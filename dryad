@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+import subprocess as sub
+import sys
+import os
+import docker
+import argparse
+from shutil import copyfile
+
+#determine command line arguments and get path
+parser = argparse.ArgumentParser(description='Construct reference free maximum likelihood trees from assembled genomes.')
+parser.add_argument('-l',metavar='list', type=str,help="text file listing the location of each assembled geneome to be included in the analysis",required=True)
+parser.add_argument('-o',metavar='output', type=str,help="output directory - defaults to working directory")
+args = parser.parse_args()
+path_list = os.path.abspath(args.l)
+
+#get current working dir if output is empty
+try:
+    out = os.path.abspath(args.o)
+except AttributeError:
+    out = os.getcwd()
+
+#open file and pull locations into a list
+with open(path_list,'r') as f:
+    p_list = f.readlines()
+#clean list items of '\n'
+p_list = [x.strip() for x in p_list]
+
+#connect to docker environment
+client = docker.from_env()
+
+#get current user id and group for file creation
+user_id = sub.check_output(["id","-u"]).decode("utf-8").strip()
+user_grp = sub.check_output(["id","-g"]).decode("utf-8").strip()
+
+#create temp folder
+sub.Popen(["mkdir","dryad_temp"]).wait()
+out = out + '/dryad_temp'
+
+print("annotating genomes in list")
+for gn in p_list:
+    name = os.path.basename(gn)
+    n = name.split('.')[0]
+    copyfile(gn,out+'/'+name)
+    client.containers.run("nwflorek/prokka","prokka --outdir /data/{1} /data/{0}".format(name,n),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+    print("compleated {}".format(name))
+
+#cleanup prokka output for next steps
+dirList = []
+ls = sub.Popen(["ls", out],stdout=sub.PIPE)
+dirList = ls.communicate()[0].decode('UTF-8').split()
+for item in dirList:
+    print('Copying '+item)
+    sub.Popen("cp "+out+'/'+item+'/'+"*.gff"+' '+out+'/'+item+".gff",shell=True,stdout=sub.PIPE).wait()
+
+print("creating alignment")
+client.containers.run("nwflorek/roary","roary -e -p 8 *.gff -f /data ",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+print("compleated alignment")
+
+print("creating maximum likelihood tree using 1000 bootstraps")
+client.containers.run("nwflorek/raxml","raxmlHPC-PTHREADS-AVX -f a -m GTRGAMMA -p 12345 -x 12345 -# 1000 -s core_gene_alignment.aln -n raxml",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
