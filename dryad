@@ -4,14 +4,17 @@ import sys
 import os
 import docker
 import argparse
+import time
 from shutil import copyfile
 
 #determine command line arguments and get path
 parser = argparse.ArgumentParser(description='Construct reference free maximum likelihood trees from assembled genomes.')
 parser.add_argument('-l',metavar='list', type=str,help="text file listing the location of each assembled geneome to be included in the analysis",required=True)
 parser.add_argument('-o',metavar='output', type=str,help="output directory - defaults to working directory")
+parser.add_argument('-r',metavar='remove',type=bool, help="remove temp directory (True/False) - defualt [True]",default=True)
 args = parser.parse_args()
 path_list = os.path.abspath(args.l)
+rm = args.r
 
 #get current working dir if output is empty
 try:
@@ -34,6 +37,7 @@ user_grp = sub.check_output(["id","-g"]).decode("utf-8").strip()
 
 #create temp folder
 sub.Popen(["mkdir","dryad_temp"]).wait()
+oout = out
 out = out + '/dryad_temp'
 
 print("annotating genomes in list")
@@ -49,12 +53,35 @@ dirList = []
 ls = sub.Popen(["ls", out],stdout=sub.PIPE)
 dirList = ls.communicate()[0].decode('UTF-8').split()
 for item in dirList:
-    print('Copying '+item)
-    sub.Popen("cp "+out+'/'+item+'/'+"*.gff"+' '+out+'/'+item+".gff",shell=True,stdout=sub.PIPE).wait()
+    if ".fasta" not in item:
+        print('Copying '+item)
+        sub.Popen("cp "+out+'/'+item+'/'+"*.gff"+' '+out+'/'+item+".gff",shell=True,stdout=sub.PIPE).wait()
 
 print("creating alignment")
-client.containers.run("nwflorek/roary","roary -e -p 8 *.gff -f /data ",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+client.containers.run("nwflorek/roary","sh -c 'roary -e -p 8 -f roary_out *.gff'",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 print("compleated alignment")
+
+#move core gene alignment out of roary_out
+sub.Popen(['cp',out+'/roary_out/core_gene_alignment.aln',out]).wait()
 
 print("creating maximum likelihood tree using 1000 bootstraps")
 client.containers.run("nwflorek/raxml","raxmlHPC-PTHREADS-AVX -f a -m GTRGAMMA -p 12345 -x 12345 -# 1000 -s core_gene_alignment.aln -n raxml",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+
+#naming based off time
+o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_tree.raxml"
+
+if os.path.isfile(oout+'/'+o_name):
+    c = 0
+    while True:
+        if not os.path.isfile(oout+'/'+o_name.split('.')[0] + "_{0}".format(c) + ".raxml"):
+            o_name = o_name.split('.')[0] + "_{0}".format(c) + ".raxml"
+            break
+        c += 1
+
+#move tree out of temp folder
+print("writing out tree: {0}".format(o_name))
+sub.Popen(['cp',out+'/RAxML_bipartitions.raxml',oout+'/'+o_name])
+
+if rm:
+    print("remving temp dir: {0}".format(out))
+    sub.Popen(["rm","-r",out]).wait()
