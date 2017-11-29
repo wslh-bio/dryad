@@ -35,52 +35,94 @@ client = docker.from_env()
 user_id = sub.check_output(["id","-u"]).decode("utf-8").strip()
 user_grp = sub.check_output(["id","-g"]).decode("utf-8").strip()
 
+#keep track of progress
+#stage 1 - create temp dir
+#stage 2 - annotation
+#stage 3 - alignment
+#stage 4 - tree
+stage = 0
+
 #create temp folder
-sub.Popen(["mkdir","dryad_temp"]).wait()
+if os.path.isdir(out+'/dryad_temp'):
+    stage = 1
+if stage == 0:
+    sub.Popen(["mkdir",out+"/dryad_temp"]).wait()
+    stage = 1
 oout = out
 out = out + '/dryad_temp'
 
-print("annotating genomes in list")
-for gn in p_list:
-    name = os.path.basename(gn)
-    n = name.split('.')[0]
-    copyfile(gn,out+'/'+name)
-    client.containers.run("nwflorek/prokka","prokka --outdir /data/{1} /data/{0}".format(name,n),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
-    print("compleated {}".format(name))
+#examine temp file to get stage
+with open(out+'/stage','r') as st:
+    check = st.read()
+    if '2' in check:
+        print('annotations were previously compleated skipping to alignment')
+        stage = 2
+    elif '3' in check:
+        print('alignment previously compleated skipping to tree')
+        stage = 3
+    elif '4' in check:
+        print('tree previously completed cleaning up')
+        stage = 4
+    else:
+        if stage == 1:
+            pass
+        else:
+            print('unknown program status, delete temporary files and start again')
+            sys.exit()
 
-#cleanup prokka output for next steps
-dirList = []
-ls = sub.Popen(["ls", out],stdout=sub.PIPE)
-dirList = ls.communicate()[0].decode('UTF-8').split()
-for item in dirList:
-    if ".fasta" not in item:
-        print('Copying '+item)
-        sub.Popen("cp "+out+'/'+item+'/'+"*.gff"+' '+out+'/'+item+".gff",shell=True,stdout=sub.PIPE).wait()
+if stage == 1:
+    print("annotating genomes in list")
+    for gn in p_list:
+        name = os.path.basename(gn)
+        n = name.split('.')[0]
+        copyfile(gn,out+'/'+name)
+        client.containers.run("nwflorek/prokka","prokka --outdir /data/{1} /data/{0}".format(name,n),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        print("compleated {}".format(name))
 
-print("creating alignment")
-client.containers.run("nwflorek/roary","sh -c 'roary -e -p 8 -f roary_out *.gff'",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
-print("compleated alignment")
+    #cleanup prokka output for next steps
+    dirList = []
+    ls = sub.Popen(["ls", out],stdout=sub.PIPE)
+    dirList = ls.communicate()[0].decode('UTF-8').split()
+    for item in dirList:
+        if ".fasta" not in item:
+            print('Copying '+item)
+            sub.Popen("cp "+out+'/'+item+'/'+"*.gff"+' '+out+'/'+item+".gff",shell=True,stdout=sub.PIPE).wait()
+    stage = 2
+    with open(out+'/stage','w') as st:
+        st.write(2)
 
-#move core gene alignment out of roary_out
-sub.Popen(['cp',out+'/roary_out/core_gene_alignment.aln',out]).wait()
+if stage == 2:
+    print("creating alignment")
+    client.containers.run("nwflorek/roary","sh -c 'roary -e -p 8 -f roary_out *.gff'",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+    print("compleated alignment")
 
-print("creating maximum likelihood tree using 1000 bootstraps")
-client.containers.run("nwflorek/raxml","raxmlHPC-PTHREADS-AVX -f a -m GTRGAMMA -p 12345 -x 12345 -# 1000 -s core_gene_alignment.aln -n raxml",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+    #move core gene alignment out of roary_out
+    sub.Popen(['cp',out+'/roary_out/core_gene_alignment.aln',out]).wait()
+    stage = 3
+    with open(out+'/stage','w') as st:
+        st.write(3)
 
-#naming based off time
-o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_tree.raxml"
+if stage == 3:
+    print("creating maximum likelihood tree using 1000 bootstraps")
+    client.containers.run("nwflorek/raxml","raxmlHPC-PTHREADS-AVX -f a -m GTRGAMMA -p 12345 -x 12345 -# 1000 -s core_gene_alignment.aln -n raxml",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
-if os.path.isfile(oout+'/'+o_name):
-    c = 0
-    while True:
-        if not os.path.isfile(oout+'/'+o_name.split('.')[0] + "_{0}".format(c) + ".raxml"):
-            o_name = o_name.split('.')[0] + "_{0}".format(c) + ".raxml"
-            break
-        c += 1
+    #naming based off time
+    o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_tree.raxml"
 
-#move tree out of temp folder
-print("writing out tree: {0}".format(o_name))
-sub.Popen(['cp',out+'/RAxML_bipartitions.raxml',oout+'/'+o_name])
+    if os.path.isfile(oout+'/'+o_name):
+        c = 0
+        while True:
+            if not os.path.isfile(oout+'/'+o_name.split('.')[0] + "_{0}".format(c) + ".raxml"):
+                o_name = o_name.split('.')[0] + "_{0}".format(c) + ".raxml"
+                break
+            c += 1
+
+    #move tree out of temp folder
+    print("writing out tree: {0}".format(o_name))
+    sub.Popen(['cp',out+'/RAxML_bipartitions.raxml',oout+'/'+o_name])
+    stage = 4
+    with open(out+'/stage','w') as st:
+        st.write(4)
 
 if rm:
     print("remving temp dir: {0}".format(out))
