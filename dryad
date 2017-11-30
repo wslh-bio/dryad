@@ -89,7 +89,7 @@ if stage == 1:
             sub.Popen("cp "+out+'/'+item+'/'+"*.gff"+' '+out+'/'+item+".gff",shell=True,stdout=sub.PIPE).wait()
     stage = 2
     with open(out+'/stage','w') as st:
-        st.write(2)
+        st.write('2')
 
 if stage == 2:
     print("creating alignment")
@@ -100,7 +100,7 @@ if stage == 2:
     sub.Popen(['cp',out+'/roary_out/core_gene_alignment.aln',out]).wait()
     stage = 3
     with open(out+'/stage','w') as st:
-        st.write(3)
+        st.write('3')
 
 if stage == 3:
     print("creating maximum likelihood tree using 1000 bootstraps")
@@ -122,7 +122,7 @@ if stage == 3:
     sub.Popen(['cp',out+'/RAxML_bipartitions.raxml',oout+'/'+o_name])
     stage = 4
     with open(out+'/stage','w') as st:
-        st.write(4)
+        st.write('4')
 
 if rm:
     print("remving temp dir: {0}".format(out))
