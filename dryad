@@ -42,6 +42,8 @@ user_grp = sub.check_output(["id","-g"]).decode("utf-8").strip()
 #stage 4 - tree
 stage = 0
 
+if not os.path.isdir(out):
+    sub.Popen(["mkdir",out]).wait()
 #create temp folder
 if os.path.isdir(out+'/dryad_temp'):
     stage = 1
@@ -52,23 +54,26 @@ oout = out
 out = out + '/dryad_temp'
 
 #examine temp file to get stage
-with open(out+'/stage','r') as st:
-    check = st.read()
-    if '2' in check:
-        print('annotations were previously compleated skipping to alignment')
-        stage = 2
-    elif '3' in check:
-        print('alignment previously compleated skipping to tree')
-        stage = 3
-    elif '4' in check:
-        print('tree previously completed cleaning up')
-        stage = 4
-    else:
-        if stage == 1:
-            pass
+try:
+    with open(out+'/stage','r') as st:
+        check = st.read()
+        if '2' in check:
+            print('annotations were previously compleated skipping to alignment')
+            stage = 2
+        elif '3' in check:
+            print('alignment previously compleated skipping to tree')
+            stage = 3
+        elif '4' in check:
+            print('tree previously completed cleaning up')
+            stage = 4
         else:
-            print('unknown program status, delete temporary files and start again')
-            sys.exit()
+            if stage == 1:
+                pass
+            else:
+                print('unknown program status, delete temporary files and start again')
+                sys.exit()
+except FileNotFoundError:
+    pass
 
 if stage == 1:
     print("annotating genomes in list")
