@@ -11,10 +11,10 @@ from shutil import copyfile
 parser = argparse.ArgumentParser(description='Construct reference free maximum likelihood trees from assembled genomes.')
 parser.add_argument('-l',metavar='list', type=str,help="text file listing the location of each assembled geneome to be included in the analysis",required=True)
 parser.add_argument('-o',metavar='output', type=str,help="output directory - defaults to working directory")
-parser.add_argument('-r',metavar='remove',type=bool, help="remove temp directory (True/False) - defualt [True]",default=True)
+parser.add_argument('-k',metavar='keep',action='store_const', help="keep temp directory",const=True,default=False)
 args = parser.parse_args()
 path_list = os.path.abspath(args.l)
-rm = args.r
+keep_temp = args.k
 
 #get current working dir if output is empty
 try:
@@ -129,6 +129,6 @@ if stage == 3:
     with open(out+'/stage','w') as st:
         st.write('4')
 
-if rm:
+if not keep_temp:
     print("remving temp dir: {0}".format(out))
     sub.Popen(["rm","-r",out]).wait()
