@@ -5,16 +5,45 @@ import os
 import docker
 import argparse
 import time
+import core_worker as cw
+import snp_worker as snpw
+import multiprocessing as mp
 from shutil import copyfile
 
 #determine command line arguments and get path
-parser = argparse.ArgumentParser(description='Construct reference free maximum likelihood trees from assembled genomes.')
-parser.add_argument('-l',metavar='list', type=str,help="text file listing the location of each assembled geneome to be included in the analysis",required=True)
+parser = argparse.ArgumentParser(description='Construct phylogenetic trees for outbreak investigations.')
+parser.add_argument('-g',metavar='glist', type=str,help="text file listing the location of each assembled geneome to be included in the analysis")
+parser.add_argument('-r',metavar='rlist', type=str,help="text file listing the location of paired reads to be included in the analysis")
 parser.add_argument('-o',metavar='output', type=str,help="output directory - defaults to working directory")
-parser.add_argument('-k',metavar='keep',action='store_const', help="keep temp directory",const=True,default=False)
+parser.add_argument('-k',metavar='keep', action='store_const', help="keep temp directory",const=True,default=False)
+parser.add_argument('-c',metavar='core', action='store_const',help="construct core genome reference free maximum likelihood phylogenetic tree",const=True,default=False)
+parser.add_argument('-s',metavar='snp', action='store_const',help="create SNP tree using Lyve-SET",const=True,default=False)
+parser.add_argument('-f',metavar='reference', type=str,help="reference fasta for SNP tree")
 args = parser.parse_args()
-path_list = os.path.abspath(args.l)
+try:
+    g_path = os.path.abspath(args.g)
+except AttributeError:
+    g_path = False
+try:
+    r_path = os.path.abspath(args.r)
+except AttributeError:
+    r_path = False
+try:
+    reference = os.path.abspath(args.f)
+except AttributeError:
+    reference = False
+
 keep_temp = args.k
+lyveset = args.s
+core = args.c
+
+if core == False and lyveset == False:
+    print("Please select phylogenetic constuction method: core genome [-c] or SNP [-s]")
+    sys.exit(0)
+
+if lyveset == True and reference == False:
+    print("Lyve-SET SNP tree needs a reference: [-f]")
+    sys.exit(0)
 
 #get current working dir if output is empty
 try:
@@ -22,11 +51,19 @@ try:
 except AttributeError:
     out = os.getcwd()
 
-#open file and pull locations into a list
-with open(path_list,'r') as f:
-    p_list = f.readlines()
-#clean list items of '\n'
-p_list = [x.strip() for x in p_list]
+if g_path:
+    #open file and pull locations into a list
+    with open(g_path,'r') as f:
+        g_list = f.readlines()
+    #clean list items of '\n'
+    g_list = [x.strip() for x in g_list]
+
+if r_path:
+    #open file and pull locations into a list
+    with open(r_path,'r') as f:
+        r_list = f.readlines()
+    #clean list items of '\n'
+    r_list = [x.strip() for x in r_list]
 
 #connect to docker environment
 client = docker.from_env()
@@ -35,100 +72,15 @@ client = docker.from_env()
 user_id = sub.check_output(["id","-u"]).decode("utf-8").strip()
 user_grp = sub.check_output(["id","-g"]).decode("utf-8").strip()
 
-#keep track of progress
-#stage 1 - create temp dir
-#stage 2 - annotation
-#stage 3 - alignment
-#stage 4 - tree
-stage = 0
+if core == True:
+    #create and start core genome worker
+    print("Starting Core Genome phylogeny")
+    cg_p = mp.Process(target=cw.cg_tree(out,g_list,user_id,user_grp,client,keep_temp))
+    cg_p.start()
 
-if not os.path.isdir(out):
-    sub.Popen(["mkdir",out]).wait()
-#create temp folder
-if os.path.isdir(out+'/dryad_temp'):
-    stage = 1
-if stage == 0:
-    sub.Popen(["mkdir",out+"/dryad_temp"]).wait()
-    stage = 1
-oout = out
-out = out + '/dryad_temp'
-
-#examine temp file to get stage
-try:
-    with open(out+'/stage','r') as st:
-        check = st.read()
-        if '2' in check:
-            print('annotations were previously compleated skipping to alignment')
-            stage = 2
-        elif '3' in check:
-            print('alignment previously compleated skipping to tree')
-            stage = 3
-        elif '4' in check:
-            print('tree previously completed cleaning up')
-            stage = 4
-        else:
-            if stage == 1:
-                pass
-            else:
-                print('unknown program status, delete temporary files and start again')
-                sys.exit()
-except FileNotFoundError:
+if lyveset ==True:
+    print("Starting SNP phylogeny")
     pass
-
-if stage == 1:
-    print("annotating genomes in list")
-    for gn in p_list:
-        name = os.path.basename(gn)
-        n = name.split('.')[0]
-        copyfile(gn,out+'/'+name)
-        client.containers.run("nwflorek/prokka","prokka --outdir /data/{1} /data/{0}".format(name,n),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
-        print("compleated {}".format(name))
-
-    #cleanup prokka output for next steps
-    dirList = []
-    ls = sub.Popen(["ls", out],stdout=sub.PIPE)
-    dirList = ls.communicate()[0].decode('UTF-8').split()
-    for item in dirList:
-        if ".fasta" not in item:
-            print('Copying '+item)
-            sub.Popen("cp "+out+'/'+item+'/'+"*.gff"+' '+out+'/'+item+".gff",shell=True,stdout=sub.PIPE).wait()
-    stage = 2
-    with open(out+'/stage','w') as st:
-        st.write('2')
-
-if stage == 2:
-    print("creating alignment")
-    client.containers.run("nwflorek/roary","sh -c 'roary -e -p 8 -f roary_out *.gff'",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
-    print("compleated alignment")
-
-    #move core gene alignment out of roary_out
-    sub.Popen(['cp',out+'/roary_out/core_gene_alignment.aln',out]).wait()
-    stage = 3
-    with open(out+'/stage','w') as st:
-        st.write('3')
-
-if stage == 3:
-    print("creating maximum likelihood tree using 1000 bootstraps")
-    client.containers.run("nwflorek/raxml","raxmlHPC-PTHREADS-AVX -f a -m GTRGAMMA -p 12345 -x 12345 -# 1000 -s core_gene_alignment.aln -n raxml",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
-
-    #naming based off time
-    o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_tree.raxml"
-
-    if os.path.isfile(oout+'/'+o_name):
-        c = 0
-        while True:
-            if not os.path.isfile(oout+'/'+o_name.split('.')[0] + "_{0}".format(c) + ".raxml"):
-                o_name = o_name.split('.')[0] + "_{0}".format(c) + ".raxml"
-                break
-            c += 1
-
-    #move tree out of temp folder
-    print("writing out tree: {0}".format(o_name))
-    sub.Popen(['cp',out+'/RAxML_bipartitions.raxml',oout+'/'+o_name])
-    stage = 4
-    with open(out+'/stage','w') as st:
-        st.write('4')
-
-if not keep_temp:
-    print("remving temp dir: {0}".format(out))
-    sub.Popen(["rm","-r",out]).wait()
+    #create and start snp tree worker
+    snp_p = mp.Process(target=snpw.snp_tree(out,r_list,user_id,user_grp,client,reference,keep_temp))
+    snp_p.start()
