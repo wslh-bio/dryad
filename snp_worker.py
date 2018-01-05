@@ -52,29 +52,23 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
     if stage == 1:
         print("trimming reads")
         for r1,r2 in zip(p_list[0::2],p_list[1::2]):
+            #get id
+            _id = os.path.basename(r1).split('_')[0]
+            #rename raw reads
+            r1raw = _id+"-raw_1.fastq.gz"
+            r2raw = _id+"-raw_2.fastq.gz"
             #copy reads to temp dir
-            copyfile(r1,out+'/'+os.path.basename(r1))
-            copyfile(r2,out+'/'+os.path.basename(r2))
-            #move pointers to copied reads
-            r1 = out+'/'+os.path.basename(r1)
-            r2 = out+'/'+os.path.basename(r2)
-            #unzip if compressed
-            if '.gz' in r1:
-                sub.Popen(['gunzip',r1])
-            if '.gz' in r2:
-                sub.Popen(['gunzip',r2])
-            #set basename
-            base_name = os.path.basename(r1).split('_')[0]
+            copyfile(r1,out+'/'+r1raw)
+            copyfile(r2,out+'/'+r2raw)
             #trim
-            client.containers.run("nwflorek/trimassem","trimmomatic PE -threads 4 /data/{0} /data/{1} -baseout /data/{2} SLIDINGWINDOW:4:30".format(r1,r2,base_name),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
-            #remove raw reads
-            sub.Popen(['rm',r1])
-            sub.Popen(['rm',r2])
-            #rename reads for shuffeling
-            sub.Popen(['mv',base_name+'_1P', base_name+'_1.fastq'])
-            sub.Popen(['mv',base_name+'_2P', base_name+'_2.fastq'])
+            client.containers.run("nwflorek/trimassem","trimmomatic PE -threads 4 /data/{0} /data/{1} {2}_1.fastq.gz {2}_1U {2}_2.fastq.gz {2}_2U SLIDINGWINDOW:4:30".format(r1raw,r2raw,_id),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+            #remove raw and unpaired reads
+            sub.Popen(['rm',out+'/'+r1raw]).wait()
+            sub.Popen(['rm',out+'/'+r2raw]).wait()
+            sub.Popen(['rm',out+'/'+_id+'_1U']).wait()
+            sub.Popen(['rm',out+'/'+_id+'_2U']).wait()
+            #rename reads and compress for shuffeling
             print("compleated {0} / {1}".format(r1,r2))
-
 
         stage = 2
         with open(temp_f,'w') as st:
@@ -82,7 +76,7 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
 
     if stage == 2:
         print("shuffle reads")
-        client.containers.run("nwflorek/lyveset","shuffleSplitReads.pl --numcpus 4 -o inter *.fastq",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/lyveset","shuffleSplitReads.pl --numcpus 4 -o inter *.fastq.gz",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
         print("compleated compleated shuffle")
         print("building project")
         client.containers.run("nwflorek/lyveset","set_manage.pl --create snp_tree",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
@@ -110,7 +104,7 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
 
         #move tree out of temp folder
         print("writing out tree: {0}".format(o_name))
-        sub.Popen(['cp',out+'snp_tree/msa/out.RAxML_bipartitions.raxml',oout+'/'+o_name])
+        sub.Popen(['cp',out+'snp_tree/msa/out.RAxML_bipartitions.raxml',oout+'/'+o_name]).wait()
         stage = 4
         with open(temp_f,'w') as st:
             st.write('4')
