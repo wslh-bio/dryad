@@ -76,12 +76,12 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
 
     if stage == 2:
         print("shuffle reads")
-        client.containers.run("nwflorek/lyveset","shuffleSplitReads.pl --numcpus 4 -o inter *.fastq.gz",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/lyveset","shuffleSplitReads.pl --numcpus 4 -o inter *.fastq.gz",user=user_id+":"+user_grp, working_dir='/data/dryad_snp_temp', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
         print("compleated compleated shuffle")
         print("building project")
-        client.containers.run("nwflorek/lyveset","set_manage.pl --create snp_tree",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
-        client.containers.run("nwflorek/lyveset","for i in inter/*.fastq.gz; do set_manage.pl snp_tree --add-reads $i done;",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
-        client.containers.run("nwflorek/lyveset","set_manage.pl snp_tree --change-reference {0}".format(reference),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/lyveset","set_manage.pl --create snp_tree",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data/dryad_snp_temp','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/lyveset","for i in inter/*.fastq.gz; do set_manage.pl snp_tree --add-reads $i done;",user=user_id+":"+user_grp, working_dir='/data/dryad_snp_temp', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/lyveset","set_manage.pl snp_tree --change-reference {0}".format(reference),user=user_id+":"+user_grp, working_dir='/data/dryad_snp_temp', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
         stage = 3
         with open(temp_f,'w') as st:
@@ -89,7 +89,7 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
 
     if stage == 3:
         print("building SNP tree with Lyve-SET")
-        client.containers.run("nwflorek/lyveset","launch_set.pl snp_tree --numcpus 4",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/lyveset","launch_set.pl snp_tree --numcpus 4",user=user_id+":"+user_grp, working_dir='/data/dryad_snp_temp', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
         #naming based off time
         o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_snp_tree.raxml"
