@@ -6,7 +6,7 @@ import docker
 import time
 from shutil import copyfile
 #function to build snp tree
-def cg_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
+def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
     #keep track of progress
     #stage 1 - create temp dir
     #stage 2 - trim reads
