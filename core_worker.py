@@ -3,6 +3,7 @@ import subprocess as sub
 import sys
 import os
 import docker
+import time
 from shutil import copyfile
 #function to build core genome tree
 def cg_tree(out,p_list,user_id,user_grp,client,keep_temp):
@@ -85,7 +86,7 @@ def cg_tree(out,p_list,user_id,user_grp,client,keep_temp):
         client.containers.run("nwflorek/raxml","raxmlHPC-PTHREADS-AVX -f a -m GTRGAMMA -p 12345 -x 12345 -# 1000 -s core_gene_alignment.aln -n raxml",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
         #naming based off time
-        o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_tree.raxml"
+        o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_cg_tree.raxml"
 
         if os.path.isfile(oout+'/'+o_name):
             c = 0
