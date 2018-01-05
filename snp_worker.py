@@ -3,6 +3,7 @@ import subprocess as sub
 import sys
 import os
 import docker
+import time
 from shutil import copyfile
 #function to build snp tree
 def cg_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
@@ -94,10 +95,10 @@ def cg_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
 
     if stage == 3:
         print("building SNP tree with Lyve-SET")
-        client.containers.run("nwflorek/lyveset","launch_set.pl snp_tree",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/lyveset","launch_set.pl snp_tree --numcpus 4",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
         #naming based off time
-        o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_tree.raxml"
+        o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_snp_tree.raxml"
 
         if os.path.isfile(oout+'/'+o_name):
             c = 0
