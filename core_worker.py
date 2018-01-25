@@ -72,7 +72,7 @@ def cg_tree(out,p_list,user_id,user_grp,client,keep_temp):
 
     if stage == 2:
         print("creating alignment")
-        client.containers.run("nwflorek/roary","sh -c 'roary -e -p 4 -f roary_out *.gff'",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/roary","sh -c 'roary -en -p 4 -f roary_out *.gff'",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
         print("compleated alignment")
 
         #move core gene alignment out of roary_out
