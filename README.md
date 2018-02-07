@@ -20,6 +20,6 @@ The SNP tree pipeline takes a list of paired end fastq file locations and a refe
 The SNP pipeline uses Trimmomatic v0.35 (http://www.usadellab.org/cms/?page=trimmomatic) to trim the raw reads and Lyve-SET v2.0 (https://github.com/lskatz/lyve-SET) to construct the tree.
 
 #### Dependencies
-Python 3 (https://www.python.org)
-Docker (https://www.docker.com)
+Python 3 (https://www.python.org)  
+Docker (https://www.docker.com)  
 python Docker library (https://github.com/docker/docker-py)
