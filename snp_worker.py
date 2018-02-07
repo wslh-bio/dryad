@@ -81,7 +81,6 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
         print("building project")
         client.containers.run("nwflorek/lyveset","set_manage.pl --create snp_tree",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
         client.containers.run("nwflorek/lyveset","sh -c 'for i in inter/*.fastq.gz; do set_manage.pl snp_tree --add-reads $i; done'",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
-        #client.containers.run("nwflorek/lyveset","set_manage.pl snp_tree --change-reference {0}".format(reference),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
         stage = 3
         with open(temp_f,'w') as st:
@@ -91,7 +90,8 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
         sub.Popen(['cp',reference,out])
         reference = os.path.basename(reference)
         print("building SNP tree with Lyve-SET")
-        client.containers.run("nwflorek/lyveset","launch_set.pl snp_tree --numcpus 4 -ref {0}".format(reference),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/lyveset","sh -c 'set_manage.pl snp_tree --change-reference {0}'".format(reference),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/lyveset","sh -c 'launch_set.pl snp_tree --numcpus 4 --ref {0}'".format(reference),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
         #naming based off time
         o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_snp_tree.raxml"
