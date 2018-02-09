@@ -25,6 +25,10 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
     oout = out
     out = out + '/dryad_snp_temp'
 
+    #start logging stdout and stderr
+    sys.stdout = open(out+'/'+'snp_'+str(os.getpid()) + ".out", "w",buffering=1)
+    sys.stderr = open(out+'/'+'snp_'+str(os.getpid()) + ".err", "w",buffering=1)
+
     #examine temp file to get stage
     #temp file name
     temp_f = out+'/ss'
@@ -91,7 +95,7 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
         reference = os.path.basename(reference)
         print("building SNP tree with Lyve-SET")
         client.containers.run("nwflorek/lyveset","sh -c 'set_manage.pl snp_tree --change-reference {0}'".format(reference),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
-        client.containers.run("nwflorek/lyveset","sh -c 'launch_set.pl snp_tree --numcpus 4 --ref {0}'".format(reference),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/lyveset","sh -c 'launch_set.pl snp_tree --numcpus 4'",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
         #naming based off time
         o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_snp_tree.raxml"
