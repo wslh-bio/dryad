@@ -110,7 +110,7 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
 
         #move tree out of temp folder
         print("writing out tree: {0}".format(o_name))
-        sub.Popen(['cp',out+'/snp_tree/msa/out.RAxML_bipartitions.raxml',oout+'/'+o_name]).wait()
+        sub.Popen(['cp',out+'/snp_tree/msa/out.RAxML_bipartitions',oout+'/'+o_name]).wait()
         stage = 4
         with open(temp_f,'w') as st:
             st.write('4')
