@@ -6,7 +6,7 @@ import docker
 import time
 from shutil import copyfile
 #function to build snp tree
-def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
+def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
     #keep track of progress
     #stage 1 - create temp dir
     #stage 2 - trim reads
@@ -65,7 +65,7 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
             copyfile(r1,out+'/'+r1raw)
             copyfile(r2,out+'/'+r2raw)
             #trim
-            client.containers.run("nwflorek/trimassem","trimmomatic PE -threads 4 /data/{0} /data/{1} {2}_1.fastq.gz {2}_1U {2}_2.fastq.gz {2}_2U SLIDINGWINDOW:4:30".format(r1raw,r2raw,_id),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+            client.containers.run("nwflorek/trimassem","trimmomatic PE -threads {3} /data/{0} /data/{1} {2}_1.fastq.gz {2}_1U {2}_2.fastq.gz {2}_2U SLIDINGWINDOW:4:30".format(r1raw,r2raw,_id,threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
             #remove raw and unpaired reads
             sub.Popen(['rm',out+'/'+r1raw]).wait()
             sub.Popen(['rm',out+'/'+r2raw]).wait()
@@ -80,7 +80,7 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
 
     if stage == 2:
         print("shuffle reads")
-        client.containers.run("nwflorek/lyveset","sh -c 'shuffleSplitReads.pl --numcpus 4 -o inter *.fastq.gz'",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/lyveset","sh -c 'shuffleSplitReads.pl --numcpus {0} -o inter *.fastq.gz'".format(threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
         print("compleated shuffle")
         print("building project")
         client.containers.run("nwflorek/lyveset","set_manage.pl --create snp_tree",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
@@ -95,7 +95,7 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp):
         reference = os.path.basename(reference)
         print("building SNP tree with Lyve-SET")
         client.containers.run("nwflorek/lyveset","sh -c 'set_manage.pl snp_tree --change-reference {0}'".format(reference),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
-        client.containers.run("nwflorek/lyveset","sh -c 'launch_set.pl snp_tree --numcpus 1'",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/lyveset","sh -c 'launch_set.pl snp_tree --numcpus {0}'".format(threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
         #naming based off time
         o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_snp_tree.raxml"
