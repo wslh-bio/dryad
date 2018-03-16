@@ -95,7 +95,7 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
         reference = os.path.basename(reference)
         print("building SNP tree with Lyve-SET")
         client.containers.run("nwflorek/lyveset","sh -c 'set_manage.pl snp_tree --change-reference {0}'".format(reference),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
-        client.containers.run("nwflorek/lyveset","sh -c 'launch_set.pl snp_tree --numcpus {0}'".format(threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/lyveset","sh -c 'launch_set.pl snp_tree --noqsub --numcpus {0}'".format(threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
         #naming based off time
         o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_snp_tree.raxml"
