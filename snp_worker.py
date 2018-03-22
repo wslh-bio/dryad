@@ -9,8 +9,8 @@ from shutil import copyfile
 def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
     #keep track of progress
     #stage 1 - create temp dir
-    #stage 2 - trim reads
-    #stage 3 - shuffle and build lyveset project
+    #stage 2 - trim and shuffel reads, set reference
+    #stage 3 - build lyveset project
     #stage 4 - run lyveset
     stage = 0
 
@@ -85,17 +85,17 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
         print("building project")
         client.containers.run("nwflorek/lyveset","set_manage.pl --create snp_tree",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
         client.containers.run("nwflorek/lyveset","sh -c 'for i in inter/*.fastq.gz; do set_manage.pl snp_tree --add-reads $i; done'",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
-
+        print("setting reference")
+        sub.Popen(['cp',reference,out])
+        reference = os.path.basename(reference)
+        client.containers.run("nwflorek/lyveset","sh -c 'set_manage.pl snp_tree --change-reference {0}'".format(reference),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
         stage = 3
         with open(temp_f,'w') as st:
             st.write('3')
 
     if stage == 3:
-        sub.Popen(['cp',reference,out])
-        reference = os.path.basename(reference)
         print("building SNP tree with Lyve-SET")
-        client.containers.run("nwflorek/lyveset","sh -c 'set_manage.pl snp_tree --change-reference {0}'".format(reference),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
-        client.containers.run("nwflorek/lyveset","sh -c 'launch_set.pl snp_tree --noqsub --numcpus {0}'".format(threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/lyveset","sh -c 'launch_set.pl snp_tree --numcpus {0}'".format(threads),cpu_count=threads,user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
         #naming based off time
         o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_snp_tree.raxml"
