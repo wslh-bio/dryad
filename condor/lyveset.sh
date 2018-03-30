@@ -14,7 +14,7 @@ shuffleSplitReads.pl --numcpus $3 -o interleaved $1/*.fastq.gz
 set_manage.pl --create $4
 # Add reads
 for i in interleaved/*.fastq.gz; do
-  set_manage.pl setTest --add-reads $i
+  set_manage.pl $4 --add-reads $i
 done;
 # Specify your reference genome
 set_manage.pl $4 --change-reference $2
