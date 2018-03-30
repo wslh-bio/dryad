@@ -1,33 +1,33 @@
-####SeqSero.sub####
-####Salmonella serotyping
+####lyveset.sub####
+####SNP phylogeny construction
 
 #### Specify the HTCondor Universe
 universe = docker
-docker_image = nwflorek/seqsero:condor
+docker_image = nwflorek/lyveset:1.1.4
 
 #### Docker will run most successfully on our new operating system, CentOS7.
 requirements = (Target.HasGluster == true) && (OpSysMajorVer == 7)
 
 #### Specify your executable.
-executable = bucky-tr/condor-bucky-tr/bucky-tr_seqsero.sh
+executable = dryad/condor/lyveset.sh
 
 #### Transfer files in
 should_transfer_files = YES
 
 #### Specify arguments
-arguments = -i $(id) -d $(dir)
+arguments = /mnt/gluster/nwflorek/lyveset reference.fasta 6 30_sal
 
 #### Specify initaldir
-initialdir = output/$(stamp)/$(id)
+initialdir = output/lyveset/
 
 #### Specify log files
-output = seqsero_$(Cluster)_$(id).out
-log = seqsero_$(Cluster)_$(id).log
-error = seqsero_$(Cluster)_$(id).err
+output = lyveset_$(Cluster).out
+log = lyveset_$(Cluster).log
+error = lyveset_$(Cluster).err
 
 #### Resources
-request_cpus = 1
-request_memory = 4GB
+request_cpus = 8
+request_memory = 20GB
 request_disk = 1GB
 
 #### Tell HTCondor to run 1 instances of our job:
