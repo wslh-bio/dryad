@@ -8,6 +8,7 @@ from shutil import copyfile
 #function to build snp tree
 def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
     lyveset_container = "nwflorek/lyveset:1.1.4"
+    ninja_container = "nwflorek/ninja:1.2.2"
     #keep track of progress
     #stage 1 - create temp dir
     #stage 2 - trim and shuffel reads, set reference
@@ -43,7 +44,7 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
                 print('project previously built running Lyve-SET')
                 stage = 3
             elif '4' in check:
-                print('tree previously completed cleaning up')
+                print('alignment previously made, building tree')
                 stage = 4
             else:
                 if stage == 1:
@@ -95,26 +96,32 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
             st.write('3')
 
     if stage == 3:
-        print("building SNP tree with Lyve-SET")
-        client.containers.run(lyveset_container,"sh -c 'launch_set.pl snp_tree --numcpus {0}'".format(threads),cpu_count=threads,user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        print("making SNP pseudo alignment with Lyve-SET")
+        client.containers.run(lyveset_container,"sh -c 'launch_set.pl snp_tree --numcpus {0} --notrees'".format(threads),cpu_count=threads,user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
-        #naming based off time
-        o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_snp_tree.raxml"
-
-        if os.path.isfile(oout+'/'+o_name):
-            c = 0
-            while True:
-                if not os.path.isfile(oout+'/'+o_name.split('.')[0] + "_{0}".format(c) + ".raxml"):
-                    o_name = o_name.split('.')[0] + "_{0}".format(c) + ".raxml"
-                    break
-                c += 1
-
-        #move tree out of temp folder
-        print("writing out tree: {0}".format(o_name))
-        sub.Popen(['cp',out+'/snp_tree/msa/out.RAxML_bipartitions',oout+'/'+o_name]).wait()
         stage = 4
         with open(temp_f,'w') as st:
             st.write('4')
+
+    if stage == 4:
+        #naming based off time
+        out_prefix = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday) + ".nj"
+
+        #incrament if already exists
+        if os.path.isfile(oout+'/'+out_prefix+'.nj'):
+            c = 0
+            while True:
+                if not os.path.isfile(oout+'/'+out_prefix.split('.')[0] + "_{0}".format(c) + ".nj"):
+                    out_prefix = out_prefix.split('.')[0] + "_{0}".format(c) + ".nj"
+                    break
+                c += 1
+
+        #build neghborhood joining tree
+        client.containers.run(ninja_container,"sh -c 'ninja --in_type d snp_tree/msa/out.informative.fasta.phy > {}'".format(out_prefix),cpu_count=threads,user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+
+        #move matrix and alignment out of temp folder
+        sub.Popen(['cp',out+'/snp_tree/msa/out.informative.fasta',oout+'/'+out_prefix+'.aln.fna']).wait()
+        sub.Popen(['cp',out+'/snp_tree/msa/out.pairwiseMatrix.tsv',oout+'/'+out_prefix+'.matrix.tsv']).wait()
 
     if not keep_temp:
         print("remving temp dir: {0}".format(out))
