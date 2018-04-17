@@ -42,9 +42,11 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
                 stage = 2
             elif '3' in check:
                 print('project previously built running Lyve-SET')
+                reference = os.path.basename(reference)
                 stage = 3
             elif '4' in check:
                 print('alignment previously made, building tree')
+                reference = os.path.basename(reference)
                 stage = 4
             else:
                 if stage == 1:
@@ -97,7 +99,7 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
 
     if stage == 3:
         print("making SNP pseudo alignment with Lyve-SET")
-        client.containers.run(lyveset_container,"sh -c 'launch_set.pl snp_tree --numcpus {0} --notrees'".format(threads),cpu_count=threads,user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run(lyveset_container,"sh -c 'launch_set.pl snp_tree --numcpus {0} --notrees -ref {1}'".format(threads,reference),cpu_count=threads,user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
         stage = 4
         with open(temp_f,'w') as st:
