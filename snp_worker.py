@@ -69,7 +69,7 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
             copyfile(r1,out+'/'+r1raw)
             copyfile(r2,out+'/'+r2raw)
             #trim
-            client.containers.run("nwflorek/trimassem","trimmomatic PE -threads {3} /data/{0} /data/{1} {2}_1.fastq.gz {2}_1U {2}_2.fastq.gz {2}_2U SLIDINGWINDOW:4:30".format(r1raw,r2raw,_id,threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+            client.containers.run("nwflorek/trimmomatic","trimmomatic PE -threads {3} /data/{0} /data/{1} {2}_1.fastq.gz {2}_1U {2}_2.fastq.gz {2}_2U SLIDINGWINDOW:4:30".format(r1raw,r2raw,_id,threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
             #remove raw and unpaired reads
             sub.Popen(['rm',out+'/'+r1raw]).wait()
             sub.Popen(['rm',out+'/'+r2raw]).wait()
