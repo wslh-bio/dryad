@@ -77,6 +77,7 @@ if core == True:
     print("Starting Core Genome phylogeny")
     cg_p = mp.Process(target=cw.cg_tree(out,g_list,user_id,user_grp,client,keep_temp))
     cg_p.start()
+    cg_p.join()
 
 if lyveset ==True:
     print("Starting SNP phylogeny")
@@ -84,3 +85,4 @@ if lyveset ==True:
     #create and start snp tree worker
     snp_p = mp.Process(target=snpw.snp_tree(out,r_list,user_id,user_grp,client,reference,keep_temp,4))
     snp_p.start()
+    snp_p.join()
