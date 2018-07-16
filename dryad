@@ -77,7 +77,7 @@ user_grp = sub.check_output(["id","-g"]).decode("utf-8").strip()
 if core == True:
     #create and start core genome worker
     print("Starting Core Genome phylogeny")
-    cg_p = mp.Process(target=cw.cg_tree(out,g_list,user_id,user_grp,client,keep_temp))
+    cg_p = mp.Process(target=cw.cg_tree(out,g_list,user_id,user_grp,client,keep_temp,threads))
     cg_p.start()
     cg_p.join()
 

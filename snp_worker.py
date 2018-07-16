@@ -7,7 +7,7 @@ import time
 from shutil import copyfile
 #function to build snp tree
 def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
-    lyveset_container = "nwflorek/lyveset:1.1.4"
+    lyveset_container = "nwflorek/lyveset:test"
     ninja_container = "nwflorek/ninja:1.2.2"
     #keep track of progress
     #stage 1 - create temp dir
@@ -99,7 +99,7 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
 
     if stage == 3:
         print("making SNP pseudo alignment with Lyve-SET")
-        client.containers.run(lyveset_container,"sh -c 'launch_set.pl snp_tree --numcpus {0} --notrees -ref {1}'".format(threads,reference),cpu_count=threads,user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run(lyveset_container,"sh -c 'launch_set.pl snp_tree --numcpus {0} --notrees -ref {1}'".format(threads,reference),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
         stage = 4
         with open(temp_f,'w') as st:
@@ -119,11 +119,12 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
                 c += 1
 
         #build neghborhood joining tree
-        client.containers.run(ninja_container,"sh -c 'ninja --in_type d snp_tree/msa/out.informative.fasta.phy > {}'".format(out_prefix),cpu_count=threads,user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run(ninja_container,"sh -c 'phylip_converter.py snp_tree/msa/out.pairwiseMatrix.tsv phylip.pairwiseMatrix.tsv; ninja --in_type d phylip.pairwiseMatrix.tsv > {}'".format(out_prefix),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
-        #move matrix and alignment out of temp folder
+        #move matrix and alignment and tree out of temp folder
         sub.Popen(['cp',out+'/snp_tree/msa/out.informative.fasta',oout+'/'+out_prefix+'.aln.fna']).wait()
         sub.Popen(['cp',out+'/snp_tree/msa/out.pairwiseMatrix.tsv',oout+'/'+out_prefix+'.matrix.tsv']).wait()
+        sub.Popen(['cp',out_prefix,oout+'/'+out_prefix]).wait()
 
     if not keep_temp:
         print("remving temp dir: {0}".format(out))
