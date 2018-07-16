@@ -6,7 +6,7 @@ import docker
 import time
 from shutil import copyfile
 #function to build core genome tree
-def cg_tree(out,p_list,user_id,user_grp,client,keep_temp):
+def cg_tree(out,p_list,user_id,user_grp,client,keep_temp,threads):
     #keep track of progress
     #stage 1 - create temp dir
     #stage 2 - annotation
@@ -55,7 +55,7 @@ def cg_tree(out,p_list,user_id,user_grp,client,keep_temp):
             name = os.path.basename(gn)
             n = name.split('.')[0]
             copyfile(gn,out+'/'+name)
-            client.containers.run("nwflorek/prokka","prokka --outdir /data/{1} /data/{0}".format(name,n),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+            client.containers.run("nwflorek/prokka","prokka --cpus {2} --outdir /data/{1} /data/{0}".format(name,n,threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
             print("compleated {}".format(name))
 
         #cleanup prokka output for next steps
@@ -72,7 +72,7 @@ def cg_tree(out,p_list,user_id,user_grp,client,keep_temp):
 
     if stage == 2:
         print("creating alignment")
-        client.containers.run("nwflorek/roary","sh -c 'roary -e -mafft -p 4 -f roary_out *.gff'",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/roary","sh -c 'roary -e -mafft -p {0} -f roary_out *.gff'".format(threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
         print("compleated alignment")
 
         #move core gene alignment out of roary_out
@@ -83,7 +83,7 @@ def cg_tree(out,p_list,user_id,user_grp,client,keep_temp):
 
     if stage == 3:
         print("creating maximum likelihood tree using 1000 bootstraps")
-        client.containers.run("nwflorek/raxml","raxmlHPC-PTHREADS-AVX -f a -m GTRGAMMA -p 12345 -x 12345 -# 1000 -s core_gene_alignment.aln -n raxml",user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("nwflorek/raxml","raxmlHPC-PTHREADS-AVX -T {0} -f a -m GTRGAMMA -p 12345 -x 12345 -# 1000 -s core_gene_alignment.aln -n raxml".format(threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
         #naming based off time
         o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_cg_tree.raxml"
