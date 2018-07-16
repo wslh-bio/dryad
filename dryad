@@ -19,6 +19,7 @@ parser.add_argument('-k',metavar='keep', action='store_const', help="keep temp d
 parser.add_argument('-c',metavar='core', action='store_const',help="construct core genome reference free maximum likelihood phylogenetic tree",const=True,default=False)
 parser.add_argument('-s',metavar='snp', action='store_const',help="create SNP tree using Lyve-SET",const=True,default=False)
 parser.add_argument('-f',metavar='reference', type=str,help="reference fasta for SNP tree")
+parser.add_argument('-t',metavar='threads', type=int,help="number of cpus to use for pipeline",default=4)
 args = parser.parse_args()
 try:
     g_path = os.path.abspath(args.g)
@@ -33,6 +34,7 @@ try:
 except (AttributeError, TypeError) as err:
     reference = False
 
+threads = args.t
 keep_temp = args.k
 lyveset = args.s
 core = args.c
@@ -83,6 +85,6 @@ if lyveset ==True:
     print("Starting SNP phylogeny")
     pass
     #create and start snp tree worker
-    snp_p = mp.Process(target=snpw.snp_tree(out,r_list,user_id,user_grp,client,reference,keep_temp,4))
+    snp_p = mp.Process(target=snpw.snp_tree(out,r_list,user_id,user_grp,client,reference,keep_temp,threads))
     snp_p.start()
     snp_p.join()
