@@ -124,7 +124,7 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
         #move matrix and alignment and tree out of temp folder
         sub.Popen(['cp',out+'/snp_tree/msa/out.informative.fasta',oout+'/'+out_prefix+'.aln.fna']).wait()
         sub.Popen(['cp',out+'/snp_tree/msa/out.pairwiseMatrix.tsv',oout+'/'+out_prefix+'.matrix.tsv']).wait()
-        sub.Popen(['cp',out_prefix,oout+'/'+out_prefix]).wait()
+        sub.Popen(['cp',out+'/'+out_prefix,oout+'/'+out_prefix]).wait()
 
     if not keep_temp:
         print("remving temp dir: {0}".format(out))
