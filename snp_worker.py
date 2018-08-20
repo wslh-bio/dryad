@@ -7,7 +7,7 @@ import time
 from shutil import copyfile
 #function to build snp tree
 def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
-    lyveset_container = "nwflorek/lyveset:test"
+    lyveset_container = "nwflorek/lyveset:2.0"
     ninja_container = "nwflorek/ninja:1.2.2"
     #keep track of progress
     #stage 1 - create temp dir
