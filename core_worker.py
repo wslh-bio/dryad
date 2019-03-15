@@ -55,7 +55,7 @@ def cg_tree(out,p_list,user_id,user_grp,client,keep_temp,threads):
             name = os.path.basename(gn)
             n = name.split('.')[0]
             copyfile(gn,out+'/'+name)
-            client.containers.run("nwflorek/prokka","prokka --cpus {2} --outdir /data/{1} /data/{0}".format(name,n,threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+            client.containers.run("staphb/prokka","prokka --cpus {2} --outdir /data/{1} /data/{0}".format(name,n,threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
             print("compleated {}".format(name))
 
         #cleanup prokka output for next steps
@@ -72,7 +72,7 @@ def cg_tree(out,p_list,user_id,user_grp,client,keep_temp,threads):
 
     if stage == 2:
         print("creating alignment")
-        client.containers.run("nwflorek/roary","sh -c 'roary -e -mafft -p {0} -f roary_out *.gff'".format(threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("staphb/roary","sh -c 'roary -e -mafft -p {0} -f roary_out *.gff'".format(threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
         print("compleated alignment")
 
         #move core gene alignment out of roary_out
@@ -83,22 +83,22 @@ def cg_tree(out,p_list,user_id,user_grp,client,keep_temp,threads):
 
     if stage == 3:
         print("creating maximum likelihood tree using 1000 bootstraps")
-        client.containers.run("nwflorek/raxml","raxmlHPC-PTHREADS-AVX -T {0} -f a -m GTRGAMMA -p 12345 -x 12345 -# 1000 -s core_gene_alignment.aln -n raxml".format(threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("staphb/iqtree","iqtree -nt {0} -m GTR+G -s core_gene_alignment.aln -pre cg_tree".format(threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
         #naming based off time
-        o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_cg_tree.raxml"
+        o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_cg_tree.newick"
 
         if os.path.isfile(oout+'/'+o_name):
             c = 0
             while True:
-                if not os.path.isfile(oout+'/'+o_name.split('.')[0] + "_{0}".format(c) + ".raxml"):
-                    o_name = o_name.split('.')[0] + "_{0}".format(c) + ".raxml"
+                if not os.path.isfile(oout+'/'+o_name.split('.')[0] + "_{0}".format(c) + ".newick"):
+                    o_name = o_name.split('.')[0] + "_{0}".format(c) + ".newick"
                     break
                 c += 1
 
         #move tree out of temp folder
         print("writing out tree: {0}".format(o_name))
-        sub.Popen(['cp',out+'/RAxML_bipartitions.raxml',oout+'/'+o_name])
+        sub.Popen(['cp',out+'/cg_tree.treefile',oout+'/'+o_name])
         stage = 4
         with open(temp_f,'w') as st:
             st.write('4')
