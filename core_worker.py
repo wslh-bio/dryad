@@ -6,7 +6,7 @@ import docker
 import time
 from shutil import copyfile
 #function to build core genome tree
-def cg_tree(out,p_list,user_id,user_grp,client,keep_temp,threads):
+def cg_tree(out,p_list,user_id,user_grp,client,threads):
     #keep track of progress
     #stage 1 - create temp dir
     #stage 2 - annotation
@@ -83,7 +83,7 @@ def cg_tree(out,p_list,user_id,user_grp,client,keep_temp,threads):
 
     if stage == 3:
         print("creating maximum likelihood tree using 1000 bootstraps")
-        client.containers.run("staphb/iqtree","iqtree -nt {0} -m GTR+G -s core_gene_alignment.aln -pre cg_tree".format(threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
+        client.containers.run("staphb/iqtree","iqtree -nt {0} -m GTR+G -bb 1000 -s core_gene_alignment.aln -pre cg_tree".format(threads),user=user_id+":"+user_grp, working_dir='/data', volumes={out:{'bind':'/data','mode':'rw'}}, remove=True)
 
         #naming based off time
         o_name = str(time.localtime().tm_year)[2:]+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+"_cg_tree.newick"
@@ -102,7 +102,3 @@ def cg_tree(out,p_list,user_id,user_grp,client,keep_temp,threads):
         stage = 4
         with open(temp_f,'w') as st:
             st.write('4')
-
-    if not keep_temp:
-        print("remving temp dir: {0}".format(out))
-        sub.Popen(["rm","-r",out]).wait()
