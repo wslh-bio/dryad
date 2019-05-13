@@ -6,7 +6,7 @@ import docker
 import time
 from shutil import copyfile
 #function to build snp tree
-def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
+def snp_tree(out,p_list,user_id,user_grp,client,reference,threads):
     lyveset_container = "staphb/lyveset:2.0.1"
     ninja_container = "nwflorek/ninja:1.2.2"
     #keep track of progress
@@ -125,7 +125,3 @@ def snp_tree(out,p_list,user_id,user_grp,client,reference,keep_temp,threads):
         sub.Popen(['cp',out+'/snp_tree/msa/out.informative.fasta',oout+'/'+out_prefix+'.aln.fna']).wait()
         sub.Popen(['cp',out+'/snp_tree/msa/out.pairwiseMatrix.tsv',oout+'/'+out_prefix+'.matrix.tsv']).wait()
         sub.Popen(['cp',out+'/'+out_prefix,oout+'/'+out_prefix]).wait()
-
-    if not keep_temp:
-        print("remving temp dir: {0}".format(out))
-        sub.Popen(["rm","-r",out]).wait()
