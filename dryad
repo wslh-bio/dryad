@@ -39,7 +39,6 @@ except (AttributeError, TypeError) as err:
     reference = False
 
 threads = args.t
-keep_temp = args.k
 lyveset = args.s
 core = args.c
 
