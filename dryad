@@ -77,3 +77,7 @@ outdir = os.path.join(out,"dryad-"+str_time)
 
 #start trimming
 q_trim(paired_reads,jobs,cpu_job,outdir)
+
+#start snp pipeline
+
+#start core-genome pipeline
