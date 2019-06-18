@@ -4,51 +4,44 @@
 #description: A pipeline for constructing SNP based and reference free phylogenies
 
 import subprocess as sub
-import sys, os, time, argparse
+import sys, os, time, argparse, datetime
 import docker
-import core_worker as cw
-import snp_worker as snpw
+from fun_lib import cpu_count, checkexists
+from trimming import q_trim
 import multiprocessing as mp
 from shutil import copyfile
 
 #determine command line arguments and get path
 parser = argparse.ArgumentParser(description='A pipeline for constructing SNP based and reference free phylogenies.')
-parser.add_argument('-g',metavar='glist', type=str,help="text file listing the location of each assembled geneome to be included in the analysis")
-parser.add_argument('-r',metavar='rlist', type=str,help="text file listing the location of paired reads to be included in the analysis")
+parser.add_argument('reads', type=str,help="text file listing the location of paired reads to be included in the analysis")
 parser.add_argument('-o',metavar='output', type=str,help="output directory - defaults to working directory")
-parser.add_argument('-c',metavar='core', action='store_const',help="construct core genome reference free maximum likelihood phylogenetic tree",const=True,default=False)
-parser.add_argument('-s',metavar='snp', action='store_const',help="create SNP tree using Lyve-SET",const=True,default=False)
+parser.add_argument('-c', action='store_const',help="construct core genome reference free maximum likelihood phylogenetic tree",const=True,default=False)
+parser.add_argument('-s', action='store_const',help="create SNP tree using Lyve-SET",const=True,default=False)
 parser.add_argument('-f',metavar='reference', type=str,help="reference fasta for SNP tree")
 parser.add_argument('-t',metavar='threads', type=int,help="number of cpus to use for pipeline",default=4)
 
 if len(sys.argv[1:]) == 0:
-        parser.print_help()
-        parser.exit()
+    parser.print_help()
+    parser.exit()
 args = parser.parse_args()
-try:
-    g_path = os.path.abspath(args.g)
-except (AttributeError, TypeError) as err:
-    g_path = False
-try:
-    r_path = os.path.abspath(args.r)
-except (AttributeError, TypeError) as err:
-    r_path = False
+
 try:
     reference = os.path.abspath(args.f)
 except (AttributeError, TypeError) as err:
     reference = False
 
 threads = args.t
-lyveset = args.s
+snp = args.s
 core = args.c
+reads_path = args.reads
 
-if core == False and lyveset == False:
-    print("Please select phylogenetic constuction method: core genome [-c] or SNP [-s]")
-    sys.exit(0)
+if core == False and snp == False:
+    parser.print_help()
+    sys.exit()
 
-if lyveset == True and reference == False:
-    print("Lyve-SET SNP tree needs a reference: [-f]")
-    sys.exit(0)
+if snp == True and reference == False:
+    print("SNP pipeline needs a reference: [-f]")
+    sys.exit()
 
 #get current working dir if output is empty
 try:
@@ -56,38 +49,31 @@ try:
 except (AttributeError, TypeError) as err:
     out = os.getcwd()
 
-if g_path:
-    #open file and pull locations into a list
-    with open(g_path,'r') as f:
-        g_list = f.readlines()
-    #clean list items of '\n'
-    g_list = [x.strip() for x in g_list]
+#open file and pull locations into a list
+with open(reads_path,'r') as f:
+    r_list = []
+    for line in f:
+        if line.strip() != '':
+            r_list.append(line.strip())
 
-if r_path:
-    #open file and pull locations into a list
-    with open(r_path,'r') as f:
-        r_list = f.readlines()
-    #clean list items of '\n'
-    r_list = [x.strip() for x in r_list]
+#sort and join pairs
+r_list.sort()
+if len(r_list) % 2 != 0:
+    print('There is an uneven number of read pairs in the read list. Exiting.')
+    sys.exit()
+paired_reads = []
+[paired_reads.append([x,y]) for x,y in zip(r_list[0::2],r_list[1::2])]
 
-#connect to docker environment
-client = docker.from_env()
+#get num of jobs and number of cpus per job
+jobs,cpu_job = cpu_count(threads)
 
-#get current user id and group for file creation
-user_id = sub.check_output(["id","-u"]).decode("utf-8").strip()
-user_grp = sub.check_output(["id","-g"]).decode("utf-8").strip()
+#create output dir
+time = datetime.datetime.now()
+str_time = "{0}{1}{2}{3}{4}".format(time.year,time.month,time.day,time.hour,time.minute)
+if checkexists(os.path.join(out,"dryad-"+str_time)):
+    print(os.path.join(out,"dryad-"+str_time)+" already exists... exiting.")
+    sys.exit()
+outdir = os.path.join(out,"dryad-"+str_time)
 
-if core == True:
-    #create and start core genome worker
-    print("Starting Core Genome phylogeny")
-    cg_p = mp.Process(target=cw.cg_tree(out,g_list,user_id,user_grp,client,threads))
-    cg_p.start()
-    cg_p.join()
-
-if lyveset ==True:
-    print("Starting SNP phylogeny")
-    pass
-    #create and start snp tree worker
-    snp_p = mp.Process(target=snpw.snp_tree(out,r_list,user_id,user_grp,client,reference,threads))
-    snp_p.start()
-    snp_p.join()
+#start trimming
+q_trim(paired_reads,jobs,cpu_job,outdir)
