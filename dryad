@@ -10,8 +10,9 @@ import multiprocessing as mp
 from shutil import copyfile
 
 #local libraries
-from app/lib import cpu_count, checkexists
-from app/trimming import q_trim
+from app.lib import cpu_count, checkexists, check_update_status
+from app.trimming import q_trim
+from app.core_genome import core_genome
 
 #determine command line arguments and get path
 parser = argparse.ArgumentParser(description='A pipeline for constructing SNP based and reference free phylogenies.')
@@ -69,17 +70,40 @@ paired_reads = []
 #get num of jobs and number of cpus per job
 jobs,cpu_job = cpu_count(threads)
 
-#create output dir
-time = datetime.datetime.now()
-str_time = "{0}{1}{2}{3}{4}".format(time.year,time.month,time.day,time.hour,time.minute)
-if checkexists(os.path.join(out,"dryad-"+str_time)):
-    print(os.path.join(out,"dryad-"+str_time)+" already exists... exiting.")
-    sys.exit()
-outdir = os.path.join(out,"dryad-"+str_time)
+#check to see if an unfinished job exists
+status = 0
+status,outdir = check_update_status(out)
+if status:
+    print("There is a previous unfinished run, do you wish to continue?")
+    continue_run = input("Y/N? ")
+    if continue_run == 'n' or continue_run == 'N':
+        status = 0
+        outdir = ''
+    elif continue_run == 'y' or continue_run == 'Y':
+        pass
+    else:
+        print("Not a Y/N, exiting!")
+        sys.exit()
 
-#start trimming
-q_trim(paired_reads,jobs,cpu_job,outdir)
+if status == 0:
+    #create output dir
+    time = datetime.datetime.now()
+    str_time = "{0}{1}{2}{3}{4}".format(time.year,time.month,time.day,time.hour,time.minute)
+    if checkexists(os.path.join(out,"dryad-"+str_time)):
+        print(os.path.join(out,"dryad-"+str_time)+" already exists... exiting.")
+        sys.exit()
+    outdir = os.path.join(out,"dryad-"+str_time)
+    check_update_status(outdir,"1")
+    status = 1
+
+if status == 1:
+    #start trimming
+    status = q_trim(paired_reads,jobs,cpu_job,outdir)
+    check_update_status(outdir,"2")
+    status = 2
+
+if status == 2:
+    #start core-genome pipeline
+    core_genome(paired_reads,jobs,cpu_job,outdir)
 
 #start snp pipeline
-
-#start core-genome pipeline

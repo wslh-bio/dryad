@@ -2,13 +2,11 @@ import os,sys
 import multiprocessing as mp
 import psutil
 
-from lib import getfiles,checkexists
-
-def core_genome(input_path,jobs,cpu_job,outdir):
-
-    print("Starting the core-genome process.")
-    logfile = os.path.join(outdir,'core_genome.log')
-
+from app.lib import getfiles,checkexists,check_update_status
+import app.calldocker as cd
+#assembly function
+def assemble_reads(input_path,jobs,cpu_job,outdir):
+    logfile = os.path.join(outdir,'assembly.log')
     #determine free ram
     free_ram = int(psutil.virtual_memory()[1]/1000000000)
     ram_job = int(free_ram / jobs)
@@ -19,7 +17,8 @@ def core_genome(input_path,jobs,cpu_job,outdir):
 
     #get trimmed reads
     fastqs,bam = getfiles(input_path)
-
+    print(fastqs,bam)
+    sys.exit()
     cmds = []
     read_path = ''
     for read_pair in fastqs:
@@ -44,7 +43,7 @@ def core_genome(input_path,jobs,cpu_job,outdir):
         outlog.write('***********\n')
         outlog.write('Assembly\n')
         #begin multiprocessing
-        results = pool.starmap_async(cd.call,[['staphb/trimmomatic:0.39',cmd,'/data',{read_path:"/data",os.path.join(outdir,'trimmed'):"/output"}] for cmd in cmds])
+        results = pool.starmap_async(cd.call,[['staphb/shovill:1.0.4',cmd,'/data',{read_path:"/data",os.path.join(outdir,'assembled'):"/output"}] for cmd in cmds])
         stdouts = results.get()
         for stdout in stdouts:
             outlog.write('-----------\n')
@@ -53,6 +52,22 @@ def core_genome(input_path,jobs,cpu_job,outdir):
         outlog.write('***********\n')
     print("Finished Assembling Reads")
 
-    #annotate
-    #align
-    #constrct_tree
+#annotation function
+def annotate_assemblies():
+    pass
+
+#align assemblies function
+def align():
+    pass
+
+#create tree
+def build_tree():
+    pass
+
+# ------------------------------------------------------
+
+def core_genome(input_path,jobs,cpu_job,outdir):
+
+    print("Starting the core-genome process.")
+
+    assemble_reads(input_path,jobs,cpu_job,outdir)
