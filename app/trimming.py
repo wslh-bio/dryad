@@ -2,8 +2,8 @@ import os
 import multiprocessing as mp
 
 #local libs
-from lib import checkexists
-import calldocker as cd
+from app.lib import checkexists
+import app.calldocker as cd
 
 def q_trim(reads,jobs,cpu,outdir):
     minlength = 100
@@ -47,4 +47,11 @@ def q_trim(reads,jobs,cpu,outdir):
             outlog.write(stdout)
         #denote end of logs
         outlog.write('***********\n')
+
+    #remove unpaired reads
+    for root,dirs,files in os.walk(os.path.join(outdir,'trimmed')):
+        for file in files:
+            if "U.fastq.gz" in file:
+                os.remove(os.path.join(root,file))
+
     print("Finished Quality Trimming Reads")
