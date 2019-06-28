@@ -6,10 +6,12 @@
 import subprocess as sub
 import sys, os, time, argparse, datetime
 import docker
-from fun_lib import cpu_count, checkexists
-from trimming import q_trim
 import multiprocessing as mp
 from shutil import copyfile
+
+#local libraries
+from app/lib import cpu_count, checkexists
+from app/trimming import q_trim
 
 #determine command line arguments and get path
 parser = argparse.ArgumentParser(description='A pipeline for constructing SNP based and reference free phylogenies.')
