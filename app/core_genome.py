@@ -17,8 +17,6 @@ def assemble_reads(input_path,jobs,cpu_job,outdir):
 
     #get trimmed reads
     fastqs,bam = getfiles(input_path)
-    print(fastqs,bam)
-    sys.exit()
     cmds = []
     read_path = ''
     for read_pair in fastqs:
@@ -36,7 +34,7 @@ def assemble_reads(input_path,jobs,cpu_job,outdir):
 
     #start multiprocessing
     pool = mp.Pool(processes=jobs)
-    print("Begining assembly of reads:\n Number of Jobs: {0}\n CPUs/Job: {1}".format(jobs,cpu))
+    print("Begining assembly of reads:\n Number of Jobs: {0}\n CPUs/Job: {1}".format(jobs,cpu_job))
 
     #denote logs
     with open(logfile,'a') as outlog:
@@ -69,5 +67,5 @@ def build_tree():
 def core_genome(input_path,jobs,cpu_job,outdir):
 
     print("Starting the core-genome process.")
-
+    print(input_path)
     assemble_reads(input_path,jobs,cpu_job,outdir)
