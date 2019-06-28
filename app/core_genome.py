@@ -1,25 +1,31 @@
-import os
+import os,sys
 import multiprocessing as mp
-from fun_lib import checkexists
-import calldocker as cd
+import psutil
 
-def q_trim(reads,jobs,cpu,outdir):
-    minlength = 100
-    windowsize = 4
-    qscore = 30
-    logfile = os.path.join(outdir,'qtrim.log')
+from lib import getfiles,checkexists
+
+def core_genome(input_path,jobs,cpu_job,outdir):
+
+    print("Starting the core-genome process.")
+    logfile = os.path.join(outdir,'core_genome.log')
+
+    #determine free ram
+    free_ram = int(psutil.virtual_memory()[1]/1000000000)
+    ram_job = int(free_ram / jobs)
+
+    #assemble
+    assemblies_path = os.path.join(outdir,"assemblies")
+    checkexists(assemblies_path)
+
+    #get trimmed reads
+    fastqs,bam = getfiles(input_path)
 
     cmds = []
     read_path = ''
-    for read_pair in reads:
+    for read_pair in fastqs:
         #main command
-        main_cmd = 'java -jar /Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads {0}'.format(cpu)
-
         sid = os.path.basename(read_pair[0]).split('_')[0]
-
-        args = ' {read1} {read2} -baseout /output/{sid}.fastq.gz SLIDINGWINDOW:{windowsize}:{qscore} MINLEN:{minlength}'.format(minlength=minlength,windowsize=windowsize,qscore=qscore,read1=os.path.basename(read_pair[0]),read2=os.path.basename(read_pair[1]),sid=sid)
-
-        cmds.append(main_cmd + args)
+        cmds.append('shovill --R1 {0} --R2 {1} --outdir {2} --cpus {3} --ram {4}'.format(read_pair[0],read_pair[1],sid,cpu_job,ram_job))
 
         if read_path == '':
             read_path = os.path.dirname(os.path.abspath(read_pair[1]))
@@ -28,15 +34,15 @@ def q_trim(reads,jobs,cpu,outdir):
             sys.exit()
         else:
             pass
-    checkexists(os.path.join(outdir,"trimmed"))
 
     #start multiprocessing
     pool = mp.Pool(processes=jobs)
-    print("Begining quality trimming of reads:\n Number of Jobs: {0}\n CPUs/Job: {1}".format(jobs,cpu))
+    print("Begining assembly of reads:\n Number of Jobs: {0}\n CPUs/Job: {1}".format(jobs,cpu))
+
     #denote logs
     with open(logfile,'a') as outlog:
         outlog.write('***********\n')
-        outlog.write('Trimmomatic\n')
+        outlog.write('Assembly\n')
         #begin multiprocessing
         results = pool.starmap_async(cd.call,[['staphb/trimmomatic:0.39',cmd,'/data',{read_path:"/data",os.path.join(outdir,'trimmed'):"/output"}] for cmd in cmds])
         stdouts = results.get()
@@ -45,4 +51,8 @@ def q_trim(reads,jobs,cpu,outdir):
             outlog.write(stdout)
         #denote end of logs
         outlog.write('***********\n')
-    print("Finished Quality Trimming Reads")
+    print("Finished Assembling Reads")
+
+    #annotate
+    #align
+    #constrct_tree
