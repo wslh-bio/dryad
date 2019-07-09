@@ -104,6 +104,6 @@ if status == 1:
 
 if status == 2:
     #start core-genome pipeline
-    core_genome(os.path.join(outdir,'trimmed'),jobs,cpu_job,outdir)
+    core_genome(jobs,cpu_job,outdir)
 
 #start snp pipeline
