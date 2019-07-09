@@ -31,6 +31,14 @@ def check_update_status(path,status=''):
         with open(status_file,'a') as outstat:
             outstat.write(status+'\n')
     else:
+        if "dryad-" in os.path.basename(path):
+            status_file = os.path.join(path,"status")
+            with open(status_file,'r') as instat:
+                code = 0
+                for line in instat:
+                    code = int(line)
+                if code != "done":
+                    return code, path
         for root,dirs,files in os.walk(path):
             for dir in dirs:
                 if "dryad-" in dir:
