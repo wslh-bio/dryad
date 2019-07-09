@@ -66,12 +66,15 @@ def getfiles(path):
 
         fastq_files = []
         bam_files = []
+        gff_files = []
 
         for file in files:
             if "fastq.gz" in file:
                 fastq_files.append(os.path.join(root,file))
             if "bam" in file:
                 bam_files.append(os.path.join(root,file))
+            if "gff" in file:
+                gff_files.append(os.path.join(root,file))
 
         if len(fastq_files) > 0:
             fastq_files.sort()
@@ -83,3 +86,4 @@ def getfiles(path):
             yield paired_reads
 
         yield bam_files
+        yield gff_files
