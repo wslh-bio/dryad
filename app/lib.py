@@ -1,3 +1,7 @@
+#author: Kelsey Florek
+#email: kelsey.florek@slh.wisc.edu
+#miscellaneous functions
+
 import os
 
 #returns (num jobs,num cpus per job)
@@ -65,15 +69,15 @@ def getfiles(path):
         #scan path and look for files
 
         fastq_files = []
-        bam_files = []
+        fasta_files = []
         gff_files = []
 
         for file in files:
-            if "fastq.gz" in file:
+            if ".fastq.gz" in file:
                 fastq_files.append(os.path.join(root,file))
-            if "bam" in file:
-                bam_files.append(os.path.join(root,file))
-            if "gff" in file:
+            if ".fa" in file and "spades" not in file:
+                fasta_files.append(os.path.join(root,file))
+            if ".gff" in file:
                 gff_files.append(os.path.join(root,file))
 
         if len(fastq_files) > 0:
@@ -85,5 +89,8 @@ def getfiles(path):
             [paired_reads.append([x,y]) for x,y in zip(fastq_files[0::2],fastq_files[1::2])]
             yield paired_reads
 
-        yield bam_files
-        yield gff_files
+        if len(fasta_files) > 0:
+            yield fasta_files
+
+        if len(gff_files) > 0:
+            yield gff_files

@@ -1,3 +1,7 @@
+#author: Kelsey Florek
+#email: kelsey.florek@slh.wisc.edu
+#quality trimming function
+
 import os
 import multiprocessing as mp
 
