@@ -67,8 +67,7 @@ def assemble_reads(jobs,cpu_job,outdir):
 #annotation function
 def annotate_assemblies(jobs,cpu_job,outdir):
     logfile = os.path.join(outdir,'annotation.log')
-    input_path = os.path.join(outdir,'assemblies')
-
+    input_path = os.path.join(outdir,"assemblies")
     #annotation
     annotated_path = os.path.join(outdir,"annotated")
     checkexists(annotated_path)
@@ -93,14 +92,14 @@ def annotate_assemblies(jobs,cpu_job,outdir):
         outlog.write('***********\n')
         outlog.write('Annotating\n')
         #begin multiprocessing
-        results = pool.starmap_async(cd.call,[['staphb/prokka:1.13',cmd,'/data',{input_path:"/data",os.path.join(outdir,'assemblies'):"/output"}] for cmd in cmds])
+        results = pool.starmap_async(cd.call,[['staphb/prokka:1.13',cmd,'/data',{input_path:"/data",os.path.join(outdir,'annotated'):"/output"}] for cmd in cmds])
         stdouts = results.get()
         for stdout in stdouts:
             outlog.write('-----------\n')
             outlog.write(stdout)
         #denote end of logs
         outlog.write('***********\n')
-    print("Finished Assembling Reads")
+    print("Finished Annotating Assemblies")
 
 #align assemblies function
 def align():
