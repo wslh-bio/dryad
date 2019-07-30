@@ -6,6 +6,7 @@
 import os,sys
 import multiprocessing as mp
 import psutil
+import shutil
 
 from app.lib import getfiles,checkexists,check_update_status
 import app.calldocker as cd
@@ -99,11 +100,38 @@ def annotate_assemblies(jobs,cpu_job,outdir):
             outlog.write(stdout)
         #denote end of logs
         outlog.write('***********\n')
+
+    #move finished .gff up a dir
+    for root,dirs,files in os.walk(annotated_path):
+        for file in files:
+            if '.gff' in file:
+                current_path = os.path.join(root,file)
+                destination_path = os.path.join(os.path.dirname(root),file)
+                os.rename(current_path,destination_path)
+
     print("Finished Annotating Assemblies")
 
 #align assemblies function
-def align():
-    pass
+def align(jobs,cpu_job,outdir,method='mafft'):
+    cpus = jobs * cpu_job
+    logfile = os.path.join(outdir,'alignment.log')
+    input_path = os.path.join(outdir,"annotated")
+    #remove alignment dir if it exists
+    shutil.rmtree(os.path.join(outdir,'alignment'),ignore_errors=True)
+    #alignment
+    command = "sh -c 'roary -e -{0} -p {1} -f /output/alignment *.gff'".format(method,cpus)
+    print("Begining alignment of core genes:\n Number CPUs: {0}".format(cpus))
+
+    #denote logs
+    with open(logfile,'a') as outlog:
+        outlog.write('***********\n')
+        outlog.write('Aligning Core Genes\n')
+        stdout = cd.call('staphb/roary:3.12.0',command,'/data',{input_path:"/data",outdir:"/output"})
+        outlog.write('-----------\n')
+        outlog.write(stdout)
+        #denote end of logs
+        outlog.write('***********\n')
+    print("Finished Annotating Assemblies")
 
 #create tree
 def build_tree():
@@ -124,5 +152,13 @@ def core_genome(jobs,cpu_job,outdir):
     if status == 3:
         print("Annotating assemblies using Prokka.")
         annotate_assemblies(jobs,cpu_job,outdir)
+        check_update_status(outdir,'4')
+        status = 4
 
-    check_update_status(outdir,'done')
+    if status == 4:
+        print("Aligning Core Gene Set")
+        align(jobs,cpu_job,outdir)
+        #check_update_status(outdir,'5')
+        #status = 5
+
+    #check_update_status(outdir,'done')

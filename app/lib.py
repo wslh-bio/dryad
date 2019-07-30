@@ -65,13 +65,11 @@ def check_update_status(path,status=''):
         return True
 
 def getfiles(path):
+    #scan path and look for files
+    fastq_files = []
+    fasta_files = []
+    gff_files = []
     for root,dirs,files in os.walk(path):
-        #scan path and look for files
-
-        fastq_files = []
-        fasta_files = []
-        gff_files = []
-
         for file in files:
             if ".fastq.gz" in file:
                 fastq_files.append(os.path.join(root,file))
@@ -80,17 +78,17 @@ def getfiles(path):
             if ".gff" in file:
                 gff_files.append(os.path.join(root,file))
 
-        if len(fastq_files) > 0:
-            fastq_files.sort()
-            if len(fastq_files) % 2 != 0:
-                print('There is an uneven number of read pairs in {0}. Exiting.'.format(path))
-                sys.exit()
-            paired_reads = []
-            [paired_reads.append([x,y]) for x,y in zip(fastq_files[0::2],fastq_files[1::2])]
-            yield paired_reads
+    if len(fastq_files) > 0:
+        fastq_files.sort()
+        if len(fastq_files) % 2 != 0:
+            print('There is an uneven number of read pairs in {0}. Exiting.'.format(path))
+            sys.exit()
+        paired_reads = []
+        [paired_reads.append([x,y]) for x,y in zip(fastq_files[0::2],fastq_files[1::2])]
+        yield paired_reads
 
-        if len(fasta_files) > 0:
-            yield fasta_files
+    if len(fasta_files) > 0:
+        yield fasta_files
 
-        if len(gff_files) > 0:
-            yield gff_files
+    if len(gff_files) > 0:
+        yield gff_files
