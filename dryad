@@ -14,38 +14,42 @@ from app.lib import cpu_count, checkexists, check_update_status
 from app.trimming import q_trim
 from app.core_genome import core_genome
 
-#determine command line arguments and get path
-parser = argparse.ArgumentParser(description='A pipeline for constructing SNP based and reference free phylogenies.')
-parser.add_argument('reads', type=str,help="text file listing the location of paired reads to be included in the analysis")
-parser.add_argument('-o',metavar='output', type=str,help="output directory - defaults to working directory")
-parser.add_argument('-c', action='store_const',help="construct core genome reference free maximum likelihood phylogenetic tree",const=True,default=False)
-parser.add_argument('-s', action='store_const',help="create SNP tree using Lyve-SET",const=True,default=False)
-parser.add_argument('-f',metavar='reference', type=str,help="reference fasta for SNP tree")
-parser.add_argument('-t',metavar='threads', type=int,help="number of cpus to use for pipeline",default=4)
+#setup argparser to display help if no arguments
+class MyParser(argparse.ArgumentParser):
+    def error(self, message):
+        sys.stderr.write('error: %s\n' % message)
+        self.print_help()
+        sys.exit(2)
 
-if len(sys.argv[1:]) == 0:
-    parser.print_help()
-    parser.exit()
+#determine command line arguments and get path
+parser = MyParser(description='A pipeline for constructing SNP based and reference free phylogenies.')
+subparsers= parser.add_subparsers(title='required arguments',metavar='pipeline',dest="subparser_name",required=True)
+#core geneome pipeline
+parser_cg = subparsers.add_parser('cg', help='reference free core geneome pipeline')
+parser_cg.add_argument('reads', type=str,help="text file listing the location of paired reads to be included in the analysis")
+parser_cg.add_argument('-o',metavar='output', type=str,help="output directory - defaults to working directory")
+parser_cg.add_argument('-t',metavar='threads', type=int,help="number of cpus to use for pipeline",default=4)
+#snp pipeline
+parser_snp = subparsers.add_parser('snp', help='CFSAN SNP pipeline')
+parser_snp.add_argument('reads', type=str,help="text file listing the location of paired reads to be included in the analysis")
+parser_snp.add_argument('reference_sequence', type=str,help="reference fasta for SNP tree")
+parser_snp.add_argument('-o',metavar='output', type=str,help="output directory - defaults to working directory")
+parser_snp.add_argument('-t',metavar='threads', type=int,help="number of cpus to use for pipeline",default=4)
+
 args = parser.parse_args()
 
-try:
-    reference = os.path.abspath(args.f)
-except (AttributeError, TypeError) as err:
-    reference = False
+pipeline = ''
+if args.subparser_name == 'cg':
+    pipeline = args.subparser_name
 
+if args.subparser_name == 'snp':
+    pipeline = args.subparser_name
+    #get reference path
+    reference = os.path.abspath(args.reference_sequence)
+
+#common args
 threads = args.t
-snp = args.s
-core = args.c
 reads_path = args.reads
-
-if core == False and snp == False:
-    parser.print_help()
-    sys.exit()
-
-if snp == True and reference == False:
-    print("SNP pipeline needs a reference: [-f]")
-    sys.exit()
-
 #get current working dir if output is empty
 try:
     out = os.path.abspath(args.o)
@@ -71,13 +75,13 @@ paired_reads = []
 jobs,cpu_job = cpu_count(threads)
 
 #check to see if an unfinished job exists
-status = 0
+status = ''
 status,outdir = check_update_status(out)
 if status:
     print("There is a previous unfinished run, do you wish to continue?")
     continue_run = input("Y/N? ")
     if continue_run == 'n' or continue_run == 'N':
-        status = 0
+        status = ''
         outdir = ''
     elif continue_run == 'y' or continue_run == 'Y':
         pass
@@ -85,7 +89,7 @@ if status:
         print("Not a Y/N, exiting!")
         sys.exit()
 
-if status == 0:
+if status == '':
     #create output dir
     time = datetime.datetime.now()
     str_time = "{0}{1}{2}{3}{4}".format(time.year,time.month,time.day,time.hour,time.minute)
@@ -93,16 +97,16 @@ if status == 0:
         print(os.path.join(out,"dryad-"+str_time)+" already exists... exiting.")
         sys.exit()
     outdir = os.path.join(out,"dryad-"+str_time)
-    check_update_status(outdir,"1")
-    status = 1
+    check_update_status(outdir,"start")
+    status = 'start'
 
-if status == 1:
+if status == 'start':
     #start trimming
     status = q_trim(paired_reads,jobs,cpu_job,outdir)
-    check_update_status(outdir,"2")
-    status = 2
+    check_update_status(outdir,"trimm")
+    status = "trimm"
 
-if status >= 2:
+if pipeline == 'cg' and status = 'trimm':
     #start core-genome pipeline
     core_genome(jobs,cpu_job,outdir)
 
