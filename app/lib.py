@@ -27,18 +27,26 @@ def checkexists(path):
         return False
     else:
         return True
-
+#todo fix status tracker
 def check_update_status(path,status='',pipe=''):
     if pipe:
-        path += '_'+pipe
+        s_file = 'status'+'_'+pipe
+        if status == '' and not os.path.exists(os.path.join(path,s_file)):
+        status_file = os.path.join(path,s_file)
+        with open(status_file,'a') as outstat:
+            outstat.write('start'+'\n')
+    else:
+        s_file = 'status'
     path = os.path.abspath(path)
-    if status != '':
-        status_file = os.path.join(path,'status')
+
+    if not status:
+        status_file = os.path.join(path,s_file)
         with open(status_file,'a') as outstat:
             outstat.write(status+'\n')
-    else:
+
+    elif status:
         if "dryad-" in os.path.basename(path):
-            status_file = os.path.join(path,"status")
+            status_file = os.path.join(path,s_file)
             with open(status_file,'r') as instat:
                 code = ''
                 for line in instat:
@@ -49,7 +57,7 @@ def check_update_status(path,status='',pipe=''):
             for dir in dirs:
                 if "dryad-" in dir:
                     dryad_path = os.path.join(root,dir)
-                    status_file = os.path.join(dryad_path,"status")
+                    status_file = os.path.join(dryad_path,s_file)
                     with open(status_file,'r') as instat:
                         code = ''
                         for line in instat:
@@ -57,6 +65,8 @@ def check_update_status(path,status='',pipe=''):
                         if code != "done":
                             return code, dryad_path
         return '',""
+    else
+        pass
 
 
 

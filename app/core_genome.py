@@ -165,7 +165,7 @@ def build_tree(outdir,model='GTR+G'):
 def core_genome(jobs,cpu_job,outdir):
 
     status,na = check_update_status(outdir,'','cg')
-    if status == '':
+    if status == 'start':
         print("Starting the core-genome process.")
         print("Assembling reads using Shovill.")
         assemble_reads(jobs,cpu_job,outdir)
@@ -192,3 +192,4 @@ def core_genome(jobs,cpu_job,outdir):
         out_path = [outdir,'core_genome_tree.tree']
         shutil.copyfile(os.path.join(*in_path),os.path.join(*out_path))
         status = 'tree'
+    check_update_status(outdir,'done')
