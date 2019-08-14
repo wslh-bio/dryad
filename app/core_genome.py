@@ -134,31 +134,61 @@ def align(jobs,cpu_job,outdir,method='mafft'):
     print("Finished Annotating Assemblies")
 
 #create tree
-def build_tree():
-    pass
+def build_tree(outdir,model='GTR+G'):
+    logfile = os.path.join(outdir,'tree.log')
+    input_path = os.path.join(outdir,"alignment")
+
+    #remove tree dir if it exists
+    shutil.rmtree(os.path.join(outdir,'cg_tree'),ignore_errors=True)
+    #create path
+    cg_path = os.path.join(outdir,"cg_tree")
+    checkexists(cg_path)
+    shutil.copyfile(os.path.join(input_path,'core_gene_alignment.aln'),os.path.join(cg_path,'core_gene_alignment.aln'))
+
+    #iqtree command
+    command = "sh -c 'iqtree -s core_gene_alignment.aln -m {0} -bb 1000 '".format(model)
+    print("Beginning to buld the Phylogeny")
+
+    #denote logs
+    with open(logfile,'a') as outlog:
+        outlog.write('***********\n')
+        outlog.write('Building Tree\n')
+        stdout = cd.call('staphb/iqtree:1.6.7',command,'/data',{cg_path:"/data"})
+        outlog.write('-----------\n')
+        outlog.write(stdout)
+        #denote end of logs
+        outlog.write('***********\n')
+    print("Finished Bulding Phylogeny")
 
 # ------------------------------------------------------
 
 def core_genome(jobs,cpu_job,outdir):
 
-    status,na = check_update_status(outdir)
-    if status == 2:
+    status,na = check_update_status(outdir,'','cg')
+    if status == '':
         print("Starting the core-genome process.")
         print("Assembling reads using Shovill.")
         assemble_reads(jobs,cpu_job,outdir)
-        check_update_status(outdir,"3")
-        status = 3
+        check_update_status(outdir,"assemble",'cg')
+        status = "assemble"
 
-    if status == 3:
+    if status == 'assemble':
         print("Annotating assemblies using Prokka.")
         annotate_assemblies(jobs,cpu_job,outdir)
-        check_update_status(outdir,'4')
-        status = 4
+        check_update_status(outdir,'annotate','cg')
+        status = 'annotate'
 
-    if status == 4:
+    if status == 'annotate':
         print("Aligning Core Gene Set")
         align(jobs,cpu_job,outdir)
-        #check_update_status(outdir,'5')
-        #status = 5
+        check_update_status(outdir,'5','cg')
+        status = 'align'
 
-    #check_update_status(outdir,'done')
+    if status == 'align':
+        print("Building the Phylogeny")
+        build_tree(outdir)
+        check_update_status(outdir,'tree','cg')
+        in_path = [outdir,'cg_tree','core_gene_alignment.aln.contree']
+        out_path = [outdir,'core_genome_tree.tree']
+        shutil.copyfile(os.path.join(*in_path),os.path.join(*out_path))
+        status = 'tree'
