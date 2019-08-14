@@ -28,7 +28,9 @@ def checkexists(path):
     else:
         return True
 
-def check_update_status(path,status=''):
+def check_update_status(path,status='',pipe=''):
+    if pipe:
+        path += '_'+pipe
     path = os.path.abspath(path)
     if status != '':
         status_file = os.path.join(path,'status')
@@ -38,9 +40,9 @@ def check_update_status(path,status=''):
         if "dryad-" in os.path.basename(path):
             status_file = os.path.join(path,"status")
             with open(status_file,'r') as instat:
-                code = 0
+                code = ''
                 for line in instat:
-                    code = int(line)
+                    code = line
                 if code != "done":
                     return code, path
         for root,dirs,files in os.walk(path):
@@ -49,12 +51,12 @@ def check_update_status(path,status=''):
                     dryad_path = os.path.join(root,dir)
                     status_file = os.path.join(dryad_path,"status")
                     with open(status_file,'r') as instat:
-                        code = 0
+                        code = ''
                         for line in instat:
-                            code = int(line)
+                            code = line
                         if code != "done":
                             return code, dryad_path
-        return 0,""
+        return '',""
 
 
 
