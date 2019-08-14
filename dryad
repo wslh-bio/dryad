@@ -106,7 +106,7 @@ if status == 'start':
     check_update_status(outdir,"trimm")
     status = "trimm"
 
-if pipeline == 'cg' and status = 'trimm':
+if pipeline == 'cg' and status == 'trimm':
     #start core-genome pipeline
     core_genome(jobs,cpu_job,outdir)
 
