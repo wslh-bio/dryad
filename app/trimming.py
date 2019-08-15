@@ -9,7 +9,7 @@ import multiprocessing as mp
 from app.lib import checkexists
 import app.calldocker as cd
 
-def q_trim(reads,jobs,cpu,outdir):
+def q_trim(reads,jobs,cpu,outdir,tracker):
     minlength = 100
     windowsize = 4
     qscore = 30
@@ -59,3 +59,6 @@ def q_trim(reads,jobs,cpu,outdir):
                 os.remove(os.path.join(root,file))
 
     print("Finished Quality Trimming Reads")
+
+    #update status
+    tracker.update_status_done('trimmed')
