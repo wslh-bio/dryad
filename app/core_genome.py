@@ -8,7 +8,7 @@ import multiprocessing as mp
 import psutil
 import shutil
 
-from app.lib import getfiles,checkexists,check_update_status
+from app.lib import getfiles,checkexists
 import app.calldocker as cd
 
 
@@ -162,34 +162,28 @@ def build_tree(outdir,model='GTR+G'):
 
 # ------------------------------------------------------
 
-def core_genome(jobs,cpu_job,outdir):
+def core_genome(jobs,cpu_job,outdir,tracker):
 
-    status,na = check_update_status(outdir,'','cg')
-    if status == 'start':
+    if not tracker.check_status('assemble'):
         print("Starting the core-genome process.")
         print("Assembling reads using Shovill.")
         assemble_reads(jobs,cpu_job,outdir)
-        check_update_status(outdir,"assemble",'cg')
-        status = "assemble"
+        tracker.update_status_done('assemble')
 
-    if status == 'assemble':
+    if not tracker.check_status('annotate'):
         print("Annotating assemblies using Prokka.")
         annotate_assemblies(jobs,cpu_job,outdir)
-        check_update_status(outdir,'annotate','cg')
-        status = 'annotate'
+        tracker.update_status_done('annotate')
 
-    if status == 'annotate':
+    if not tracker.check_status('align'):
         print("Aligning Core Gene Set")
         align(jobs,cpu_job,outdir)
-        check_update_status(outdir,'5','cg')
-        status = 'align'
+        tracker.update_status_done('align')
 
-    if status == 'align':
+    if not tracker.check_status('cg_tree'):
         print("Building the Phylogeny")
         build_tree(outdir)
-        check_update_status(outdir,'tree','cg')
         in_path = [outdir,'cg_tree','core_gene_alignment.aln.contree']
         out_path = [outdir,'core_genome_tree.tree']
         shutil.copyfile(os.path.join(*in_path),os.path.join(*out_path))
-        status = 'tree'
-    check_update_status(outdir,'done')
+        tracker.update_status_done('cg_tree')
