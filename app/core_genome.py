@@ -93,7 +93,7 @@ def annotate_assemblies(jobs,cpu_job,outdir):
         outlog.write('***********\n')
         outlog.write('Annotating\n')
         #begin multiprocessing
-        results = pool.starmap_async(cd.call,[['staphb/prokka:1.13',cmd,'/data',{input_path:"/data",os.path.join(outdir,'annotated'):"/output"}] for cmd in cmds])
+        results = pool.starmap_async(cd.call,[['staphb/prokka:1.14.0',cmd,'/data',{input_path:"/data",os.path.join(outdir,'annotated'):"/output"}] for cmd in cmds])
         stdouts = results.get()
         for stdout in stdouts:
             outlog.write('-----------\n')
