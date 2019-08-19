@@ -94,7 +94,7 @@ The dryad pipeline creates a folder named `dryad-XXXXXXXXXX` when it is initiall
 #### Dependencies
 Python 3 (https://www.python.org)  
 Docker (https://www.docker.com)  
-python Docker library (https://github.com/docker/docker-py)
+python Docker library (https://github.com/docker/docker)
 Process and System utilities (https://pypi.org/project/psutil/)
 
 To install the python dependencies use pip `pip install -r requirements.txt`
