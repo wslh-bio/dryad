@@ -6,7 +6,7 @@ Dryad is a pipeline that uses several programs and pipelines to construct trees 
 [Usage](#Using-the-pipeline)  
 [Core-genome](#Core-Genome-phylogenetic-tree-construction)  
 [SNP](#SNP-phylogenetic-tree-construction)  
-[Output](#Output-files)
+[Output](#Output-files)  
 [Dependencies](#Dependencies)  
 
 #### Using the pipeline
