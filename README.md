@@ -1,4 +1,4 @@
-## Dryad is a pipeline to construct a Reference free or SNP phylogenetic tree for examining prokarote relatedness in outbreaks.
+## Dryad is a pipeline to construct a reference free core-genome or SNP phylogenetic tree for examining prokarote relatedness in outbreaks.
 
 Dryad is a pipeline that uses several programs and pipelines to construct trees from either a core set of genes or a set of SNPs from a reference genome. The pipeline uses multiprocessing to evenly distribute sample data across cores to maximize the speed of the pipeline. The pipeline uses Docker containers to maintain the stability, reproducibility, and portability by keeping the applications and pipelines used by this pipeline in controlled environments. This also reduces issues surrounding the installation of dependencies.
 
@@ -30,7 +30,7 @@ required arguments:
 Both pipelines begin with a quality trimming step to trim the reads of low quality bases at the end of the read using Trimmomatic v0.39 (http://www.usadellab.org/cms/?page=trimmomatic). After the trimming process the read information is then used by each pipeline as needed.
 
 #### Core Genome phylogenetic tree construction
-The core-genome pipeline takes the trimmed reads and generates a phylogenetic tree that can be used for inferring outbreak relatedness. The pipeline only requires the text file containing the read paths mentioned above.
+The core-genome pipeline takes the trimmed reads and generates a phylogenetic tree that can be used for inferring outbreak relatedness. The pipeline only requires the text file containing the read paths mentioned above. This pipeline is based loosely off of the pipeline described here by [Oakeson et. al](https://www.ncbi.nlm.nih.gov/pubmed/30158193).
 
 Usage:
 ```
