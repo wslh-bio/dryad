@@ -1,25 +1,92 @@
-## Dryad is a bioinformatic pipeline to construct reference-free or SNP phylogenetic trees for examining prokarote relatedness in outbreaks.
+## Dryad is a pipeline to construct a Reference free or SNP phylogenetic tree for examining prokarote relatedness in outbreaks.
 
-Dryad uses multiprocessing and is able to construct a core genome tree and a SNP tree in parallel. Each process is set to use 4 cores. Running both tree construction pipelines would require 8 cores total.
+Dryad is a pipeline that uses several programs and pipelines to construct trees from either a core set of genes or a set of SNPs from a reference genome. The pipeline uses multiprocessing to evenly distribute sample data across cores to maximize the speed of the pipeline. The pipeline uses Docker containers to maintain the stability, reproducibility, and portability by keeping the applications and pipelines used by this pipeline in controlled environments. This also reduces issues surrounding the installation of dependencies.
+
+### Table of Contents:
+[Usage](#Using-the-pipeline)
+[Core-genome](#Core-Genome-phylogenetic-tree-construction)
+[SNP](#SNP-phylogenetic-tree-construction)
+[Dependencies](#Dependencies)
+
+#### Using the pipeline
+
+The pipeline is designed to start from raw Illumina short reads. The core-genome pipeline only requires a text file that contains the paths to the raw reads used in the analysis. This can simply be generated using the following command `find {read_path} -name "*.fastq.gz" > read_file.txt` and just replacing `{read_path}` with the path to the folder containing the reads. Then start the pipeline using `./dryad` and follow the options for selecting and running the appropriate pipeline.
+
+```
+usage: dryad [-h] pipeline ...
+
+A pipeline for constructing SNP based and reference free phylogenies.
+
+optional arguments:
+  -h, --help  show this help message and exit
+
+required arguments:
+  pipeline
+    cg        reference free core geneome pipeline
+    snp       CFSAN SNP pipeline
+```
+
+Both pipelines begin with a quality trimming step to trim the reads of low quality bases at the end of the read using Trimmomatic v0.39 (http://www.usadellab.org/cms/?page=trimmomatic). After the trimming process the read information is then used by each pipeline as needed.
 
 #### Core Genome phylogenetic tree construction
-The core genome tree pipeline takes a list of assembled genome locations and runs the following programs to construct a maximum likelihood tree.
+The core-genome pipeline takes the trimmed reads and generates a phylogenetic tree that can be used for inferring outbreak relatedness. The pipeline only requires the text file containing the read paths mentioned above.
 
-Prokka v1.12 (https://github.com/tseemann/prokka)
-Prokka is used to annotate the genomes.
+Usage:
+```
+usage: dryad cg [-h] [-o output] [-t threads] reads
+
+positional arguments:
+  reads       text file listing the location of paired reads to be included in
+              the analysis
+
+optional arguments:
+  -h, --help  show this help message and exit
+  -o output   output directory - defaults to working directory
+  -t threads  number of cpus to use for pipeline - default of 4
+```
+
+The pipeline uses the following applications and pipelines:
+
+Shovill v1.0.4 (https://github.com/tseemann/shovill)
+Shovill is a pipeline centered around SPAdes but alters some of the steps to get similar results in less time.
+
+Prokka v1.14.0 (https://github.com/tseemann/prokka)
+Prokka is a whole genome annotation tool that is used to annotate the coding regions of the assembly.
 
 Roary v3.6.0 (https://github.com/sanger-pathogens/Roary)
 Roary takes the annotated genomes and constructs a core gene alignment.
 
-RAxML v8.0.0 (https://sco.h-its.org/exelixis/web/software/raxml/index.html)
-RAxML uses the core gene alignment and creates a maximum likelihood phylogenetic tree bootstraped 1000 times.
+IQ-Tree v1.6.7 (http://www.iqtree.org/)
+IQ-Tree uses the core gene alignment and creates a maximum likelihood phylogenetic tree bootstraped 1000 times.
 
 #### SNP phylogenetic tree construction
-The SNP tree pipeline takes a list of paired end fastq file locations and a reference genome to construct a SNP based maximum likelihood tree.
+The SNP pipeline takes the trimmed reads and generates a phylogenetic tree that can be used for inferring outbreak relatedness. The pipeline requires the text file containing the read paths mentioned above and a reference genome in a fasta file format.
 
-The SNP pipeline uses Trimmomatic v0.35 (http://www.usadellab.org/cms/?page=trimmomatic) to trim the raw reads and Lyve-SET v2.0 (https://github.com/lskatz/lyve-SET) to construct the tree.
+Usage:
+```
+usage: dryad snp [-h] [-o output] [-t threads] reads reference_sequence
+
+positional arguments:
+  reads               text file listing the location of paired reads to be
+                      included in the analysis
+  reference_sequence  reference fasta for SNP tree
+
+optional arguments:
+  -h, --help          show this help message and exit
+  -o output           output directory - defaults to working directory
+  -t threads          number of cpus to use for pipeline - default of 4
+```
+
+CFSAN SNP Pipeline v2.0.2 (https://github.com/CFSAN-Biostatistics/snp-pipeline)
+
+IQ-Tree v1.6.7 (http://www.iqtree.org/)
+IQ-Tree uses an alignment of the SNP sites to create a maximum likelihood phylogenetic tree bootstraped 1000 times.
+
 
 #### Dependencies
 Python 3 (https://www.python.org)  
 Docker (https://www.docker.com)  
 python Docker library (https://github.com/docker/docker-py)
+Process and System utilities (https://pypi.org/project/psutil/)
+
+To install the python dependencies use pip `pip install -r requirements.txt`

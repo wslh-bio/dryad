@@ -14,6 +14,7 @@ from app.lib import cpu_count, checkexists
 from app.lib import StatusTracker as ST
 from app.trimming import q_trim
 from app.core_genome import core_genome
+from app.snp import snp
 
 #setup argparser to display help if no arguments
 class MyParser(argparse.ArgumentParser):
@@ -29,13 +30,13 @@ subparsers= parser.add_subparsers(title='required arguments',metavar='pipeline',
 parser_cg = subparsers.add_parser('cg', help='reference free core geneome pipeline')
 parser_cg.add_argument('reads', type=str,help="text file listing the location of paired reads to be included in the analysis")
 parser_cg.add_argument('-o',metavar='output', type=str,help="output directory - defaults to working directory")
-parser_cg.add_argument('-t',metavar='threads', type=int,help="number of cpus to use for pipeline",default=4)
+parser_cg.add_argument('-t',metavar='threads', type=int,help="number of cpus to use for pipeline - default of 4",default=4)
 #snp pipeline
 parser_snp = subparsers.add_parser('snp', help='CFSAN SNP pipeline')
 parser_snp.add_argument('reads', type=str,help="text file listing the location of paired reads to be included in the analysis")
 parser_snp.add_argument('reference_sequence', type=str,help="reference fasta for SNP tree")
 parser_snp.add_argument('-o',metavar='output', type=str,help="output directory - defaults to working directory")
-parser_snp.add_argument('-t',metavar='threads', type=int,help="number of cpus to use for pipeline",default=4)
+parser_snp.add_argument('-t',metavar='threads', type=int,help="number of cpus to use for pipeline - default of 4",default=4)
 
 args = parser.parse_args()
 
@@ -83,10 +84,10 @@ if not tracker.check_status('trimmed'):
     #start trimming
     q_trim(paired_reads,jobs,cpu_job,outdir,tracker)
 
-if tracker.check_status('cg'):
+if tracker.check_status('cg') and pipeline == 'cg':
     #start core-genome pipeline
     core_genome(jobs,cpu_job,outdir,tracker)
 
-if tracker.check_status('snp'):
+if tracker.check_status('snp') and pipeline == 'snp':
     #start snp pipeline
-    pass
+    snp(jobs,cpu_job,outdir,reference,tracker)
