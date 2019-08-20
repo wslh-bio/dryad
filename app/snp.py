@@ -12,7 +12,7 @@ import app.calldocker as cd
 
 
 #CFSAN SNP pipeline
-def cfsan_snp(outdir,reference):
+def cfsan_snp(outdir,reference,cpus):
     reference_name = os.path.basename(reference)
     shutil.copyfile(reference,os.path.join(outdir,reference_name))
     logfile = os.path.join(outdir,'cfsan_snp.log')
@@ -21,7 +21,7 @@ def cfsan_snp(outdir,reference):
     with open(logfile,'a') as outlog:
         outlog.write('***********\n')
         outlog.write('CFSAN SNP\n')
-        stdout = cd.call('staphb/cfsan-snp-pipeline:2.0.2',command,'/data',{outdir:"/data"})
+        stdout = cd.call('staphb/cfsan-snp-pipeline:2.0.2',command,'/data',{outdir:"/data"},cpu_set=cpus,sig_default=False)
         outlog.write('-----------\n')
         outlog.write(stdout)
         #denote end of logs
@@ -48,7 +48,7 @@ def build_tree(outdir,model='GTR+G'):
     with open(logfile,'a') as outlog:
         outlog.write('***********\n')
         outlog.write('Building Tree\n')
-        stdout = cd.call('staphb/iqtree:1.6.7',command,'/data',{cg_path:"/data"})
+        stdout = cd.call('staphb/iqtree:1.6.7',command,'/data',{cg_path:"/data"},sig_default=False)
         outlog.write('-----------\n')
         outlog.write(stdout)
         #denote end of logs
@@ -71,7 +71,8 @@ def snp(jobs,cpu_job,outdir,reference,tracker):
         tracker.update_status_done('initalize')
 
     if not tracker.check_status('cfsan'):
-        cfsan_snp(outdir,reference)
+        total_cpus = jobs * cpu_job
+        cfsan_snp(outdir,reference,total_cpus)
         dist_matrix_path = os.path.join(*[outdir,'cfsan','snp_distance_matrix.tsv'])
         shutil.copyfile(dist_matrix_path,os.path.join(outdir,'snp_distance_matrix.tsv'))
         tracker.update_status_done('cfsan')

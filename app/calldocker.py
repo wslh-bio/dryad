@@ -5,8 +5,12 @@
 import docker
 import os, sys
 import time
+import signal
 
-def call(container,command,cwd='',paths={},remove=True):
+def call(container,command,cwd='',paths={},remove=True,cpu_set='',sig_default=True):
+    ###set signal handler to default if we are part of a subprocess
+    if sig_default:
+        signal.signal(signal.SIGINT,signal.SIG_DFL)
     ###access docker environment
     client = docker.from_env()
 
@@ -25,7 +29,12 @@ def call(container,command,cwd='',paths={},remove=True):
     output = b''
     #try block to run the container
     try:
-        container_obj = client.containers.run(container,command,user=user,volumes=volumes,working_dir=cwd,remove=remove,detach=True)
+        ###format cpu set for control of cpus
+        if cpu_set:
+            cpu_set = int(str(int(cpu_set))+"00000")
+            container_obj = client.containers.run(container,command,user=user,volumes=volumes,working_dir=cwd,remove=remove,detach=True,cpu_period=100000,cpu_quota=cpu_set,labels={"prog":"dryad"})
+        else:
+            container_obj = client.containers.run(container,command,user=user,volumes=volumes,working_dir=cwd,remove=remove,detach=True,labels={"prog":"dryad"})
     except:
         #loop through output as it is streamed
         for line in container_obj.logs(stream=True):

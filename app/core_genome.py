@@ -126,7 +126,7 @@ def align(jobs,cpu_job,outdir,method='mafft'):
     with open(logfile,'a') as outlog:
         outlog.write('***********\n')
         outlog.write('Aligning Core Genes\n')
-        stdout = cd.call('staphb/roary:3.12.0',command,'/data',{input_path:"/data",outdir:"/output"})
+        stdout = cd.call('staphb/roary:3.12.0',command,'/data',{input_path:"/data",outdir:"/output"},sig_default=False)
         outlog.write('-----------\n')
         outlog.write(stdout)
         #denote end of logs
@@ -153,7 +153,7 @@ def build_tree(outdir,model='GTR+G'):
     with open(logfile,'a') as outlog:
         outlog.write('***********\n')
         outlog.write('Building Tree\n')
-        stdout = cd.call('staphb/iqtree:1.6.7',command,'/data',{cg_path:"/data"})
+        stdout = cd.call('staphb/iqtree:1.6.7',command,'/data',{cg_path:"/data"},sig_default=False)
         outlog.write('-----------\n')
         outlog.write(stdout)
         #denote end of logs
