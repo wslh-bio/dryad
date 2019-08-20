@@ -6,6 +6,7 @@
 import subprocess as sub
 import sys, os, argparse
 import docker
+import signal
 import multiprocessing as mp
 from shutil import copyfile
 
@@ -15,6 +16,17 @@ from app.lib import StatusTracker as ST
 from app.trimming import q_trim
 from app.core_genome import core_genome
 from app.snp import snp
+
+#setup signal handler
+def handler(sig,frame):
+    print('\nShutting down the running docker containers and exiting...')
+    client = docker.from_env()
+    container_list = client.containers.list(filters={"label":"prog=dryad"})
+    for container in container_list:
+        print("shutting down container: ",container.name)
+        container.kill()
+    sys.exit()
+signal.signal(signal.SIGINT, handler)
 
 #setup argparser to display help if no arguments
 class MyParser(argparse.ArgumentParser):
