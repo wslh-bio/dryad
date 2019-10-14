@@ -49,6 +49,12 @@ parser_snp.add_argument('reads', type=str,help="text file listing the location o
 parser_snp.add_argument('reference_sequence', type=str,help="reference fasta for SNP tree")
 parser_snp.add_argument('-o',metavar='output', type=str,help="output directory - defaults to working directory")
 parser_snp.add_argument('-t',metavar='threads', type=int,help="number of cpus to use for pipeline - default of 4",default=4)
+#all pipelines
+parser_all = subparsers.add_parser('all', help='all pipelines')
+parser_all.add_argument('reads', type=str,help="text file listing the location of paired reads to be included in the analysis")
+parser_all.add_argument('reference_sequence', type=str,help="reference fasta for SNP tree")
+parser_all.add_argument('-o',metavar='output', type=str,help="output directory - defaults to working directory")
+parser_all.add_argument('-t',metavar='threads', type=int,help="number of cpus to use for pipeline - default of 4",default=4)
 
 args = parser.parse_args()
 
@@ -57,6 +63,11 @@ if args.subparser_name == 'cg':
     pipeline = args.subparser_name
 
 if args.subparser_name == 'snp':
+    pipeline = args.subparser_name
+    #get reference path
+    reference = os.path.abspath(args.reference_sequence)
+
+if args.subparser_name == 'all':
     pipeline = args.subparser_name
     #get reference path
     reference = os.path.abspath(args.reference_sequence)
@@ -101,5 +112,13 @@ if tracker.check_status('cg') and pipeline == 'cg':
     core_genome(jobs,cpu_job,outdir,tracker)
 
 if tracker.check_status('snp') and pipeline == 'snp':
+    #start snp pipeline
+    snp(jobs,cpu_job,outdir,reference,tracker)
+
+if tracker.check_status('cg') and pipeline == 'all':
+    #start core-genome pipeline
+    core_genome(jobs,cpu_job,outdir,tracker)
+
+if tracker.check_status('snp') and pipeline == 'all':
     #start snp pipeline
     snp(jobs,cpu_job,outdir,reference,tracker)

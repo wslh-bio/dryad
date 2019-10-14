@@ -55,6 +55,8 @@ class StatusTracker:
             return True
         elif pipeline == 'snp' and self.status_code['snp_tree'] == '1':
             return True
+        elif pipeline == 'all'and self.status_code['snp_tree'] == '1' and self.status_code['cg_tree'] == '1':
+            return True
         else:
             return False
 
@@ -79,7 +81,11 @@ class StatusTracker:
 
     #update the status on a finished process
     def update_status_done(self,process):
-        self.status_code[process] = '1'
+        if process == 'all':
+            self.status_code['cg'] = '1'
+            self.status_code['snp'] = '1'
+        else:
+            self.status_code[process] = '1'
         self.write_status_code()
 
     #check the status of completion on a process

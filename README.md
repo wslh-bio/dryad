@@ -25,9 +25,10 @@ required arguments:
   pipeline
     cg        reference free core geneome pipeline
     snp       CFSAN SNP pipeline
+    all       all pipelines
 ```
 
-Both pipelines begin with a quality trimming step to trim the reads of low quality bases at the end of the read using Trimmomatic v0.39 (http://www.usadellab.org/cms/?page=trimmomatic). After the trimming process the read information is then used by each pipeline as needed.
+Both pipelines begin with a quality trimming step to trim the reads of low quality bases at the end of the read using Trimmomatic v0.39 (http://www.usadellab.org/cms/?page=trimmomatic). After the trimming process the read information is then used by each pipeline as needed. *Note: Both pipelines can be run automatically in succession using the `all` parameter.*
 
 #### Core Genome phylogenetic tree construction
 The core-genome pipeline takes the trimmed reads and generates a phylogenetic tree that can be used for inferring outbreak relatedness. The pipeline only requires the text file containing the read paths mentioned above. This pipeline is based loosely off of the pipeline described here by [Oakeson et. al](https://www.ncbi.nlm.nih.gov/pubmed/30158193).
