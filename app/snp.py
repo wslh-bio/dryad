@@ -50,8 +50,10 @@ def build_tree(outdir,model='GTR+G'):
     #iqtree command
     if isolate_counter > 3:
         command = "sh -c 'iqtree -s snpma.fasta -m {0} -bb 1000 '".format(model)
+        tree_file = 'snpma.fasta.contree'
     else:
         command = "sh -c 'iqtree -s snpma.fasta -m {0} '".format(model)
+        tree_file = 'snpma.fasta.treefile'
 
     print("Building the Phylogeny")
 
@@ -65,6 +67,7 @@ def build_tree(outdir,model='GTR+G'):
         #denote end of logs
         outlog.write('***********\n')
     print("Finished Bulding Phylogeny")
+    return tree_file
 
 
 def snp(jobs,cpu_job,outdir,reference,tracker):
@@ -89,8 +92,8 @@ def snp(jobs,cpu_job,outdir,reference,tracker):
         tracker.update_status_done('cfsan')
 
     if not tracker.check_status('snp_tree'):
-        build_tree(outdir)
-        in_path = os.path.join(*[outdir,'snp_tree','snpma.fasta.contree'])
+        tree_file = build_tree(outdir)
+        in_path = os.path.join(*[outdir,'snp_tree',tree_file])
         out_path = os.path.join(outdir,'snp_tree.tree')
         shutil.copyfile(in_path,out_path)
         tracker.update_status_done('snp_tree')

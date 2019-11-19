@@ -155,8 +155,10 @@ def build_tree(outdir,model='GTR+G'):
     #iqtree command
     if isolate_counter > 3:
         command = "sh -c 'iqtree -s core_gene_alignment.aln -m {0} -bb 1000 '".format(model)
+        tree_file = 'core_gene_alignment.aln.contree'
     else:
         command = "sh -c 'iqtree -s core_gene_alignment.aln -m {0}'".format(model)
+        tree_file = 'core_gene_alignment.aln.treefile'
 
     print("Building the Phylogeny")
 
@@ -170,6 +172,7 @@ def build_tree(outdir,model='GTR+G'):
         #denote end of logs
         outlog.write('***********\n')
     print("Finished Bulding Phylogeny")
+    return tree_file
 
 # ------------------------------------------------------
 
@@ -193,8 +196,8 @@ def core_genome(jobs,cpu_job,outdir,tracker):
 
     if not tracker.check_status('cg_tree'):
         print("Building the Phylogeny")
-        build_tree(outdir)
-        in_path = [outdir,'cg_tree','core_gene_alignment.aln.contree']
+        tree_file = build_tree(outdir)
+        in_path = [outdir,'cg_tree',tree_file]
         out_path = [outdir,'core_genome_tree.tree']
         shutil.copyfile(os.path.join(*in_path),os.path.join(*out_path))
         tracker.update_status_done('cg_tree')
