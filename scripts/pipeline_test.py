@@ -21,7 +21,7 @@ os.remove('sratoolkit.2.10.0-centos_linux64.tar.gz')
 
 #fetch reference sequence
 print(f"\nDownloading reference sequence.")
-os.system('wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/005/845/GCF_000005845.2_ASM584v2/GCF_000005845.2_ASM584v2_genomic.fna.gz')
+os.system('wget http://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/005/845/GCF_000005845.2_ASM584v2/GCF_000005845.2_ASM584v2_genomic.fna.gz')
 os.system('gunzip GCF_000005845.2_ASM584v2_genomic.fna.gz')
 
 #create full read list
