@@ -1,4 +1,5 @@
 ## Dryad is a pipeline to construct a reference free core-genome or SNP phylogenetic tree for examining prokarote relatedness in outbreaks.
+[![Build Status](https://travis-ci.org/k-florek/dryad.svg?branch=master)](https://travis-ci.org/k-florek/dryad)
 
 Dryad is a pipeline that uses several programs and pipelines to construct trees from either a core set of genes or a set of SNPs from a reference genome. The pipeline uses multiprocessing to evenly distribute sample data across cores to maximize the speed of the pipeline. The pipeline uses Docker containers to maintain the stability, reproducibility, and portability by keeping the applications and pipelines used by this pipeline in controlled environments. This also reduces issues surrounding the installation of dependencies.
 
