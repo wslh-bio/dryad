@@ -12,8 +12,11 @@ os.system('tar -xzf sratoolkit.2.10.0-centos_linux64.tar.gz')
 print("\nDownloading the reads.")
 for sra_id in SRA_test_ids:
     print(f"Downloading...{sra_id}")
-    cmd = f'sratoolkit.2.10.0-centos_linux64/bin/fastq-dump --split-3 --gzip {sra_id}'
+    cmd = f'sratoolkit.2.10.0-centos_linux64/bin/fastq-dump --split-3 {sra_id}'
     os.system(cmd)
+
+#compress reads
+os.system('for f in $(find . -name "*fastq");do gzip $f;done')
 
 #clean up
 os.system('rm -rf sratoolkit.2.10.0-centos_linux64')
