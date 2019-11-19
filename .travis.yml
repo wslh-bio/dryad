@@ -8,6 +8,7 @@ services:
 install:
   - sudo apt-get install -y libxml-libxml-perl
   - pip install -r requirements.txt
+  - pip install travis-wait-improved
 #command to run the testing
 script:
-  - travis_wait 30 scripts/pipeline_test.py
+  - travis-wait-improved --timeout 40m scripts/pipeline_test.py
