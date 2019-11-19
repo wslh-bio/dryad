@@ -6,9 +6,7 @@ services:
   - docker
 #install dependencies
 install:
-  - sudo apt-get install -y libxml-libxml-perl
   - pip install -r requirements.txt
-  - pip install travis-wait-improved
 #command to run the testing
 script:
-  - travis-wait-improved --timeout 50m scripts/pipeline_test.py
+  - scripts/pipeline_test.py
