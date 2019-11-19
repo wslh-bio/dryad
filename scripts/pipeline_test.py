@@ -30,18 +30,8 @@ with open('test_read_list.txt','w') as outfile:
         outfile.write(f'{sra_id}_1.fastq.gz\n')
         outfile.write(f'{sra_id}_2.fastq.gz\n')
 
-#create read list of 3
-with open('test_read_list_3.txt','w') as outfile:
-    counter = 0
-    for sra_id in SRA_test_ids:
-        if counter <= 2:
-            outfile.write(f'{sra_id}_1.fastq.gz\n')
-            outfile.write(f'{sra_id}_2.fastq.gz\n')
-        counter += 1
-
 #run both core genome and snp
 os.system('./dryad')
 os.system('./dryad cg')
 os.system('./dryad snp')
-os.system('./dryad all test_read_list.txt GCF_000005845.2_ASM584v2_genomic.fna')
-os.system('./dryad all test_read_list_3.txt GCF_000005845.2_ASM584v2_genomic.fna')
+os.system('./dryad all test_read_list.txt GCF_000005845.2_ASM584v2_genomic.fna -t 2')
