@@ -6,6 +6,7 @@ services:
   - docker
 #install dependencies
 install:
+  - sudo apt-get install -y libxml-libxml-perl
   - pip install -r requirements.txt
 #command to run the testing
 script:
