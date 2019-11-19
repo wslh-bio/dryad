@@ -40,9 +40,20 @@ def build_tree(outdir,model='GTR+G'):
     checkexists(cg_path)
     shutil.copyfile(os.path.join(input_path,'snpma.fasta'),os.path.join(cg_path,'snpma.fasta'))
 
+    #count the number of isolates
+    with open(os.path.join(os.path.join(cg_path,'snpma.fasta')),'r') as infasta:
+        isolate_counter = 0
+        for line in infasta.readlines():
+            if line[0] == '>':
+                isolate_counter += 1
+
     #iqtree command
-    command = "sh -c 'iqtree -s snpma.fasta -m {0} -bb 1000 '".format(model)
-    print("Beginning to buld the Phylogeny")
+    if isolate_counter > 3:
+        command = "sh -c 'iqtree -s snpma.fasta -m {0} -bb 1000 '".format(model)
+    else:
+        command = "sh -c 'iqtree -s snpma.fasta -m {0} '".format(model)
+
+    print("Building the Phylogeny")
 
     #denote logs
     with open(logfile,'a') as outlog:
