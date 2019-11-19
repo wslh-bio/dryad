@@ -5,9 +5,8 @@ python:
 services:
   - docker
 #install dependencies
-before_install:
-  - sudo apt-get -y install wget
 install:
+  - sudo apt-get -y install wget
   - pip3 install -r requirements.txt
 #command to run the testing
 script:
