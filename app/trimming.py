@@ -2,7 +2,7 @@
 #email: kelsey.florek@slh.wisc.edu
 #quality trimming function
 
-import os
+import os, sys
 import multiprocessing as mp
 
 #local libs
