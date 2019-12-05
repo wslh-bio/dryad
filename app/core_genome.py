@@ -160,8 +160,6 @@ def build_tree(outdir,model='GTR+G'):
         command = "sh -c 'iqtree -s core_gene_alignment.aln -m {0}'".format(model)
         tree_file = 'core_gene_alignment.aln.treefile'
 
-    print("Building the Phylogeny")
-
     #denote logs
     with open(logfile,'a') as outlog:
         outlog.write('***********\n')
