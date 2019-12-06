@@ -13,7 +13,7 @@ import app.calldocker as cd
 
 #CFSAN SNP pipeline
 def cfsan_snp(outdir,reference,cpus):
-	print("Running the CFSAN SNP Pipeline")
+    print("Running the CFSAN SNP Pipeline")
     reference_name = os.path.basename(reference)
     shutil.copyfile(reference,os.path.join(outdir,reference_name))
     logfile = os.path.join(outdir,'cfsan_snp.log')
