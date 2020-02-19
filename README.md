@@ -14,6 +14,8 @@ Dryad is a pipeline that uses several programs and pipelines to construct trees 
 
 The pipeline is designed to start from raw Illumina short reads. The core-genome pipeline only requires a text file that contains the paths to the raw reads used in the analysis. This can simply be generated using the following command `find {read_path} -name "*.fastq.gz" > read_file.txt` and just replacing `{read_path}` with the path to the folder containing the reads. Then start the pipeline using `./dryad` and follow the options for selecting and running the appropriate pipeline.
 
+Note: Sample names that have an _ will not work with this pipeline. It is suggested to remove the _ from the fastq names before running. E.g. `sample_1_R1_L001.fastq.gz` should be `sample-1_R1_L001.fastq.gz`.
+
 ```
 usage: dryad [-h] pipeline ...
 
