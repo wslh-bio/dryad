@@ -110,23 +110,22 @@ process cfsan {
   params.snp == true
 
   script:
+  //create input reads dir in work dir
+  new File("input_reads").mkdir()
+  items.each{
+    //iterate over the files and get the name and move reads to subfolders with name
+    String name = it.get(0)
+    new File("input_reads/$name").mkdir()
+    def read1 = it.get(1).get(0)
+    def read2 = it.get(1).get(1)
+    def read1_dest = new File("input_reads/$name/",read1.name)
+    read1.withInputStream{stream-> read1_dest << stream }
+    def read2_dest = new File("input_reads/$name/",read2.name)
+    read2.withInputStream{stream-> read2_dest << stream }
+  }
   """
-  #!/usr/bin/env python
-  import os
-  from shutil import copyfile
-  items = ${items}
-  with open("test.txt",'w') as outfile:
-    for item in items:
-        name = item[0]
-        outfile.write(name)
-        read_pair = item[1]
-        outfile.write(read_pair)
-        os.mkdir(name)
-        copyfile read_pair[0], name
-        copyfile read_pair[1], name
-        count += 1
+  cfsan_snp_pipeline run ${reference} -o . -s input_reads
   """
-
 
 }
 
@@ -227,11 +226,10 @@ process roary {
   file(genomes) from annotated_genomes.collect()
 
   output:
-  tuple numGenomes, file("core_gene_alignment.aln") into core_aligned_genomes
+  file("core_gene_alignment.aln") into core_aligned_genomes
   file "core_genome_statistics.txt" into core_aligned_stats
 
   script:
-  numGenomes = genomes.size()
   if(params.roary_mafft == true){
     mafft="-n"
   }else{mafft=""}
@@ -247,13 +245,17 @@ process cg_tree {
   publishDir "${params.outdir}/core_genome_tree",mode:'copy'
 
   input:
-  set val(numGenomes), file(alignedGenomes) from core_aligned_genomes
+  file(alignedGenomes) from core_aligned_genomes
 
   output:
   file("core_genome.tree")
 
 
   script:
+  numGenomes = 0
+  alignedGenomes.eachLine {
+    line -> if(line.startsWith('>')){numGenomes += 1}
+  }
   if(numGenomes > 3){
     """
     iqtree -nt AUTO -s core_gene_alignment.aln -m ${params.cg_tree_model} -bb 1000
