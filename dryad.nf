@@ -83,7 +83,8 @@ process cleanreads {
   set val(name), file(reads) from trimmed_reads
 
   output:
-  tuple name, file("${name}{_1,_2}.clean.fastq.gz") into cleaned_reads_cg,cleaned_reads_snp
+  tuple name, file("${name}{_1,_2}.clean.fastq.gz") into cleaned_reads_cg
+  file("${name}{_1,_2}.clean.fastq.gz") into cleaned_reads_snp
   file("${name}.{phix,adapters}.stats.txt") into read_cleanning_stats
 
   script:
@@ -99,7 +100,7 @@ process cfsan {
   publishDir "${params.outdir}/cfsan-snp", mode: 'copy'
 
   input:
-  val(items) from cleaned_reads_snp.toList().collect()
+  file(reads) from cleaned_reads_snp.collect()
   file(reference) from snp_reference
 
   output:
@@ -110,23 +111,35 @@ process cfsan {
   params.snp == true
 
   script:
-  //create input reads dir in work dir
-  new File("input_reads").mkdir()
-  items.each{
-    //iterate over the files and get the name and move reads to subfolders with name
-    String name = it.get(0)
-    new File("input_reads/$name").mkdir()
-    def read1 = it.get(1).get(0)
-    def read2 = it.get(1).get(1)
-    def read1_dest = new File("input_reads/$name/",read1.name)
-    read1.withInputStream{stream-> read1_dest << stream }
-    def read2_dest = new File("input_reads/$name/",read2.name)
-    read2.withInputStream{stream-> read2_dest << stream }
-  }
   """
-  cfsan_snp_pipeline run ${reference} -o . -s input_reads
-  """
+  #!/usr/bin/env python
+  import subprocess
+  import glob
+  import os
 
+  fwd_reads = glob.glob("*_1.clean.fastq.gz")
+  fwd_reads.sort()
+
+  readDict = {}
+  for file in fwd_reads:
+    sid = os.path.basename(file).split('_')[0]
+    fwd_read = glob.glob(sid+"_1.clean.fastq.gz")[0]
+    rev_read = glob.glob(sid+"_2.clean.fastq.gz")[0]
+    readDict[sid] = [fwd_read,rev_read]
+
+  os.mkdir("input_reads")
+  for key in readDict:
+    print key
+    os.mkdir(os.path.join("input_reads",key))
+    os.rename(readDict[key][0],os.path.join(*["input_reads",key,readDict[key][0]]))
+    os.rename(readDict[key][1],os.path.join(*["input_reads",key,readDict[key][1]]))
+
+  command = "cfsan_snp_pipeline run ${reference} -o . -s input_reads"
+  process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+  output, error = process.communicate()
+  print output
+  print error
+  """
 }
 
 //SNP Step2: Run IQTREE on snp alignment
