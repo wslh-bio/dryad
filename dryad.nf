@@ -150,25 +150,17 @@ process snp_tree {
   file(snp_fasta) from snp_alignment
 
   output:
-  file("snp.tree")
+  file("snp.tree") optional true
 
   script:
-  numGenomes = 0
-  snp_fasta.eachLine {
-    line -> if(line.startsWith('>')){numGenomes += 1}
-  }
-  if(numGenomes > 3){
     """
-    iqtree -nt AUTO -s core_gene_alignment.aln -m ${params.cg_tree_model} -bb 1000
-    mv snpma.fasta.contree snp.tree
+    numGenomes=`grep -o '>' snpma.fasta | wc -l`
+    if [ \$numGenomes -gt 3 ]
+    then
+      iqtree -nt AUTO -s snpma.fasta -m ${params.cg_tree_model} -bb 1000
+      mv snpma.fasta.contree snp.tree
+    fi
     """
-  }
-  else {
-    """
-    iqtree -nt AUTO -s core_gene_alignment.aln -m ${params.cg_tree_model}
-    mv snpma.fasta.treefile snp.tree
-    """
-  }
 }
 
 //CG Step1: Assemble trimmed reads with Shovill
@@ -261,26 +253,18 @@ process cg_tree {
   file(alignedGenomes) from core_aligned_genomes
 
   output:
-  file("core_genome.tree")
+  file("core_genome.tree") optional true
 
 
   script:
-  numGenomes = 0
-  alignedGenomes.eachLine {
-    line -> if(line.startsWith('>')){numGenomes += 1}
-  }
-  if(numGenomes > 3){
     """
-    iqtree -nt AUTO -s core_gene_alignment.aln -m ${params.cg_tree_model} -bb 1000
-    mv core_gene_alignment.aln.contree core_genome.tree
+    numGenomes=`grep -o '>' core_gene_alignment.aln | wc -l`
+    if [ \$numGenomes -gt 3 ]
+    then
+      iqtree -nt AUTO -s core_gene_alignment.aln -m ${params.cg_tree_model} -bb 1000
+      mv core_gene_alignment.aln.contree core_genome.tree
+    fi
     """
-  }
-  else {
-    """
-    iqtree -nt AUTO -s core_gene_alignment.aln -m ${params.cg_tree_model}
-    mv core_gene_alignment.aln.treefile core_genome.tree
-    """
-  }
 }
 
 //Collect Results
