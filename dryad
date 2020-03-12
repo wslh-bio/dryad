@@ -3,122 +3,66 @@
 #email: kelsey.florek@slh.wisc.edu
 #description: A pipeline for constructing SNP based and  core gene set reference free phylogenies
 
-import subprocess as sub
-import sys, os, argparse
-import docker
-import signal
-import multiprocessing as mp
-from shutil import copyfile
 
-#local libraries
-from app.lib import cpu_count, checkexists
-from app.lib import StatusTracker as ST
-from app.trimming import q_trim
-from app.core_genome import core_genome
-from app.snp import snp
+import sys,os,re
+import argparse
+from shutil import which
+import shlex
+import subprocess
 
-#setup signal handler
-def handler(sig,frame):
-    print('\nShutting down the running docker containers and exiting...')
-    client = docker.from_env()
-    container_list = client.containers.list(filters={"label":"prog=dryad"})
-    for container in container_list:
-        print("shutting down container: ",container.name)
-        container.kill()
-    sys.exit()
-signal.signal(signal.SIGINT, handler)
+if __name__ == '__main__':
+    #get nextflow executable
+    lib_path = os.path.abspath(os.path.dirname(__file__) + '/' + 'lib')
+    dryad_path = os.path.abspath(os.path.dirname(__file__) + '/' + 'dryad.nf')
+    nextflow_path = os.path.join(lib_path,'nextflow')
 
-#setup argparser to display help if no arguments
-class MyParser(argparse.ArgumentParser):
-    def error(self, message):
-        sys.stderr.write('error: %s\n' % message)
-        self.print_help()
-        sys.exit(2)
+    #setup argparser to display help if no arguments
+    class MyParser(argparse.ArgumentParser):
+        def error(self, message):
+            sys.stderr.write('error: %s\n' % message)
+            self.print_help()
+            sys.exit(2)
 
-#determine command line arguments and get path
-parser = MyParser(description='A pipeline for constructing SNP based and reference free phylogenies.')
-subparsers= parser.add_subparsers(title='required arguments',metavar='pipeline',dest="subparser_name",required=True)
-#core geneome pipeline
-parser_cg = subparsers.add_parser('cg', help='reference free core geneome pipeline')
-parser_cg.add_argument('reads', type=str,help="text file listing the location of paired reads to be included in the analysis")
-parser_cg.add_argument('-o',metavar='output', type=str,help="output directory - defaults to working directory")
-parser_cg.add_argument('-t',metavar='threads', type=int,help="number of cpus to use for pipeline - default of 4",default=4)
-#snp pipeline
-parser_snp = subparsers.add_parser('snp', help='CFSAN SNP pipeline')
-parser_snp.add_argument('reads', type=str,help="text file listing the location of paired reads to be included in the analysis")
-parser_snp.add_argument('reference_sequence', type=str,help="reference fasta for SNP tree")
-parser_snp.add_argument('-o',metavar='output', type=str,help="output directory - defaults to working directory")
-parser_snp.add_argument('-t',metavar='threads', type=int,help="number of cpus to use for pipeline - default of 4",default=4)
-#all pipelines
-parser_all = subparsers.add_parser('all', help='all pipelines')
-parser_all.add_argument('reads', type=str,help="text file listing the location of paired reads to be included in the analysis")
-parser_all.add_argument('reference_sequence', type=str,help="reference fasta for SNP tree")
-parser_all.add_argument('-o',metavar='output', type=str,help="output directory - defaults to working directory")
-parser_all.add_argument('-t',metavar='threads', type=int,help="number of cpus to use for pipeline - default of 4",default=4)
+    #check if we are using docker or singularity
+    if which('docker'):
+        profile = 'docker'
+    elif which('singularity'):
+        profile = 'singularity'
+    else:
+        print('Singularity or Docker is not installed or not in found in PATH.')
+        sys.exit(1)
 
-args = parser.parse_args()
+    parser = MyParser(description='A comprehensive tree building program.')
+    parser.add_argument('reads_path', type=str,help="Path to the location of the raw reads in the fastq format.")
+    parser.add_argument('--core-genome','-cg',default=False, action="store_true", help="Construct a core-genome tree.")
+    parser.add_argument('--snp','-s',default=False, action="store_true", help="Construct a SNP tree. Note: Requires a reference genome in fasta format (-r).")
+    parser.add_argument('-ar',default=False, action="store_true", help="Detect AR mechanisms.")
+    parser.add_argument('-r',metavar='<path>', type=str,help="Reference genome for SNP pipeline.")
+    parser.add_argument('-t',metavar='cpus', type=int,help="Maxmium number of cpus to use, default 8.",default=8)
+    parser.add_argument('-m',metavar='memory in GB', type=int,help="Maxmium number of GB of memory to use, default 16.",default=16)
 
-pipeline = ''
-if args.subparser_name == 'cg':
-    pipeline = args.subparser_name
+    args = parser.parse_args()
 
-if args.subparser_name == 'snp':
-    pipeline = args.subparser_name
-    #get reference path
-    reference = os.path.abspath(args.reference_sequence)
+    #check for reference sequence
+    if args.snp and args.r == None:
+        parser_dryad.print_help()
+        print("Please specify a reference sequence for the SNP pipeline.")
 
-if args.subparser_name == 'all':
-    pipeline = args.subparser_name
-    #get reference path
-    reference = os.path.abspath(args.reference_sequence)
+    #build nextflow command
+    selections = ""
+    if args.ar:
+        selections += " --ar"
+    if args.core_genome:
+        selections += " --cg"
+    if args.snp:
+        selections += f" --snp --snp_reference {args.r}"
+    command = nextflow_path + ""
+    command = command + f" {dryad_path} -profile {profile} -resume --reads {args.reads_path} {selections}"
 
-#common args
-threads = args.t
-reads_path = args.reads
-#get current working dir if output is empty
-try:
-    out = os.path.abspath(args.o)
-except (AttributeError, TypeError) as err:
-    out = os.getcwd()
-
-#open file and pull locations into a list
-with open(reads_path,'r') as f:
-    r_list = []
-    for line in f:
-        if line.strip() != '':
-            r_list.append(line.strip())
-
-#sort and join pairs
-r_list.sort()
-if len(r_list) % 2 != 0:
-    print('There is an uneven number of read pairs in the read list. Exiting.')
-    sys.exit()
-paired_reads = []
-[paired_reads.append([x,y]) for x,y in zip(r_list[0::2],r_list[1::2])]
-
-#get num of jobs and number of cpus per job
-jobs,cpu_job = cpu_count(threads)
-
-#initialize tracker
-tracker = ST()
-outdir = tracker.initialize(out,pipeline)
-
-if not tracker.check_status('trimmed'):
-    #start trimming
-    q_trim(paired_reads,jobs,cpu_job,outdir,tracker)
-
-if tracker.check_status('cg') and pipeline == 'cg':
-    #start core-genome pipeline
-    core_genome(jobs,cpu_job,outdir,tracker)
-
-if tracker.check_status('snp') and pipeline == 'snp':
-    #start snp pipeline
-    snp(jobs,cpu_job,outdir,reference,tracker)
-
-if tracker.check_status('cg') and pipeline == 'all':
-    #start core-genome pipeline
-    core_genome(jobs,cpu_job,outdir,tracker)
-
-if tracker.check_status('snp') and pipeline == 'all':
-    #start snp pipeline
-    snp(jobs,cpu_job,outdir,reference,tracker)
+    #run command using nextflow in a subprocess
+    process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    if output:
+        print(output.decode("utf-8",'ignore'))
+    if error:
+        print(error.decode("utf-8",'ignore'))

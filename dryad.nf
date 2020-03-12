@@ -27,17 +27,22 @@ if (params.snp) {
 //Step0: Preprocess reads - change name to end at first underscore
 process preProcess {
   input:
-  set val(oldName), file(reads) from raw_reads
+  set val(name), file(reads) from raw_reads
 
   output:
-  tuple name, file("${name}_{R1,R2}.fastq.gz") into read_files_fastqc, read_files_trimming
+  tuple name, file("*{R1,R2,_1,_2}.fastq.gz") into read_files_fastqc, read_files_trimming
 
   script:
-  name = oldName.split("_")[0]
-  """
-  mv ${reads[0]} ${name}_R1.fastq.gz
-  mv ${reads[1]} ${name}_R2.fastq.gz
-  """
+  if(params.name_split_on!=""){
+    name = name.split(params.name_split_on)[0]
+    """
+    mv ${reads[0]} ${name}_R1.fastq.gz
+    mv ${reads[1]} ${name}_R2.fastq.gz
+    """
+  }else{
+    """
+    """
+  }
 }
 
 //Step1a: FastQC
