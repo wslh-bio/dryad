@@ -30,7 +30,7 @@ process preProcess {
   tuple name, file("${name}_{R1,R2}.fastq.gz") into read_files_fastqc, read_files_trimming
 
   script:
-  name = oldName.split("_")[0]
+  name = oldName.split(params.name_split_on)[0]
   """
   mv ${reads[0]} ${name}_R1.fastq.gz
   mv ${reads[1]} ${name}_R2.fastq.gz
