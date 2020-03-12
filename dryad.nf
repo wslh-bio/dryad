@@ -10,6 +10,7 @@ params.outdir = "dryad_results"
 params.cg = false
 params.snp = false
 params.snp_reference = ""
+params.ar = false
 
 //setup channel to read in and pair the fastq files
 Channel
@@ -17,9 +18,11 @@ Channel
     .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads} Path must not end with /" }
     .set { raw_reads }
 
-Channel
-    .fromPath(params.snp_reference)
-    .set { snp_reference }
+if (params.snp) {
+    Channel
+        .fromPath(params.snp_reference)
+        .set { snp_reference }
+}
 
 //Step0: Preprocess reads - change name to end at first underscore
 process preProcess {
@@ -100,72 +103,74 @@ process cleanreads {
   """
 }
 
-//SNP Step1: Run CFSAN-SNP Pipeline
-process cfsan {
-  publishDir "${params.outdir}/cfsan-snp", mode: 'copy'
+if (params.snp) {
+    //SNP Step1: Run CFSAN-SNP Pipeline
+    process cfsan {
+      publishDir "${params.outdir}/cfsan-snp", mode: 'copy'
 
-  input:
-  file(reads) from cleaned_reads_snp.collect()
-  file(reference) from snp_reference
+      input:
+      file(reads) from cleaned_reads_snp.collect()
+      file(reference) from snp_reference
 
-  output:
-  file("snp_distance_matrix.tsv")
-  file("snpma.fasta") into snp_alignment
+      output:
+      file("snp_distance_matrix.tsv")
+      file("snpma.fasta") into snp_alignment
 
-  when:
-  params.snp == true
+      when:
+      params.snp == true
 
-  script:
-  """
-  #!/usr/bin/env python
-  import subprocess
-  import glob
-  import os
+      script:
+      """
+      #!/usr/bin/env python
+      import subprocess
+      import glob
+      import os
 
-  fwd_reads = glob.glob("*_1.clean.fastq.gz")
-  fwd_reads.sort()
+      fwd_reads = glob.glob("*_1.clean.fastq.gz")
+      fwd_reads.sort()
 
-  readDict = {}
-  for file in fwd_reads:
-    sid = os.path.basename(file).split('_')[0]
-    fwd_read = glob.glob(sid+"_1.clean.fastq.gz")[0]
-    rev_read = glob.glob(sid+"_2.clean.fastq.gz")[0]
-    readDict[sid] = [fwd_read,rev_read]
+      readDict = {}
+      for file in fwd_reads:
+        sid = os.path.basename(file).split('_')[0]
+        fwd_read = glob.glob(sid+"_1.clean.fastq.gz")[0]
+        rev_read = glob.glob(sid+"_2.clean.fastq.gz")[0]
+        readDict[sid] = [fwd_read,rev_read]
 
-  os.mkdir("input_reads")
-  for key in readDict:
-    print key
-    os.mkdir(os.path.join("input_reads",key))
-    os.rename(readDict[key][0],os.path.join(*["input_reads",key,readDict[key][0]]))
-    os.rename(readDict[key][1],os.path.join(*["input_reads",key,readDict[key][1]]))
+      os.mkdir("input_reads")
+      for key in readDict:
+        print key
+        os.mkdir(os.path.join("input_reads",key))
+        os.rename(readDict[key][0],os.path.join(*["input_reads",key,readDict[key][0]]))
+        os.rename(readDict[key][1],os.path.join(*["input_reads",key,readDict[key][1]]))
 
-  command = "cfsan_snp_pipeline run ${reference} -o . -s input_reads"
-  process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-  output, error = process.communicate()
-  print output
-  print error
-  """
-}
+      command = "cfsan_snp_pipeline run ${reference} -o . -s input_reads"
+      process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+      output, error = process.communicate()
+      print output
+      print error
+      """
+    }
 
-//SNP Step2: Run IQTREE on snp alignment
-process snp_tree {
-  publishDir "${params.outdir}/snp_tree", mode: 'copy'
+    //SNP Step2: Run IQTREE on snp alignment
+    process snp_tree {
+      publishDir "${params.outdir}/snp_tree", mode: 'copy'
 
-  input:
-  file(snp_fasta) from snp_alignment
+      input:
+      file(snp_fasta) from snp_alignment
 
-  output:
-  file("snp.tree") optional true
+      output:
+      file("snp.tree") optional true
 
-  script:
-    """
-    numGenomes=`grep -o '>' snpma.fasta | wc -l`
-    if [ \$numGenomes -gt 3 ]
-    then
-      iqtree -nt AUTO -s snpma.fasta -m ${params.cg_tree_model} -bb 1000
-      mv snpma.fasta.contree snp.tree
-    fi
-    """
+      script:
+        """
+        numGenomes=`grep -o '>' snpma.fasta | wc -l`
+        if [ \$numGenomes -gt 3 ]
+        then
+          iqtree -nt AUTO -s snpma.fasta -m ${params.cg_tree_model} -bb 1000
+          mv snpma.fasta.contree snp.tree
+        fi
+        """
+    }
 }
 
 //CG Step1: Assemble trimmed reads with Shovill
@@ -178,7 +183,7 @@ process shovill {
   set val(name), file(reads) from cleaned_reads_cg
 
   output:
-  tuple name, file("${name}.contigs.fa") into assembled_genomes_quality, assembled_genomes_annotation
+  tuple name, file("${name}.contigs.fa") into assembled_genomes_quality, assembled_genomes_annotation, assembled_genomes_ar
 
   shell:
   '''
@@ -225,6 +230,80 @@ process prokka {
   script:
   """
   prokka --cpu 0 --force --compliant --prefix ${name} --mincontiglen 500 --outdir . ${assembly}
+  """
+}
+
+//AR Step2c: Find AR genes with amrfinder+
+process amrfinder {
+  tag "$name"
+  publishDir "${params.outdir}/amrfinder",mode:'copy'
+
+  input:
+  set val(name), file(assembly) from assembled_genomes_ar
+
+  output:
+  file "${name}.tsv" into ar_predictions
+
+  when:
+  params.ar == true
+
+  script:
+  """
+  amrfinder -n ${assembly} -o ${name}.tsv
+  """
+}
+
+//AR Step2d: Summarize amrfinder+ results as a binary presence/absence matrix
+process amrfinder_summary {
+  tag "$name"
+  publishDir "${params.outdir}/amrfinder",mode:'copy'
+
+  input:
+  file(predictions) from ar_predictions.collect()
+
+  output:
+  file("ar_predictions_binary.tsv")
+
+  when:
+  params.ar == true
+
+  script:
+  """
+  #!/usr/bin/env python3
+
+  import os
+  import glob
+  import pandas as pd
+
+  files = glob.glob("*.tsv")
+  genes = ["blaOXA","blaKPC","blaNDM","blaVIM","blaIMP"]
+  hits = []
+
+  for file in files:
+      sample = os.path.basename(file).split(".")[0]
+      print(sample)
+      with open(file,"r") as inFile:
+          for line in inFile:
+              for gene in genes:
+                  if gene in line:
+                      line = line.strip().split("\t")
+                      line.insert(0, sample)
+                      hits.append(line)
+
+  vals = []
+
+  for hit in hits:
+      sample = hit[0]
+      gene = hit[6]
+      identity = hit[16]
+      if float(identity) >= 90:
+          vals.append([sample, gene, 1])
+      if float(identity) < 90:
+          vals.append([sample, gene, 0])
+
+  df = pd.DataFrame(vals, columns = ["Sample", "Gene", "Value"])
+  df = df.pivot_table(index = "Sample", columns = "Gene", values = "Value", fill_value = 0)
+  df.to_csv("ar_predictions_binary.tsv", sep='\t', encoding='utf-8')
   """
 }
 
