@@ -38,8 +38,8 @@ if __name__ == '__main__':
     parser.add_argument('--snp','-s',default=False, action="store_true", help="Construct a SNP tree. Note: Requires a reference genome in fasta format (-r).")
     parser.add_argument('-ar',default=False, action="store_true", help="Detect AR mechanisms.")
     parser.add_argument('-r',metavar='<path>', type=str,help="Reference genome for SNP pipeline.")
-    parser.add_argument('-t',metavar='cpus', type=int,help="Maxmium number of cpus to use, default 8.",default=8)
-    parser.add_argument('-m',metavar='memory in GB', type=int,help="Maxmium number of GB of memory to use, default 16.",default=16)
+    #parser.add_argument('-t',metavar='cpus', type=int,help="Maxmium number of cpus to use, default 8.",default=8)
+    #parser.add_argument('-m',metavar='memory in GB', type=int,help="Maxmium number of GB of memory to use, default 16.",default=16)
 
     args = parser.parse_args()
 
