@@ -248,6 +248,60 @@ process amrfinder {
   """
 }
 
+//AR Step2d: Summarize amrfinder+ results as a binary presence/absence matrix
+process amrfinder_summary {
+  tag "$name"
+  publishDir "${params.outdir}/amrfinder",mode:'copy'
+
+  input:
+  file(predictions) from ar_predictions.collect()
+
+  output:
+  file("ar_predictions_binary.tsv")
+
+  when:
+  params.ar == true
+
+  script:
+  """
+  #!/usr/bin/env python3
+
+  import os
+  import glob
+  import pandas as pd
+
+  files = glob.glob("*.tsv")
+  genes = ["blaOXA","blaKPC","blaNDM","blaVIM","blaIMP"]
+  hits = []
+
+  for file in files:
+      sample = os.path.basename(file).split(".")[0]
+      print(sample)
+      with open(file,"r") as inFile:
+          for line in inFile:
+              for gene in genes:
+                  if gene in line:
+                      line = line.strip().split("\t")
+                      line.insert(0, sample)
+                      hits.append(line)
+
+  vals = []
+
+  for hit in hits:
+      sample = hit[0]
+      gene = hit[6]
+      identity = hit[16]
+      if float(identity) >= 90:
+          vals.append([sample, gene, 1])
+      if float(identity) < 90:
+          vals.append([sample, gene, 0])
+
+  df = pd.DataFrame(vals, columns = ["Sample", "Gene", "Value"])
+  df = df.pivot_table(index = "Sample", columns = "Gene", values = "Value", fill_value = 0)
+  df.to_csv("ar_predictions_binary.tsv", sep='\t', encoding='utf-8')
+  """
+}
+
 //CG Step3: Align with Roary
 process roary {
   publishDir "${params.outdir}/core_alignment",mode:'copy'
