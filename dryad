@@ -35,6 +35,32 @@ class Reprinter:
         sys.stdout.write(text)
         self.text = text
 
+def nextflow_printer(running_process):
+    reprinter = Reprinter()
+    block = ""
+    running = False
+    post_text = ""
+    for line in iter(running_process.stdout.readline, b''):
+        s = line.decode("utf-8","ignore").strip('\n')
+        if "Launching" in s:
+            running = True
+            print(s)
+        elif "process" in s:
+            block += s + "\n"
+        elif "executor" in s:
+            continue
+        elif not s:
+            reprinter.reprint(block)
+            block = ""
+        elif s and running == False:
+            print(s)
+        else:
+            if s == '\n':
+                continue
+            else:
+                post_text += s + '\n'
+    print(post_text)
+
 if __name__ == '__main__':
     #get nextflow executable
     lib_path = os.path.abspath(os.path.dirname(__file__) + '/' + 'lib')
@@ -48,21 +74,13 @@ if __name__ == '__main__':
             self.print_help()
             sys.exit(2)
 
-    #check if we are using docker or singularity
-    if which('docker'):
-        profile = 'docker'
-    elif which('singularity'):
-        profile = 'singularity'
-    else:
-        print('Singularity or Docker is not installed or not in found in PATH.')
-        sys.exit(1)
-
     parser = MyParser(description='A comprehensive tree building program.')
     parser.add_argument('reads_path', type=str,help="Path to the location of the raw reads in the fastq format.")
     parser.add_argument('--core-genome','-cg',default=False, action="store_true", help="Construct a core-genome tree.")
     parser.add_argument('--snp','-s',default=False, action="store_true", help="Construct a SNP tree. Note: Requires a reference genome in fasta format (-r).")
     parser.add_argument('-ar',default=False, action="store_true", help="Detect AR mechanisms.")
     parser.add_argument('-r',metavar='<path>', type=str,help="Reference genome for SNP pipeline.")
+    parser.add_argument('--profile',metavar='profile_name', type=str,help="Specify a custom nextflow profile.")
     #parser.add_argument('-t',metavar='cpus', type=int,help="Maxmium number of cpus to use, default 8.",default=8)
     #parser.add_argument('-m',metavar='memory in GB', type=int,help="Maxmium number of GB of memory to use, default 16.",default=16)
 
@@ -72,6 +90,17 @@ if __name__ == '__main__':
     if args.snp and args.r == None:
         parser_dryad.print_help()
         print("Please specify a reference sequence for the SNP pipeline.")
+
+    #check if we are using docker or singularity or a different profile
+    if args.profile:
+        profile = args.profile
+    elif which('docker'):
+        profile = 'docker'
+    elif which('singularity'):
+        profile = 'singularity'
+    else:
+        print('Singularity or Docker is not installed or not in found in PATH.')
+        sys.exit(1)
 
     #build nextflow command
     selections = ""
@@ -85,14 +114,12 @@ if __name__ == '__main__':
     command = command + f" {dryad_path} -profile {profile} -resume --reads {args.reads_path} {selections}"
 
     #run command using nextflow in a subprocess
-    process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
-    reprinter = Reprinter()
-    block = ""
-    for line in iter(process.stdout.readline, b''):
-        line_str = line.decode("utf-8","ignore").strip('\n')
-        if "executor" in line_str:
-            reprinter.reprint(block)
-            block = ""
-            block += line_str + "\n"
-        if "process" in line_str:
-            block += line_str + "\n"
+    print("Starting the Dryad pipeline:")
+    try:
+        process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
+        nextflow_printer(process)
+    except KeyboardInterrupt:
+        print("Quitting dryad...")
+        process.terminate()
+        print("Done.")
+        sys.exit(1)
