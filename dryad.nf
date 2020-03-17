@@ -270,37 +270,33 @@ process amrfinder_summary {
   script:
   """
   #!/usr/bin/env python3
-
   import os
   import glob
   import pandas as pd
-
+  import csv
   files = glob.glob("*.tsv")
-  genes = ["blaOXA","blaKPC","blaNDM","blaVIM","blaIMP"]
   hits = []
-
   for file in files:
-      sample = os.path.basename(file).split(".")[0]
-      print(sample)
-      with open(file,"r") as inFile:
-          for line in inFile:
-              for gene in genes:
-                  if gene in line:
-                      line = line.strip().split("\t")
-                      line.insert(0, sample)
-                      hits.append(line)
-
+    sample = os.path.basename(file).split(".")[0]
+    print(sample)
+    with open(file,"r") as inFile:
+        csvreader = csv.reader(inFile,delimiter="\t",)
+        next(csvreader)
+        for row in csvreader:
+            gene = row[5]
+            identity = row[15]
+            coverage = row[16]
+            hits.append([sample,gene,identity,coverage])
   vals = []
-
   for hit in hits:
-      sample = hit[0]
-      gene = hit[6]
-      identity = hit[16]
-      if float(identity) >= 90:
-          vals.append([sample, gene, 1])
-      if float(identity) < 90:
-          vals.append([sample, gene, 0])
-
+    sample = hit[0]
+    gene = hit[1]
+    identity = hit[2]
+    coverage = hit[3]
+    if float(identity) >= 90 and float(coverage) >= 90:
+        vals.append([sample, gene, 1])
+    if float(identity) < 90 or float(coverage) < 90:
+        vals.append([sample, gene, 0])
   df = pd.DataFrame(vals, columns = ["Sample", "Gene", "Value"])
   df = df.pivot_table(index = "Sample", columns = "Gene", values = "Value", fill_value = 0)
   df.to_csv("ar_predictions_binary.tsv", sep='\t', encoding='utf-8')
