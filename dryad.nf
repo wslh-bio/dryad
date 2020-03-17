@@ -270,12 +270,15 @@ process amrfinder_summary {
   script:
   """
   #!/usr/bin/env python3
+
   import os
   import glob
   import pandas as pd
   import csv
+
   files = glob.glob("*.tsv")
   hits = []
+
   for file in files:
     sample = os.path.basename(file).split(".")[0]
     print(sample)
@@ -287,7 +290,9 @@ process amrfinder_summary {
             identity = row[15]
             coverage = row[16]
             hits.append([sample,gene,identity,coverage])
+
   vals = []
+
   for hit in hits:
     sample = hit[0]
     gene = hit[1]
@@ -297,6 +302,7 @@ process amrfinder_summary {
         vals.append([sample, gene, 1])
     if float(identity) < 90 or float(coverage) < 90:
         vals.append([sample, gene, 0])
+
   df = pd.DataFrame(vals, columns = ["Sample", "Gene", "Value"])
   df = df.pivot_table(index = "Sample", columns = "Gene", values = "Value", fill_value = 0)
   df.to_csv("ar_predictions_binary.tsv", sep='\t', encoding='utf-8')
