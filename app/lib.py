@@ -2,7 +2,7 @@
 #email: kelsey.florek@slh.wisc.edu
 #miscellaneous functions used throughout the pipeline
 
-import os, time, datetime
+import os, sys, time, datetime
 
 #returns (num jobs,num cpus per job)
 def cpu_count(num):
