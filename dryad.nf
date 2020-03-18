@@ -263,6 +263,7 @@ process amrfinder_summary {
 
   output:
   file("ar_predictions_binary.tsv")
+  file("ar_predictions.tsv")
 
   when:
   params.ar == true
@@ -291,21 +292,26 @@ process amrfinder_summary {
             coverage = row[16]
             hits.append([sample,gene,identity,coverage])
 
-  vals = []
+    vals = []
+    binary = []
 
-  for hit in hits:
-    sample = hit[0]
-    gene = hit[1]
-    identity = hit[2]
-    coverage = hit[3]
-    if float(identity) >= 90 and float(coverage) >= 90:
-        vals.append([sample, gene, 1])
-    if float(identity) < 90 or float(coverage) < 90:
-        vals.append([sample, gene, 0])
+    for hit in hits:
+      sample = hit[0]
+      gene = hit[1]
+      identity = hit[2]
+      coverage = hit[3]
+      vals.append([sample,gene,identity,coverage])
+      if float(identity) >= 90 and float(coverage) >= 90:
+          binary.append([sample, gene, 1])
+      if float(identity) < 90 or float(coverage) < 90:
+          binary.append([sample, gene, 0])
 
-  df = pd.DataFrame(vals, columns = ["Sample", "Gene", "Value"])
-  df = df.pivot_table(index = "Sample", columns = "Gene", values = "Value", fill_value = 0)
-  df.to_csv("ar_predictions_binary.tsv", sep='\t', encoding='utf-8')
+    df = pd.DataFrame(vals, columns = ["Sample", "Gene", "Identity", "Coverage"])
+    df.to_csv("ar_predictions.tsv", sep='\t', encoding='utf-8', index = False)
+
+    binary_df = pd.DataFrame(binary, columns = ["Sample", "Gene", "Value"])
+    binary_df = binary_df.pivot_table(index = "Sample", columns = "Gene", values = "Value", fill_value = 0)
+    binary_df.to_csv("ar_predictions_binary.tsv", sep='\t', encoding='utf-8')
   """
 }
 
