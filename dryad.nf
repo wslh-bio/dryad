@@ -183,7 +183,7 @@ process shovill {
   set val(name), file(reads) from cleaned_reads_cg
 
   output:
-  tuple name, file("${name}.contigs.fa") into assembled_genomes_quality, assembled_genomes_annotation, assembled_genomes_ar
+  tuple name, file("${name}.contigs.fa") into assembled_genomes_quality, assembled_genomes_annotation, assembled_genomes_ar, assembled_genomes_mash, assembled_genomes_mlst
 
   shell:
   '''
@@ -382,5 +382,39 @@ process multiqc {
   prefix = fastqc[0].toString() - '_fastqc.html' - 'fastqc/'
   """
   multiqc . 2>&1
+  """
+}
+
+process mash {
+  errorStrategy 'ignore'
+  tag "$name"
+  publishDir "${params.outdir}/mash",mode:'copy'
+
+  input:
+  set val(name), file(assembly) from assembled_genomes_mash
+
+  output:
+  file "${name}.mash.txt" 
+
+  script:
+  """
+  mash dist /db/RefSeqSketchesDefaults.msh ${assembly} > ${name}.txt
+  sort -gk3 ${name}.txt | head > ${name}.mash.txt
+  """
+}
+
+process mlst {
+  errorStrategy 'ignore'
+  publishDir "${params.outdir}/mlst",mode:'copy'
+
+  input:
+  file(assemblies) from assembled_genomes_mlst.collect()
+
+  output:
+  file "mlst.tsv"
+
+  script:
+  """
+  mlst --nopath *.fa > mlst.tsv
   """
 }
