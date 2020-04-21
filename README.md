@@ -7,7 +7,8 @@ Dryad is a pipeline implemented in Nextflow that uses several programs and pipel
 [Usage](#Using-the-pipeline)  
 [Core-genome](#Core-Genome-phylogenetic-tree-construction)  
 [SNP](#SNP-phylogenetic-tree-construction)
-[Quality-Assessment](#Quality-Assessment)                                                                     [Output](#Output-files)  
+[Quality-Assessment](#Quality-Assessment)
+[Output](#Output-files)  
 [Dependencies](#Dependencies)
 
 #### Using the pipeline
