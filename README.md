@@ -101,6 +101,8 @@ optional arguments:
               specified separating characters; default "_"
 ```
 
+The pipeline uses the following applications and pipelines:
+
 CFSAN SNP Pipeline v2.0.2 (https://github.com/CFSAN-Biostatistics/snp-pipeline)
 
 IQ-Tree v1.6.7 (http://www.iqtree.org/)
