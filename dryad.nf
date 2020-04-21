@@ -4,14 +4,6 @@
 //Author: Kelsey Florek
 //eMail: kelsey.florek@slh.wisc.edu
 
-//starting parameters
-params.reads = ""
-params.outdir = "dryad_results"
-params.cg = false
-params.snp = false
-params.snp_reference = ""
-params.ar = false
-
 //setup channel to read in and pair the fastq files
 Channel
     .fromFilePairs( "${params.reads}/*{R1,R2,_1,_2}*.fastq.gz", size: 2 )
@@ -394,7 +386,7 @@ process mash {
   set val(name), file(assembly) from assembled_genomes_mash
 
   output:
-  file "${name}.mash.txt" 
+  file "${name}.mash.txt"
 
   script:
   """
