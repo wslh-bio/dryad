@@ -1,3 +1,1 @@
-spython>=0.0.73
-docker>=4.1.0
 pexpect>=4.8
