@@ -17,11 +17,11 @@ setuptools.setup(
     include_package_data=True,
     entry_points={
             "console_scripts":[
-            'dryad = app.dryad:main'
+            'dryad = dryad_app.dryad:main'
             ]},
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GNU GPLv3.0 License",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
     install_requires=[
