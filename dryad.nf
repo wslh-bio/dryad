@@ -113,7 +113,7 @@ if (params.snp) {
       file(reference) from snp_reference
 
       output:
-      file("snp_distance_matrix.tsv")
+      file("snp_distance_matrix.tsv") into snp_mat
       file("snpma.fasta") into snp_alignment
 
       when:
@@ -233,7 +233,51 @@ process prokka {
   """
 }
 
-//AR Step2c: Find AR genes with amrfinder+
+//CG Step3: Align with Roary
+process roary {
+  publishDir "${params.outdir}/core_alignment",mode:'copy'
+  numGenomes = 0
+  input:
+  file(genomes) from annotated_genomes.collect()
+
+  output:
+  file("core_gene_alignment.aln") into core_aligned_genomes
+  file "core_genome_statistics.txt" into core_aligned_stats
+
+  script:
+  if(params.roary_mafft == true){
+    mafft="-n"
+  }else{mafft=""}
+  """
+  cpus=`grep -c ^processor /proc/cpuinfo`
+  roary -e ${mafft} -p \$cpus ${genomes}
+  mv summary_statistics.txt core_genome_statistics.txt
+  """
+}
+
+//CG Step4: IQTree for core-genome
+process cg_tree {
+  publishDir "${params.outdir}/core_genome_tree",mode:'copy'
+
+  input:
+  file(alignedGenomes) from core_aligned_genomes
+
+  output:
+  file("core_genome.tree") optional true into outChannel
+
+
+  script:
+    """
+    numGenomes=`grep -o '>' core_gene_alignment.aln | wc -l`
+    if [ \$numGenomes -gt 3 ]
+    then
+      iqtree -nt AUTO -s core_gene_alignment.aln -m ${params.cg_tree_model} -bb 1000
+      mv core_gene_alignment.aln.contree core_genome.tree
+    fi
+    """
+}
+
+//AR Step1: Find AR genes with amrfinder+
 process amrfinder {
   tag "$name"
   publishDir "${params.outdir}/amrfinder",mode:'copy'
@@ -253,7 +297,7 @@ process amrfinder {
   """
 }
 
-//AR Step2d: Summarize amrfinder+ results as a binary presence/absence matrix
+//AR Step 2: Summarize amrfinder+ results as a binary presence/absence matrix
 process amrfinder_summary {
   tag "$name"
   publishDir "${params.outdir}/amrfinder",mode:'copy'
@@ -262,8 +306,8 @@ process amrfinder_summary {
   file(predictions) from ar_predictions.collect()
 
   output:
-  file("ar_predictions_binary.tsv")
-  file("ar_predictions.tsv")
+  file("ar_predictions_binary.tsv") ar_matrix
+  file("ar_predictions.tsv") into ar_tsv
 
   when:
   params.ar == true
@@ -313,50 +357,6 @@ process amrfinder_summary {
     binary_df = binary_df.pivot_table(index = "Sample", columns = "Gene", values = "Value", fill_value = 0)
     binary_df.to_csv("ar_predictions_binary.tsv", sep='\t', encoding='utf-8')
   """
-}
-
-//CG Step3: Align with Roary
-process roary {
-  publishDir "${params.outdir}/core_alignment",mode:'copy'
-  numGenomes = 0
-  input:
-  file(genomes) from annotated_genomes.collect()
-
-  output:
-  file("core_gene_alignment.aln") into core_aligned_genomes
-  file "core_genome_statistics.txt" into core_aligned_stats
-
-  script:
-  if(params.roary_mafft == true){
-    mafft="-n"
-  }else{mafft=""}
-  """
-  cpus=`grep -c ^processor /proc/cpuinfo`
-  roary -e ${mafft} -p \$cpus ${genomes}
-  mv summary_statistics.txt core_genome_statistics.txt
-  """
-}
-
-//CG Step4: IQTree for core-genome
-process cg_tree {
-  publishDir "${params.outdir}/core_genome_tree",mode:'copy'
-
-  input:
-  file(alignedGenomes) from core_aligned_genomes
-
-  output:
-  file("core_genome.tree") optional true
-
-
-  script:
-    """
-    numGenomes=`grep -o '>' core_gene_alignment.aln | wc -l`
-    if [ \$numGenomes -gt 3 ]
-    then
-      iqtree -nt AUTO -s core_gene_alignment.aln -m ${params.cg_tree_model} -bb 1000
-      mv core_gene_alignment.aln.contree core_genome.tree
-    fi
-    """
 }
 
 //Collect Results
@@ -417,4 +417,25 @@ process mlst {
   """
   mlst --nopath *.fa > mlst.tsv
   """
+}
+
+process render{
+  errorStrategy 'ignore'
+  publishDir "${params.outdir}/cluster_analysis/report", mode: 'copy', pattern: "*.pdf"
+
+  input:
+  file(snp) from snp_mat
+  file(tree) from outChannel
+  file(ar) from ar_tsv
+  file(ar_mat) from ar_matrix
+  file(rmd) from report
+
+  output:
+  file "cluster_report.pdf"
+  shell:
+"""
+cp ${rmd} ./report_template.Rmd
+Rscript /reports/dryad_render.R ${snp} ${tree} ${ar} ${ar_mat} ./report_template.Rmd
+mv report.pdf cluster_report.pdf
+"""
 }
