@@ -1,0 +1,276 @@
+
+```{r include=FALSE}
+
+## Libraries
+library(ggplot2)
+library(ggtree)
+library(phytools)
+library(superheat)
+library(dplyr)
+library(kableExtra)
+library(viridis)
+
+date <- Sys.Date()
+
+## Figure size
+knitr::opts_chunk$set(fig.align="center")
+
+delim <- "-|_"
+
+```
+
+```{r heatmap-ploting-defaults, echo = FALSE, message = FALSE, warning = FALSE}
+
+# alter these plotting defaults as necessary
+
+# heatmap width relative to plot
+heatmap_width <- 100
+
+# font size for heatmap row and column names
+axis_font_size <- 2.25
+
+# font size for heatmap values
+cell_font_size <- 2.25
+
+# tree offset from heatmap
+tree_offset <- 1
+
+# offset of column names from heatmap; should be negative
+col_offset <- -.1
+
+# offset of row names names from heatmap
+row_offset <- .1
+
+# legend title font size
+legend_title_size <- 8
+
+# legend body font size
+legend_text_size <- 6
+
+# height of heatmap colourbar
+colourbar_height <- 0.5
+
+# width of heatmap colourbar
+colourbar_width <- 7
+
+```
+
+```{r tree-plot-defaults, echo = FALSE, message = FALSE, warning = FALSE}
+
+# alter these plotting defaults as necessary
+
+# bootstrap cutoff; plot boostrap values above this threshold
+boot_thresh <- 95
+
+# size of node label text
+node_text_size <- 1.75
+
+# nudge node label text horizontally
+x_nudge <- -0.00005
+
+#
+scale_offset <- 0.1
+
+# tree scale font size
+scale_font_size <- 2
+
+# tip label font size
+tip_font_size <- 2
+
+```
+
+### *`r species`* Analysis
+
+The analysis of `r species` (n = `r num.isolates`) has been completed. These results must always be used in conjunction with epidemiological data when determining if isolates are epidemiologically linked. This analysis should not be used as a replacement for a thorough epidemiological investigation.
+
+
+### Antibiotic Resistance
+
+
+```{r ar-table, echo=FALSE, message=FALSE, warning=FALSE}
+
+ar_genes <- c("blaOXA","blaKPC","blaVIM","blaIMP","blaNDM")
+ar_tsv$Sample <- sapply(strsplit(ar_tsv$Sample, delim), "[[", 1)
+ar_df <- dplyr::filter(ar_tsv, grepl(paste(ar_genes, collapse="|"), Gene))
+kable(ar_df) %>%
+  kable_styling(bootstrap_options = c("striped", "bordered"), full_width = F)
+
+```
+
+
+The presence (grey) or absence (white) of antibiotic resistance genes identifiedin each sample is shown in the matrix below. A dendrogram based on clustering of the presence of antibiotic resitance genes is shown on the right. Isolates that cluster close together have similar antibiotic resistance profiles. 
+
+```{r ar-heatmap, echo=FALSE, message=FALSE, warning=FALSE}
+
+
+len <- length(ar_mat$V2)
+ar <- unname(unlist(ar_mat[1,]))
+ar_mat <- ar_mat[2:len,]
+samples <- row.names(ar_mat)
+ar_mat <- data.frame(sapply(ar_mat[,], as.numeric))
+
+colnames(ar_mat) <- ar
+rownames(ar_mat) <- samples
+rownames(ar_mat) <- sapply(strsplit(rownames(ar_mat[,]), delim), "[[", 1)
+
+superheat(ar_mat,
+        pretty.order.rows = TRUE,
+        pretty.order.cols = TRUE,
+        row.dendrogram = T,
+        scale = F,
+        heat.pal.values = c(0, 1),
+        heat.lim = c(0,1),
+        bottom.label.text.angle = 90,
+        left.label.col = "white",
+        bottom.label.col = "white",
+        heat.pal = c("white", "white",
+                     "grey"),
+        legend = FALSE,
+        left.label.text.size = 4,
+        bottom.label.text.size = 4,
+        left.label.size = .3,
+        bottom.label.size = .25)
+
+```
+
+### SNP Heatmap
+
+The number of Single Nucleotide Polymorphisms (SNPs) between each sample is shown on the heatmap below. There is no hard and fast rule for determining how many SNPs are needed to classify an outbreak. Generally it is best to look for patterns in the data between the SNP data and the core-genome tree.
+
+```{r root-tree, echo = FALSE, message = FALSE, warning = FALSE}
+
+# This block midpoint-roots the tree
+
+# read tree and midpoint root
+tree <- read.tree(nwk)
+mpt <- midpoint.root(tree)
+
+# split tip labels
+mpt$tip.label <- sapply(strsplit(mpt$tip.label, delim), "[[", 1)
+
+# store midpoint-rooted tree as dataframe
+mpt.fort <- fortify(mpt)
+
+# get vertical order of tip labels from tree dataframe
+mpt.tip <- mpt.fort[which(mpt.fort$isTip ==  TRUE),]
+mpt.ord <- mpt.tip$label[order(mpt.tip$y)]
+
+# store base plot of midpoint-rooted tree
+gtree <- ggtree(mpt, branch.length = "none")
+
+```
+
+```{r format-matrix, echo = FALSE, message = FALSE, warning = FALSE}
+
+# This block formats the matrix
+
+# R places an X in front of #s when reading in a dataframe
+colnames(snp_mat) <- gsub("X","",colnames(snp_mat))
+
+# replace any "." with "-" in column names
+colnames(snp_mat) <- gsub("\\.","-",colnames(snp_mat))
+
+# split names
+rownames(snp_mat) <- sapply(strsplit(rownames(snp_mat), delim), "[[", 1)
+colnames(snp_mat) <- sapply(strsplit(colnames(snp_mat), delim), "[[", 1)
+
+# order snp matrix by vertical order of tip labels
+snp_mat <- snp_mat[c(mpt.ord),c(mpt.ord)]
+
+```
+
+```{r plot-tree-and-heatmap, echo = FALSE, message = FALSE, warning = FALSE}
+
+### Split isolate IDs by delimiter "-" and "_" (for >= 20 isolates)
+
+# ggtree will often crop the figure too small; subtract from ymin and add to ymax to fix this
+ymin <- min(gtree$data$y) - 1
+ymax <- max(gtree$data$y) + 1
+
+# main tree plotting function
+gheatmap(gtree, snp_mat,
+    width = heatmap_width,
+    offset = tree_offset,
+    cell_labels = TRUE,
+    cell_font_size = cell_font_size,
+    font.size = axis_font_size,
+    colnames_angle = 90,
+    rownames_angle = 0,
+    colnames_offset_y = col_offset,
+    rownames_offset_x = row_offset) +
+
+# set heatmap colourbar colors and limits
+scale_fill_viridis(limits = c(1,(max(snp_mat)+1)),
+    na.value = "white",
+    name = "SNPs",
+    guide = "colourbar") +
+
+# set plot y limits
+ylim(ymin,ymax) +
+
+# remove whitespace around plot and add legend
+theme(plot.margin = unit(c(0,0,0,0), "mm"),
+    legend.box = "horizontal",
+    legend.text = element_text(size = legend_text_size),
+    legend.title = element_text(size = legend_title_size),
+    legend.position = "bottom",
+    legend.margin = margin(0,0,0,0)) +
+
+# place heatmap colourbar beneath the heatmap (rather than beside)
+guides(fill = guide_colourbar(title.position = "top",
+    title.hjust = 0.5,
+    barheight = colourbar_height,
+    barwidth = colourbar_width))
+
+```
+\newpage
+
+### Core-genome phylogenetic tree
+
+The core-genome is the core set of genes shared across all isolates in the sample. Using variation within that core set of genes, we can estimate how related isolates are. We do this by determining if isolates share a similar common ancestor. Here we are looking for isolates that cluster together and share a small amount of horizontal distance on the tree. Bootstrap values are shown on the tree. A bootstrap value greater than 95 suggests the placement of a branch on the tree is well supported.
+
+```{r plot-tree, echo = FALSE, message = FALSE, warning = FALSE}
+
+# This block plots the midpint-rooted tree with bootstrap values
+
+# main tree plotting function
+gtree <- ggtree(mpt, color = "black", alpha = 0.75, size = 0.5) +
+
+# add boostrap values as node labels
+geom_nodelab(aes(x = branch,
+  label = label,
+  subset = !isTip & (as.numeric(label) >= boot_thresh)),
+  vjust = -0.5,
+  nudge_x = x_nudge,
+  size = node_text_size) +
+
+# add tip labels
+geom_tiplab(size = tip_font_size) +
+
+# add tree scale
+geom_treescale(offset = scale_offset,
+    fontsize = scale_font_size,
+    y = 0,
+    x = 0) +
+
+# remove whitespace around plot
+theme(plot.margin = unit(c(0,0,0,0), "cm"))
+
+# ggtree will often crop the figure too small; add to xmax to fix this
+# we've found the following function calculates a decent value to add to xmax:
+
+log10_ceiling <- function(x) {
+    10^(ceiling(log10(x)))
+}
+
+xmax <- max(gtree$data$x) + (log10_ceiling(max(gtree$data$x))/5)
+xmin <- 0
+
+# set x limits and plot tree
+gtree + xlim(xmin,xmax)
+
+```
+
+### Methods
+
+The figures shown here were generated using sequence data processed with our data analysis pipeline, Dryad v1.1 ([https://github.com/k-florek/dryad](https://github.com/k-florek/dryad)). SNPs were called using the Center for Food Safety and Applied Nutrition ([CFSAN](https://github.com/CFSAN-Biostatistics/snp-pipeline)) SNP pipeline within Dryad. The core-genome tree was generated using an alignment of coding regions shared across 99% of isolates. The tree was generated using a maximum-likelihood method with the GTR+G substitution model and bootstrapped with 1000 replicates. Report generated using R and designed by Abigail Shockey. If you have questions about this report please contact Kelsey Florek at [kelsey.florek@slh.wisc.edu](mailto:kelsey.florek@slh.wisc.edu).
