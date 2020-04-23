@@ -10,10 +10,10 @@ Channel
     .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads} Path must not end with /" }
     .set { raw_reads }
 
-if (params.snp) {
-    Channel
-        .fromPath(params.snp_reference)
-        .set { snp_reference }
+if(params.snp){
+Channel
+    .fromPath(params.snp_reference)
+    .set { snp_reference }
 }
 
 //Step0: Preprocess reads - change name to end at first underscore
@@ -95,74 +95,77 @@ process cleanreads {
   """
 }
 
-if (params.snp) {
-    //SNP Step1: Run CFSAN-SNP Pipeline
-    process cfsan {
-      publishDir "${params.outdir}/cfsan-snp", mode: 'copy'
+if(params.snp){
+//SNP Step1: Run CFSAN-SNP Pipeline
+process cfsan {
+  publishDir "${params.outdir}/cfsan-snp", mode: 'copy'
 
-      input:
-      file(reads) from cleaned_reads_snp.collect()
-      file(reference) from snp_reference
+  input:
+  file(reads) from cleaned_reads_snp.collect()
+  file(reference) from snp_reference
 
-      output:
-      file("snp_distance_matrix.tsv")
-      file("snpma.fasta") into snp_alignment
+  output:
+  file("snp_distance_matrix.tsv")
+  file("snpma.fasta") into snp_alignment
 
-      when:
-      params.snp == true
+  when:
+  params.snp == true
 
-      script:
-      """
-      #!/usr/bin/env python
-      import subprocess
-      import glob
-      import os
+  script:
+  """
+  #!/usr/bin/env python
+  import subprocess
+  import glob
+  import os
 
-      fwd_reads = glob.glob("*_1.clean.fastq.gz")
-      fwd_reads.sort()
+  fwd_reads = glob.glob("*_1.clean.fastq.gz")
+  fwd_reads.sort()
 
-      readDict = {}
-      for file in fwd_reads:
-        sid = os.path.basename(file).split('_')[0]
-        fwd_read = glob.glob(sid+"_1.clean.fastq.gz")[0]
-        rev_read = glob.glob(sid+"_2.clean.fastq.gz")[0]
-        readDict[sid] = [fwd_read,rev_read]
+  readDict = {}
+  for file in fwd_reads:
+    sid = os.path.basename(file).split('_')[0]
+    fwd_read = glob.glob(sid+"_1.clean.fastq.gz")[0]
+    rev_read = glob.glob(sid+"_2.clean.fastq.gz")[0]
+    readDict[sid] = [fwd_read,rev_read]
 
-      os.mkdir("input_reads")
-      for key in readDict:
-        print key
-        os.mkdir(os.path.join("input_reads",key))
-        os.rename(readDict[key][0],os.path.join(*["input_reads",key,readDict[key][0]]))
-        os.rename(readDict[key][1],os.path.join(*["input_reads",key,readDict[key][1]]))
+  os.mkdir("input_reads")
+  for key in readDict:
+    print key
+    os.mkdir(os.path.join("input_reads",key))
+    os.rename(readDict[key][0],os.path.join(*["input_reads",key,readDict[key][0]]))
+    os.rename(readDict[key][1],os.path.join(*["input_reads",key,readDict[key][1]]))
 
-      command = "cfsan_snp_pipeline run ${reference} -o . -s input_reads"
-      process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-      output, error = process.communicate()
-      print output
-      print error
-      """
-    }
+  command = "cfsan_snp_pipeline run ${reference} -o . -s input_reads"
+  process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+  output, error = process.communicate()
+  print output
+  print error
+  """
+}
 
-    //SNP Step2: Run IQTREE on snp alignment
-    process snp_tree {
-      publishDir "${params.outdir}/snp_tree", mode: 'copy'
+//SNP Step2: Run IQTREE on snp alignment
+process snp_tree {
+  publishDir "${params.outdir}/snp_tree", mode: 'copy'
 
-      input:
-      file(snp_fasta) from snp_alignment
+  input:
+  file(snp_fasta) from snp_alignment
 
-      output:
-      file("snp.tree") optional true
+  output:
+  file("snp.tree") optional true
 
-      script:
-        """
-        numGenomes=`grep -o '>' snpma.fasta | wc -l`
-        if [ \$numGenomes -gt 3 ]
-        then
-          iqtree -nt AUTO -s snpma.fasta -m ${params.cg_tree_model} -bb 1000
-          mv snpma.fasta.contree snp.tree
-        fi
-        """
-    }
+  when:
+  params.snp == true
+
+  script:
+    """
+    numGenomes=`grep -o '>' snpma.fasta | wc -l`
+    if [ \$numGenomes -gt 3 ]
+    then
+      iqtree -nt AUTO -s snpma.fasta -m ${params.cg_tree_model} -bb 1000
+      mv snpma.fasta.contree snp.tree
+    fi
+    """
+}
 }
 
 //CG Step1: Assemble trimmed reads with Shovill
@@ -318,6 +321,9 @@ process roary {
   file("core_gene_alignment.aln") into core_aligned_genomes
   file "core_genome_statistics.txt" into core_aligned_stats
 
+  when:
+  params.cg == true
+
   script:
   if(params.roary_mafft == true){
     mafft="-n"
@@ -339,6 +345,8 @@ process cg_tree {
   output:
   file("core_genome.tree") optional true
 
+  when:
+  params.cg == true
 
   script:
     """
