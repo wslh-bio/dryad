@@ -6,7 +6,8 @@
 
 import sys,os,re
 import argparse
-from shutil import which
+from shutil import which, copyfile
+from datetime import date
 import pexpect
 
 import re, sys
@@ -25,16 +26,16 @@ def main():
             sys.exit(2)
 
     parser = MyParser(description='A comprehensive tree building program.')
-    parser.add_argument('reads_path', type=str,help="Path to the location of the raw reads in the fastq format.")
-    parser.add_argument('--output','-o',metavar="<output_path>",type=str,help="Path to ouput directory, default \"dryad_results\".",default="dryad_results")
-    parser.add_argument('--core-genome','-cg',default=False, action="store_true", help="Construct a core-genome tree.")
-    parser.add_argument('--snp','-s',default=False, action="store_true", help="Construct a SNP tree. Note: Requires a reference genome in fasta format (-r).")
-    parser.add_argument('-r',metavar='<path>', type=str,help="Reference genome for SNP pipeline.")
-    parser.add_argument('-ar',default=False, action="store_true", help="Detect AR mechanisms.")
-    parser.add_argument('--sep',metavar="sep_chars",type=str,help="Dryad identifies sample names from the name of the read file by splitting the name on the specified separating characters, default \"_\".",default="_")
-    parser.add_argument('--profile', type=str,choices=["docker", "singularity"],help="Nextflow profile. Default will try docker first, then singularity if the docker executable cannot be found.")
-    parser.add_argument('--config','-c', type=str,help="Nextflow custom configureation.")
-    parser.add_argument('--get_config',action="store_true",help="Get a Nextflow configuration template for dryad.")
+    parser.add_argument('reads_path', type=str,help="path to the directory of raw reads in the fastq format",nargs='?', default=False)
+    parser.add_argument('--output','-o',metavar="<output_path>",type=str,help="path to ouput directory, default \"dryad_results\"",default="dryad_results")
+    parser.add_argument('--core-genome','-cg',default=False, action="store_true", help="construct a core-genome tree")
+    parser.add_argument('--snp','-s',default=False, action="store_true", help="construct a SNP tree, requires a reference sequence in fasta format (-r)")
+    parser.add_argument('-r',metavar='<path>', type=str,help="reference sequence for SNP pipeline")
+    parser.add_argument('-ar',default=False, action="store_true", help="detect AR mechanisms")
+    parser.add_argument('--sep',metavar="sep_chars",type=str,help="dryad identifies sample names from the name of the read file by splitting the name on the specified separating characters, default \"_\"",default="_")
+    parser.add_argument('--profile', type=str,choices=["docker", "singularity"],help="specify nextflow profile, dryad will try to use docker first, then singularity")
+    parser.add_argument('--config','-c', type=str,help="Nextflow custom configureation")
+    parser.add_argument('--get_config',action="store_true",help="get a Nextflow configuration template for dryad")
     parser.add_argument('--resume', default="", action="store_const",const="-resume",help="resume a previous run")
 
 
@@ -47,9 +48,15 @@ def main():
         copyfile(config_path,dest_path)
         sys.exit()
 
+    #check for reads_path
+    if not args.reads_path:
+        parser.print_help()
+        print("Please specify a path to a directory containing the raw reads.")
+        sys.exit(1)
+
     #check for reference sequence
     if args.snp and args.r == None:
-        parser_dryad.print_help()
+        parser.print_help()
         print("Please specify a reference sequence for the SNP pipeline.")
         sys.exit(1)
 
