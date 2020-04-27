@@ -34,7 +34,7 @@ def main():
     parser.add_argument('--sep',metavar="sep_chars",type=str,help="Dryad identifies sample names from the name of the read file by splitting the name on the specified separating characters, default \"_\".",default="_")
     parser.add_argument('--profile', type=str,choices=["docker", "singularity"],help="Nextflow profile. Default will try docker first, then singularity if the docker executable cannot be found.")
     parser.add_argument('--config','-c', type=str,help="Nextflow custom configureation.")
-    parser.add_argument('--get_config',action="store_true",help="Get a Nextflow configuration template for the chosen workflow.")
+    parser.add_argument('--get_config',action="store_true",help="Get a Nextflow configuration template for dryad.")
     parser.add_argument('--resume', default="", action="store_const",const="-resume",help="resume a previous run")
 
 
