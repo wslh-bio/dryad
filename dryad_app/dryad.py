@@ -62,15 +62,20 @@ def main():
         profile = ''
 
     #check for config or profile
-        config = ""
-        if args.config:
-            config = "-C " + os.path.abspath(args.config)
-            profile = ""
-        elif args.profile:
-            profile = args.profile
-        elif not profile:
-            print('Singularity or Docker is not installed or not in found in PATH.')
-            sys.exit(1)
+    config = ""
+    if args.config:
+        config = "-C " + os.path.abspath(args.config)
+        profile = ""
+    elif args.profile:
+        profile = args.profile
+    elif not profile:
+        print('Singularity or Docker is not installed or not in found in PATH.')
+        sys.exit(1)
+
+    #set work dir into local logs dir if profile not aws
+    work = ""
+    if profile:
+        work = f"-w {args.output}/logs/work"
 
     #build nextflow command
     selections = ""
@@ -84,7 +89,7 @@ def main():
     other_args = f"--name_split_on {args.sep} --outdir {args.output}"
     #build command
     command = nextflow_path
-    command = command + f" {config} run {dryad_path}/dryad.nf {profile} {args.resume} --reads {args.reads_path} {selections} {other_args}"
+    command = command + f" {config} run {dryad_path}/dryad.nf {profile} {args.resume} --reads {args.reads_path} {selections} {other_args} {work}"
 
     #run command using nextflow in a subprocess
     print("Starting the Dryad pipeline:")
