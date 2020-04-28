@@ -11,7 +11,7 @@ Dryad is a pipeline to construct reference free core-genome or SNP phylogenetic 
 [SNP](#SNP-phylogenetic-tree-construction)                                                                                        
 [Quality assessment](#Quality-assessment)                                                                                         
 [Output](#Output-files)                                                                                                                               
-[Genome cluster report](#Genome-cluster-report)
+[Genome cluster report](#Genome-cluster-report)                                                                                                
 [Dependencies](#Dependencies)
 
 #### Installing Dryad
