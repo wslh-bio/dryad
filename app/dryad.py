@@ -33,6 +33,7 @@ def main():
     parser.add_argument('-r',metavar='<path>', type=str,help="Reference genome for SNP pipeline.")
     parser.add_argument('--profile',metavar='profile_name', type=str,help="Specify a custom nextflow profile.")
     parser.add_argument('--sep',metavar="sep_chars",type=str,help="Dryad identifies sample names from the name of the read file by splitting the name on the specified separating characters, default \"_\".",default="_")
+    parser.add_argument('--report',metavar='<path>', type=str,help="RMarkdown file for report.")
 
     args = parser.parse_args()
 
@@ -60,6 +61,8 @@ def main():
         selections += " --cg"
     if args.snp:
         selections += f" --snp --snp_reference {args.r}"
+    if args.report and args.snp and args.core_genome:
+        selections += f" --report {args.report}"
     #add other arguments
     other_args = f"--name_split_on {args.sep} --outdir {args.output}"
     #build command

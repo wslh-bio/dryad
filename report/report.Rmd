@@ -1,3 +1,43 @@
+---
+output:
+  pdf_document:
+    latex_engine: xelatex
+header-includes:
+    - \usepackage{fancyhdr}
+    - \usepackage{fontspec}
+    - \usepackage{xcolor}
+    - \geometry{left = 0.5in,right = 0.5in}
+mainfont: Roboto
+sansfont: Roboto
+urlcolor: purplepeopleeater
+---
+<!-- define color and adjust lengths for header and footer-->
+\definecolor{purplepeopleeater}{RGB}{106,13,75}
+\addtolength{\headheight}{3.0cm}
+\addtolength{\topmargin}{-0.5in}
+\addtolength{\footskip}{-0.225in}
+
+<!-- % setup header -->
+\pagestyle{fancy}
+\fancyhf{}
+
+<!-- header content -->
+\fancyhead[R]{\Huge Genomic Clustering Report\\
+\Large `r paste(Sys.Date())`}
+
+<!-- create red header line -->
+\renewcommand{\headrulewidth}{1pt}
+\renewcommand{\headrule}{\hbox to\headwidth{%
+    \color{purplepeopleeater}\leaders\hrule height \headrulewidth\hfill}}
+
+<!-- footer content -->
+\fancyfoot[C]{For research use only, not for clinical use.}
+\fancyfoot[R]{\thepage}
+
+<!-- create red footer line -->
+\renewcommand{\footrulewidth}{1pt}
+\renewcommand{\footrule}{\hbox to\headwidth{%
+    \color{purplepeopleeater}\leaders\hrule height \headrulewidth\hfill}}
 
 ```{r include=FALSE}
 
@@ -5,7 +45,6 @@
 library(ggplot2)
 library(ggtree)
 library(phytools)
-library(superheat)
 library(dplyr)
 library(kableExtra)
 library(viridis)
@@ -13,9 +52,8 @@ library(viridis)
 date <- Sys.Date()
 
 ## Figure size
-knitr::opts_chunk$set(fig.align="center")
-
-delim <- "-|_"
+## Figure size
+knitr::opts_chunk$set(out.width="7.5in", out.height="8in", fig.align="left")
 
 ```
 
@@ -24,28 +62,28 @@ delim <- "-|_"
 # alter these plotting defaults as necessary
 
 # heatmap width relative to plot
-heatmap_width <- 100
+heatmap_width <- 5
 
 # font size for heatmap row and column names
-axis_font_size <- 2.25
+axis_font_size <- 3
 
 # font size for heatmap values
-cell_font_size <- 2.25
+cell_font_size <- 3
 
 # tree offset from heatmap
-tree_offset <- 1
+tree_offset <- 9
 
 # offset of column names from heatmap; should be negative
-col_offset <- -.1
+col_offset <- -3
 
 # offset of row names names from heatmap
-row_offset <- .1
+row_offset <- -8
 
 # legend title font size
-legend_title_size <- 8
+legend_title_size <- 10
 
 # legend body font size
-legend_text_size <- 6
+legend_text_size <- 8
 
 # height of heatmap colourbar
 colourbar_height <- 0.5
@@ -79,59 +117,22 @@ tip_font_size <- 2
 
 ```
 
-### *`r species`* Analysis
+### Dryad Analysis
 
-The analysis of `r species` (n = `r num.isolates`) has been completed. These results must always be used in conjunction with epidemiological data when determining if isolates are epidemiologically linked. This analysis should not be used as a replacement for a thorough epidemiological investigation.
+The dryad analyses have been completed. These results must always be used in conjunction with epidemiological data when determining if isolates are epidemiologically linked. This analysis should not be used as a replacement for a thorough epidemiological investigation.
 
 
-### Antibiotic Resistance
+### Antibiotic Resistance Genes
 
+The table below contains antibiotic resistance genes identified by AMRFinderPlus in each isolate.
 
 ```{r ar-table, echo=FALSE, message=FALSE, warning=FALSE}
 
-ar_genes <- c("blaOXA","blaKPC","blaVIM","blaIMP","blaNDM")
-ar_tsv$Sample <- sapply(strsplit(ar_tsv$Sample, delim), "[[", 1)
-ar_df <- dplyr::filter(ar_tsv, grepl(paste(ar_genes, collapse="|"), Gene))
 kable(ar_df) %>%
   kable_styling(bootstrap_options = c("striped", "bordered"), full_width = F)
 
 ```
-
-
-The presence (grey) or absence (white) of antibiotic resistance genes identifiedin each sample is shown in the matrix below. A dendrogram based on clustering of the presence of antibiotic resitance genes is shown on the right. Isolates that cluster close together have similar antibiotic resistance profiles. 
-
-```{r ar-heatmap, echo=FALSE, message=FALSE, warning=FALSE}
-
-
-len <- length(ar_mat$V2)
-ar <- unname(unlist(ar_mat[1,]))
-ar_mat <- ar_mat[2:len,]
-samples <- row.names(ar_mat)
-ar_mat <- data.frame(sapply(ar_mat[,], as.numeric))
-
-colnames(ar_mat) <- ar
-rownames(ar_mat) <- samples
-rownames(ar_mat) <- sapply(strsplit(rownames(ar_mat[,]), delim), "[[", 1)
-
-superheat(ar_mat,
-        pretty.order.rows = TRUE,
-        pretty.order.cols = TRUE,
-        row.dendrogram = T,
-        scale = F,
-        heat.pal.values = c(0, 1),
-        heat.lim = c(0,1),
-        bottom.label.text.angle = 90,
-        left.label.col = "white",
-        bottom.label.col = "white",
-        heat.pal = c("white", "white",
-                     "grey"),
-        legend = FALSE,
-        left.label.text.size = 4,
-        bottom.label.text.size = 4,
-        left.label.size = .3,
-        bottom.label.size = .25)
-
-```
+\newpage
 
 ### SNP Heatmap
 
@@ -144,9 +145,6 @@ The number of Single Nucleotide Polymorphisms (SNPs) between each sample is show
 # read tree and midpoint root
 tree <- read.tree(nwk)
 mpt <- midpoint.root(tree)
-
-# split tip labels
-mpt$tip.label <- sapply(strsplit(mpt$tip.label, delim), "[[", 1)
 
 # store midpoint-rooted tree as dataframe
 mpt.fort <- fortify(mpt)
@@ -170,10 +168,6 @@ colnames(snp_mat) <- gsub("X","",colnames(snp_mat))
 # replace any "." with "-" in column names
 colnames(snp_mat) <- gsub("\\.","-",colnames(snp_mat))
 
-# split names
-rownames(snp_mat) <- sapply(strsplit(rownames(snp_mat), delim), "[[", 1)
-colnames(snp_mat) <- sapply(strsplit(colnames(snp_mat), delim), "[[", 1)
-
 # order snp matrix by vertical order of tip labels
 snp_mat <- snp_mat[c(mpt.ord),c(mpt.ord)]
 
@@ -184,7 +178,7 @@ snp_mat <- snp_mat[c(mpt.ord),c(mpt.ord)]
 ### Split isolate IDs by delimiter "-" and "_" (for >= 20 isolates)
 
 # ggtree will often crop the figure too small; subtract from ymin and add to ymax to fix this
-ymin <- min(gtree$data$y) - 1
+ymin <- min(gtree$data$y) - 7
 ymax <- max(gtree$data$y) + 1
 
 # main tree plotting function

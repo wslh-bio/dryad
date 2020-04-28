@@ -1,16 +1,8 @@
 #!/usr/bin/env nextflow
 
 //Description: Workflow for building various trees from raw illumina reads
-//Author: Kelsey Florek
+//Author: Kelsey Florek and Abigail Shockey
 //eMail: kelsey.florek@slh.wisc.edu
-
-//starting parameters
-params.reads = ""
-params.outdir = "dryad_results"
-params.cg = false
-params.snp = false
-params.snp_reference = ""
-params.ar = false
 
 //setup channel to read in and pair the fastq files
 Channel
@@ -306,7 +298,7 @@ process amrfinder_summary {
   file(predictions) from ar_predictions.collect()
 
   output:
-  file("ar_predictions_binary.tsv") ar_matrix
+  file("ar_predictions_binary.tsv") into ar_matrix
   file("ar_predictions.tsv") into ar_tsv
 
   when:
@@ -419,23 +411,29 @@ process mlst {
   """
 }
 
-process render{
-  errorStrategy 'ignore'
-  publishDir "${params.outdir}/cluster_analysis/report", mode: 'copy', pattern: "*.pdf"
+if (params.report != "") {
 
-  input:
-  file(snp) from snp_mat
-  file(tree) from outChannel
-  file(ar) from ar_tsv
-  file(ar_mat) from ar_matrix
-  file(rmd) from report
+  Channel
+    .fromPath(params.report)
+    .set { report }
 
-  output:
-  file "cluster_report.pdf"
-  shell:
-"""
-cp ${rmd} ./report_template.Rmd
-Rscript /reports/dryad_render.R ${snp} ${tree} ${ar} ${ar_mat} ./report_template.Rmd
-mv report.pdf cluster_report.pdf
-"""
+  process render{
+    publishDir "${params.outdir}/report", mode: 'copy', pattern: "*.pdf"
+
+    input:
+    file(snp) from snp_mat
+    file(tree) from outChannel
+    file(ar) from ar_tsv
+    file(rmd) from report
+
+    output:
+    file "cluster_report.pdf"
+    shell:
+
+    """
+    cp ${rmd} ./report_template.Rmd
+    Rscript /reports/render_dryad.R ${snp} ${tree} ${ar} ./report_template.Rmd
+    mv report.pdf cluster_report.pdf
+    """
+    }
 }
