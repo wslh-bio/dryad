@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-#Author: Kelsey Florek
-#email: kelsey.florek@slh.wisc.edu
+#Author: Kelsey Florek and Abigail Shockey
+#email: kelsey.florek@slh.wisc.edu, abigail.shockey@slh.wisc.edu
 #description: A pipeline for constructing SNP based and  core gene set reference free phylogenies
 
 
