@@ -2,7 +2,7 @@
 
 //Description: Workflow for building various trees from raw illumina reads
 //Author: Kelsey Florek and Abigail Shockey
-//eMail: kelsey.florek@slh.wisc.edu
+//email: kelsey.florek@slh.wisc.edu, abigail.shockey@slh.wisc.edu
 
 //setup channel to read in and pair the fastq files
 Channel
@@ -386,7 +386,7 @@ process mash {
   set val(name), file(assembly) from assembled_genomes_mash
 
   output:
-  file "${name}.mash.txt" 
+  file "${name}.mash.txt"
 
   script:
   """
