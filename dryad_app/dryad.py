@@ -37,8 +37,7 @@ def main():
     parser.add_argument('--config','-c', type=str,help="Nextflow custom configureation")
     parser.add_argument('--get_config',action="store_true",help="get a Nextflow configuration template for dryad")
     parser.add_argument('--resume', default="", action="store_const",const="-resume",help="resume a previous run")
-    parser.add_argument('--report',metavar='<path>', type=str,help="RMarkdown file for report.")
-
+    parser.add_argument('--report',action="store_true",help="generte a pdf report")
 
     args = parser.parse_args()
 
@@ -94,7 +93,8 @@ def main():
     if args.snp:
         selections += f" --snp --snp_reference {args.r}"
     if args.report and args.snp and args.core_genome:
-        selections += f" --report {args.report}"
+        report_template_path = os.path.abspath(os.path.dirname(__file__) + '/' + '../report/report.Rmd')
+        selections += f" --report {report_template_path}"
     #add other arguments
     other_args = f"--name_split_on {args.sep} --outdir {args.output}"
     #build command
