@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 //Description: Workflow for building various trees from raw illumina reads
-//Author: Kelsey Florek
+//Author: Kelsey Florek and Abigail Shockey
 //eMail: kelsey.florek@slh.wisc.edu
 
 //setup channel to read in and pair the fastq files
@@ -10,10 +10,10 @@ Channel
     .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads} Path must not end with /" }
     .set { raw_reads }
 
-if(params.snp){
-Channel
-    .fromPath(params.snp_reference)
-    .set { snp_reference }
+if (params.snp) {
+    Channel
+        .fromPath(params.snp_reference)
+        .set { snp_reference }
 }
 
 //Step0: Preprocess reads - change name to end at first underscore
@@ -95,77 +95,74 @@ process cleanreads {
   """
 }
 
-if(params.snp){
-//SNP Step1: Run CFSAN-SNP Pipeline
-process cfsan {
-  publishDir "${params.outdir}/cfsan-snp", mode: 'copy'
+if (params.snp) {
+    //SNP Step1: Run CFSAN-SNP Pipeline
+    process cfsan {
+      publishDir "${params.outdir}/cfsan-snp", mode: 'copy'
 
-  input:
-  file(reads) from cleaned_reads_snp.collect()
-  file(reference) from snp_reference
+      input:
+      file(reads) from cleaned_reads_snp.collect()
+      file(reference) from snp_reference
 
-  output:
-  file("snp_distance_matrix.tsv")
-  file("snpma.fasta") into snp_alignment
+      output:
+      file("snp_distance_matrix.tsv") into snp_mat
+      file("snpma.fasta") into snp_alignment
 
-  when:
-  params.snp == true
+      when:
+      params.snp == true
 
-  script:
-  """
-  #!/usr/bin/env python
-  import subprocess
-  import glob
-  import os
+      script:
+      """
+      #!/usr/bin/env python
+      import subprocess
+      import glob
+      import os
 
-  fwd_reads = glob.glob("*_1.clean.fastq.gz")
-  fwd_reads.sort()
+      fwd_reads = glob.glob("*_1.clean.fastq.gz")
+      fwd_reads.sort()
 
-  readDict = {}
-  for file in fwd_reads:
-    sid = os.path.basename(file).split('_')[0]
-    fwd_read = glob.glob(sid+"_1.clean.fastq.gz")[0]
-    rev_read = glob.glob(sid+"_2.clean.fastq.gz")[0]
-    readDict[sid] = [fwd_read,rev_read]
+      readDict = {}
+      for file in fwd_reads:
+        sid = os.path.basename(file).split('_')[0]
+        fwd_read = glob.glob(sid+"_1.clean.fastq.gz")[0]
+        rev_read = glob.glob(sid+"_2.clean.fastq.gz")[0]
+        readDict[sid] = [fwd_read,rev_read]
 
-  os.mkdir("input_reads")
-  for key in readDict:
-    print key
-    os.mkdir(os.path.join("input_reads",key))
-    os.rename(readDict[key][0],os.path.join(*["input_reads",key,readDict[key][0]]))
-    os.rename(readDict[key][1],os.path.join(*["input_reads",key,readDict[key][1]]))
+      os.mkdir("input_reads")
+      for key in readDict:
+        print key
+        os.mkdir(os.path.join("input_reads",key))
+        os.rename(readDict[key][0],os.path.join(*["input_reads",key,readDict[key][0]]))
+        os.rename(readDict[key][1],os.path.join(*["input_reads",key,readDict[key][1]]))
 
-  command = "cfsan_snp_pipeline run ${reference} -o . -s input_reads"
-  process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-  output, error = process.communicate()
-  print output
-  print error
-  """
-}
+      command = "cfsan_snp_pipeline run ${reference} -o . -s input_reads"
+      process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+      output, error = process.communicate()
+      print output
+      print error
+      """
+    }
 
-//SNP Step2: Run IQTREE on snp alignment
-process snp_tree {
-  publishDir "${params.outdir}/snp_tree", mode: 'copy'
+    //SNP Step2: Run IQTREE on snp alignment
+    process snp_tree {
+      publishDir "${params.outdir}/snp_tree", mode: 'copy'
 
-  input:
-  file(snp_fasta) from snp_alignment
+      input:
+      file(snp_fasta) from snp_alignment
 
-  output:
-  file("snp.tree") optional true
+      output:
+      file("snp.tree") optional true
 
-  when:
-  params.snp == true
-
-  script:
-    """
-    numGenomes=`grep -o '>' snpma.fasta | wc -l`
-    if [ \$numGenomes -gt 3 ]
-    then
-      iqtree -nt AUTO -s snpma.fasta -m ${params.cg_tree_model} -bb 1000
-      mv snpma.fasta.contree snp.tree
-    fi
-    """
-}
+      script:
+        """
+        numGenomes=`grep -o '>' snpma.fasta | wc -l`
+        if [ \$numGenomes -gt 3 ]
+        then
+          iqtree -nt AUTO -s snpma.fasta -m ${params.cg_tree_model} -bb 1000
+          mv snpma.fasta.contree snp.tree
+        fi
+        """
+    }
 }
 
 //CG Step1: Assemble trimmed reads with Shovill
@@ -228,7 +225,51 @@ process prokka {
   """
 }
 
-//AR Step2c: Find AR genes with amrfinder+
+//CG Step3: Align with Roary
+process roary {
+  publishDir "${params.outdir}/core_alignment",mode:'copy'
+  numGenomes = 0
+  input:
+  file(genomes) from annotated_genomes.collect()
+
+  output:
+  file("core_gene_alignment.aln") into core_aligned_genomes
+  file "core_genome_statistics.txt" into core_aligned_stats
+
+  script:
+  if(params.roary_mafft == true){
+    mafft="-n"
+  }else{mafft=""}
+  """
+  cpus=`grep -c ^processor /proc/cpuinfo`
+  roary -e ${mafft} -p \$cpus ${genomes}
+  mv summary_statistics.txt core_genome_statistics.txt
+  """
+}
+
+//CG Step4: IQTree for core-genome
+process cg_tree {
+  publishDir "${params.outdir}/core_genome_tree",mode:'copy'
+
+  input:
+  file(alignedGenomes) from core_aligned_genomes
+
+  output:
+  file("core_genome.tree") optional true into outChannel
+
+
+  script:
+    """
+    numGenomes=`grep -o '>' core_gene_alignment.aln | wc -l`
+    if [ \$numGenomes -gt 3 ]
+    then
+      iqtree -nt AUTO -s core_gene_alignment.aln -m ${params.cg_tree_model} -bb 1000
+      mv core_gene_alignment.aln.contree core_genome.tree
+    fi
+    """
+}
+
+//AR Step1: Find AR genes with amrfinder+
 process amrfinder {
   tag "$name"
   publishDir "${params.outdir}/amrfinder",mode:'copy'
@@ -248,7 +289,7 @@ process amrfinder {
   """
 }
 
-//AR Step2d: Summarize amrfinder+ results as a binary presence/absence matrix
+//AR Step 2: Summarize amrfinder+ results as a binary presence/absence matrix
 process amrfinder_summary {
   tag "$name"
   publishDir "${params.outdir}/amrfinder",mode:'copy'
@@ -257,8 +298,8 @@ process amrfinder_summary {
   file(predictions) from ar_predictions.collect()
 
   output:
-  file("ar_predictions_binary.tsv")
-  file("ar_predictions.tsv")
+  file("ar_predictions_binary.tsv") into ar_matrix
+  file("ar_predictions.tsv") into ar_tsv
 
   when:
   params.ar == true
@@ -310,55 +351,6 @@ process amrfinder_summary {
   """
 }
 
-//CG Step3: Align with Roary
-process roary {
-  publishDir "${params.outdir}/core_alignment",mode:'copy'
-  numGenomes = 0
-  input:
-  file(genomes) from annotated_genomes.collect()
-
-  output:
-  file("core_gene_alignment.aln") into core_aligned_genomes
-  file "core_genome_statistics.txt" into core_aligned_stats
-
-  when:
-  params.cg == true
-
-  script:
-  if(params.roary_mafft == true){
-    mafft="-n"
-  }else{mafft=""}
-  """
-  cpus=`grep -c ^processor /proc/cpuinfo`
-  roary -e ${mafft} -p \$cpus ${genomes}
-  mv summary_statistics.txt core_genome_statistics.txt
-  """
-}
-
-//CG Step4: IQTree for core-genome
-process cg_tree {
-  publishDir "${params.outdir}/core_genome_tree",mode:'copy'
-
-  input:
-  file(alignedGenomes) from core_aligned_genomes
-
-  output:
-  file("core_genome.tree") optional true
-
-  when:
-  params.cg == true
-
-  script:
-    """
-    numGenomes=`grep -o '>' core_gene_alignment.aln | wc -l`
-    if [ \$numGenomes -gt 3 ]
-    then
-      iqtree -nt AUTO -s core_gene_alignment.aln -m ${params.cg_tree_model} -bb 1000
-      mv core_gene_alignment.aln.contree core_genome.tree
-    fi
-    """
-}
-
 //Collect Results
 process multiqc {
   tag "$prefix"
@@ -394,7 +386,7 @@ process mash {
   set val(name), file(assembly) from assembled_genomes_mash
 
   output:
-  file "${name}.mash.txt"
+  file "${name}.mash.txt" 
 
   script:
   """
@@ -417,4 +409,31 @@ process mlst {
   """
   mlst --nopath *.fa > mlst.tsv
   """
+}
+
+if (params.report != "") {
+
+  Channel
+    .fromPath(params.report)
+    .set { report }
+
+  process render{
+    publishDir "${params.outdir}/report", mode: 'copy', pattern: "*.pdf"
+
+    input:
+    file(snp) from snp_mat
+    file(tree) from outChannel
+    file(ar) from ar_tsv
+    file(rmd) from report
+
+    output:
+    file "cluster_report.pdf"
+    shell:
+
+    """
+    cp ${rmd} ./report_template.Rmd
+    Rscript /reports/render_dryad.R ${snp} ${tree} ${ar} ./report_template.Rmd
+    mv report.pdf cluster_report.pdf
+    """
+    }
 }
