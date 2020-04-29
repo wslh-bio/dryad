@@ -17,7 +17,8 @@ setuptools.setup(
     include_package_data=True,
     entry_points={
             "console_scripts":[
-            'dryad = dryad_app.dryad:main'
+            'dryad = dryad_app.dryad:main',
+            'dryad_report = dryad_app.dryad_report:main'
             ]},
     classifiers=[
         "Programming Language :: Python :: 3",
