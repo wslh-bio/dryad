@@ -1,4 +1,4 @@
-![Dryad](dryad_logo_250.png)
+![Dryad](dryad_app/assets/dryad_logo_500.png)
 
 Latest Release: ![Latest Release](https://img.shields.io/github/v/release/k-florek/dryad)
 [![Build Status](https://travis-ci.org/k-florek/dryad.svg?branch=master)](https://travis-ci.org/k-florek/dryad)
