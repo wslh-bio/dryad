@@ -2,7 +2,7 @@
 
 //Description: Workflow for building various trees from raw illumina reads
 //Author: Kelsey Florek and Abigail Shockey
-//eMail: kelsey.florek@slh.wisc.edu
+//email: kelsey.florek@slh.wisc.edu, abigail.shockey@slh.wisc.edu
 
 //setup channel to read in and pair the fastq files
 Channel
@@ -40,7 +40,7 @@ process preProcess {
 //Step1a: FastQC
 process fastqc {
   tag "$name"
-  publishDir "${params.outdir}/fastqc", mode: 'copy',saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
+  publishDir "${params.outdir}/logs/fastqc", mode: 'copy',saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
 
   input:
   set val(name), file(reads) from read_files_fastqc
@@ -57,8 +57,9 @@ process fastqc {
 //Step1b: Trim with Trimmomatic
 process trim {
   tag "$name"
-  publishDir "${params.outdir}/trimmed", mode: 'copy'
-
+  if(params.savetrimmedreads){
+    publishDir "${params.outdir}/trimmed", mode: 'copy'
+  }
   input:
   set val(name), file(reads) from read_files_trimming
 
@@ -77,7 +78,7 @@ process trim {
 //Step2: Remove PhiX contamination
 process cleanreads {
   tag "$name"
-  publishDir "${params.outdir}/cleanedreads", mode: 'copy',pattern:"*.stats.txt"
+  publishDir "${params.outdir}/logs/cleanedreads", mode: 'copy',pattern:"*.stats.txt"
 
   input:
   set val(name), file(reads) from trimmed_reads
@@ -98,7 +99,7 @@ process cleanreads {
 if (params.snp) {
     //SNP Step1: Run CFSAN-SNP Pipeline
     process cfsan {
-      publishDir "${params.outdir}/cfsan-snp", mode: 'copy'
+      publishDir "${params.outdir}/results/cfsan-snp", mode: 'copy'
 
       input:
       file(reads) from cleaned_reads_snp.collect()
@@ -145,7 +146,7 @@ if (params.snp) {
 
     //SNP Step2: Run IQTREE on snp alignment
     process snp_tree {
-      publishDir "${params.outdir}/snp_tree", mode: 'copy'
+      publishDir "${params.outdir}/results", mode: 'copy'
 
       input:
       file(snp_fasta) from snp_alignment
@@ -169,7 +170,7 @@ if (params.snp) {
 process shovill {
   errorStrategy 'ignore'
   tag "$name"
-  publishDir "${params.outdir}/assembled", mode: 'copy'
+  publishDir "${params.outdir}/results/assembled", mode: 'copy'
 
   input:
   set val(name), file(reads) from cleaned_reads_cg
@@ -188,7 +189,7 @@ process shovill {
 //CG Step2a: Assembly Quality Report
 process quast {
   errorStrategy 'ignore'
-  publishDir "${params.outdir}/quast",mode:'copy'
+  publishDir "${params.outdir}/logs/quast",mode:'copy'
 
   input:
   file(assemblies) from assembled_genomes_quality.collect()
@@ -208,7 +209,7 @@ process quast {
 process prokka {
   errorStrategy 'ignore'
   tag "$name"
-  publishDir "${params.outdir}/annotated",mode:'copy'
+  publishDir "${params.outdir}/results/annotated",mode:'copy'
 
   input:
   set val(name), file(assembly) from assembled_genomes_annotation
@@ -227,7 +228,8 @@ process prokka {
 
 //CG Step3: Align with Roary
 process roary {
-  publishDir "${params.outdir}/core_alignment",mode:'copy'
+  publishDir "${params.outdir}/results",mode:'copy'
+
   numGenomes = 0
   input:
   file(genomes) from annotated_genomes.collect()
@@ -249,14 +251,13 @@ process roary {
 
 //CG Step4: IQTree for core-genome
 process cg_tree {
-  publishDir "${params.outdir}/core_genome_tree",mode:'copy'
+  publishDir "${params.outdir}/results",mode:'copy'
 
   input:
   file(alignedGenomes) from core_aligned_genomes
 
   output:
-  file("core_genome.tree") optional true into outChannel
-
+  file("core_genome.tree") optional true into cgtree
 
   script:
     """
@@ -272,7 +273,7 @@ process cg_tree {
 //AR Step1: Find AR genes with amrfinder+
 process amrfinder {
   tag "$name"
-  publishDir "${params.outdir}/amrfinder",mode:'copy'
+  publishDir "${params.outdir}/results/amrfinder",mode:'copy'
 
   input:
   set val(name), file(assembly) from assembled_genomes_ar
@@ -292,7 +293,7 @@ process amrfinder {
 //AR Step 2: Summarize amrfinder+ results as a binary presence/absence matrix
 process amrfinder_summary {
   tag "$name"
-  publishDir "${params.outdir}/amrfinder",mode:'copy'
+  publishDir "${params.outdir}/results",mode:'copy'
 
   input:
   file(predictions) from ar_predictions.collect()
@@ -354,16 +355,16 @@ process amrfinder_summary {
 //Collect Results
 process multiqc {
   tag "$prefix"
-  publishDir "${params.outdir}/MultiQC", mode: 'copy'
+  publishDir "${params.outdir}/results", mode: 'copy'
   echo true
 
   input:
   //file multiqc_config
   file (fastqc:'fastqc/*') from fastqc_results.collect()
-  file ('*.trim.stats.txt') from trimmed_reads_stats.collect()
-  file ('assembly.report.txt') from quast_report
+  path ('*.trim.stats.txt',stageAs:'*.stats') from trimmed_reads_stats.collect()
+  path ('assembly.report.txt',stageAs:'report.tsv') from quast_report
   file ('core_genome_statistics.txt') from core_aligned_stats
-  file ('*.stats.txt') from read_cleanning_stats.collect()
+  path ('*.stats.txt',stageAs:'*.trim.log') from read_cleanning_stats.collect()
 
 
   output:
@@ -373,14 +374,14 @@ process multiqc {
   script:
   prefix = fastqc[0].toString() - '_fastqc.html' - 'fastqc/'
   """
-  multiqc . 2>&1
+  multiqc . >/dev/null 2>&1
   """
 }
 
 process mash {
   errorStrategy 'ignore'
   tag "$name"
-  publishDir "${params.outdir}/mash",mode:'copy'
+  publishDir "${params.outdir}/results/mash",mode:'copy'
 
   input:
   set val(name), file(assembly) from assembled_genomes_mash
@@ -397,7 +398,7 @@ process mash {
 
 process mlst {
   errorStrategy 'ignore'
-  publishDir "${params.outdir}/mlst",mode:'copy'
+  publishDir "${params.outdir}/results",mode:'copy'
 
   input:
   file(assemblies) from assembled_genomes_mlst.collect()
@@ -418,22 +419,22 @@ if (params.report != "") {
     .set { report }
 
   process render{
-    publishDir "${params.outdir}/report", mode: 'copy', pattern: "*.pdf"
+    publishDir "${params.outdir}/results", mode: 'copy', pattern: "*.[pdf,Rmd]"
 
     input:
-    file(snp) from snp_mat
-    file(tree) from outChannel
-    file(ar) from ar_tsv
-    file(rmd) from report
+    file snp from snp_mat
+    file tree from cgtree
+    file ar from ar_tsv
+    file rmd from report
 
     output:
     file "cluster_report.pdf"
-    shell:
+    file "report_template.Rmd"
 
+    shell:
     """
-    cp ${rmd} ./report_template.Rmd
-    Rscript /reports/render_dryad.R ${snp} ${tree} ${ar} ./report_template.Rmd
+    Rscript /reports/render_dryad.R ${snp} ${tree} ${ar} ${rmd}
     mv report.pdf cluster_report.pdf
     """
-    }
+  }
 }
