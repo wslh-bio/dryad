@@ -6,6 +6,7 @@ Latest Release: ![Latest Release](https://img.shields.io/github/v/release/k-flor
 Dryad is a pipeline to construct reference free core-genome or SNP phylogenetic trees for examining prokaryote relatedness in outbreaks. Dryad accomplishes this using [NextFlow](https://www.nextflow.io/) allowing the pipeline to be run in numerous environments using [docker](https://www.docker.com/) or [singularity](https://sylabs.io/) either locally or in an HPC or cloud environment. Dryad will perform both a reference free core-genome analysis based off of the approach outlined by [Oakeson et. al](https://www.ncbi.nlm.nih.gov/pubmed/30158193) and/or a SNP analysis using the [CFSAN-SNP](https://snp-pipeline.readthedocs.io/en/latest/readme.html) pipeline.
 
 ### Table of Contents:
+<<<<<<< HEAD
 [Installation](#installing-dryad)  
 [Usage](#using-the-pipeline)  
 [Workflow outline](#workflow-outline)
@@ -15,6 +16,16 @@ Dryad is a pipeline to construct reference free core-genome or SNP phylogenetic 
 [Genome cluster report](#genome-cluster-report)  
 [Output](#output-files)  
 [Dependencies](#dependencies)  
+=======
+[Installation](#installing-dryad)
+[Usage](#Using-the-pipeline)  
+[Core-genome](#Core-Genome-phylogenetic-tree-construction)  
+[SNP](#SNP-phylogenetic-tree-construction)                                                                                        
+[Quality assessment](#Quality-assessment)                                                                                         
+[Output](#Output-files)                                                                                                                               
+[Genome cluster report](#Genome-cluster-report)                                                                                                
+[Dependencies](#Dependencies)
+>>>>>>> ceb3820df4e85460f1141aca84532358fb734952
 
 #### Installing Dryad
 Dryad uses a combination of nextflow and containers to function and is dependent on either [Docker](https://docs.docker.com/get-docker/) or [Singularity](https://sylabs.io/guides/3.5/user-guide/quick_start.html#quick-installation-steps).
@@ -26,7 +37,7 @@ The pipeline is designed to start from raw Illumina short reads. All reads must 
 ```
 usage: dryad [-h] [--output <output_path>] [--core-genome] [--snp] [-r <path>]
              [-ar] [--sep sep_chars] [--profile {docker,singularity}]
-             [--config CONFIG] [--get_config] [--resume] [--report <path>]
+             [--config CONFIG] [--get_config] [--resume] [--report]
              [reads_path]
 
 A comprehensive tree building program.
@@ -37,6 +48,7 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   --output <output_path>, -o <output_path>
+<<<<<<< HEAD
                         path to ouput directory, default "dryad_results"
   --core-genome, -cg    construct a core-genome tree
   --snp, -s             construct a SNP tree, requires a reference sequence in
@@ -44,6 +56,18 @@ optional arguments:
   -r <path>             reference sequence for SNP pipeline
   -ar                   detect AR mechanisms
   --sep sep_chars       dryad identifies sample names from the name of the
+=======
+                        Path to ouput directory, default "dryad_results".
+  --core-genome, -cg    Construct a core-genome tree.
+  --snp, -s             Construct a SNP tree. Note: Requires a reference
+                        genome in fasta format (-r).
+  -ar                   Detect AR mechanisms.
+  -r <path>             Reference genome for SNP pipeline.
+  --report <path>       Path to report RMarkdown file
+  --profile profile_name
+                        Specify a custom nextflow profile.
+  --sep sep_chars       Dryad identifies sample names from the name of the
+>>>>>>> ceb3820df4e85460f1141aca84532358fb734952
                         read file by splitting the name on the specified
                         separating characters, default "_"
   --profile {docker,singularity}
@@ -113,7 +137,11 @@ IQ-Tree uses an alignment of the SNP sites to create a maximum likelihood phylog
 The results of quality checks from each pipeline are summarized using [MultiQC v1.8](https://multiqc.info/)
 
 #### Genome cluster report
+<<<<<<< HEAD
 Dryad can generate an easily attributable analysis report. This uses RMarkdown and the results from the SNP and core genome pipelines to generate the genome cluster report. This option can be run using `--report`. The plotting defaults of the RMarkdown file (/report/report.Rmd) can be modified as necessary.
+=======
+Dryad uses RMarkdown and the results from the SNP and core genome pipelines to generate a genome cluster report. This option can be run using --report. The plotting defaults of the RMarkdown file (/report/report.Rmd) can be modified as necessary.
+>>>>>>> ceb3820df4e85460f1141aca84532358fb734952
 
 #### Output files
 
@@ -154,7 +182,13 @@ dryad_results
 **multiqc_report.html** - QC report.   
 **snp_distance_matrix.tsv** - The SNP distances generated by the SNP pipeline.
 **snp_tree.tree** - The SNP tree created by the SNP pipeline.  
+<<<<<<< HEAD
 **snpma.fasta** - The SNP alignment.  
+=======
+**snp_distance_matrix.tsv** - The SNP distances generated by the SNP pipeline.  
+**multiqc_report.html** - QC report.                                                                                                       
+**cluster_report.pdf** - Genome cluster report.
+>>>>>>> ceb3820df4e85460f1141aca84532358fb734952
 
 #### Authors
 [Kelsey Florek](https://github.com/k-florek), WSLH Bioinformatics Scientist  
