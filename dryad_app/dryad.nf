@@ -419,7 +419,7 @@ if (params.report != "") {
     .set { report }
 
   process render{
-    publishDir "${params.outdir}/results", mode: 'copy', pattern: "*.[pdf,Rmd]"
+    publishDir "${params.outdir}/results", mode: 'copy'
 
     input:
     file snp from snp_mat
@@ -429,11 +429,11 @@ if (params.report != "") {
 
     output:
     file "cluster_report.pdf"
-    file "report_template.Rmd"
 
     shell:
     """
-    Rscript /reports/render_dryad.R ${snp} ${tree} ${ar} ${rmd}
+    cp ${rmd} ./report_template.Rmd
+    Rscript /reports/render_dryad.R ${snp} ${tree} report_template.Rmd ${ar}
     mv report.pdf cluster_report.pdf
     """
   }
