@@ -74,7 +74,7 @@ def main():
         config = "-C " + os.path.abspath(args.config)
         profile = ""
     elif args.profile:
-        profile = args.profile
+        profile = '-profile ' + args.profile
     elif not profile:
         print('Singularity or Docker is not installed or not in found in PATH.')
         sys.exit(1)
