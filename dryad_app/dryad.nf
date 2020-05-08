@@ -413,24 +413,6 @@ process multiqc {
   """
 }
 
-process mash {
-  errorStrategy 'ignore'
-  tag "$name"
-  publishDir "${params.outdir}/results/mash",mode:'copy'
-
-  input:
-  set val(name), file(assembly) from assembled_genomes_mash
-
-  output:
-  file "${name}.mash.txt"
-
-  script:
-  """
-  mash dist /db/RefSeqSketchesDefaults.msh ${assembly} > ${name}.txt
-  sort -gk3 ${name}.txt | head > ${name}.mash.txt
-  """
-}
-
 process mlst {
   errorStrategy 'ignore'
   publishDir "${params.outdir}/results",mode:'copy'
