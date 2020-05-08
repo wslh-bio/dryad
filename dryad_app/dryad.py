@@ -93,8 +93,12 @@ def main():
     if args.snp:
         selections += f" --snp --snp_reference {args.r}"
     if args.report and args.snp and args.core_genome:
+<<<<<<< HEAD
         report_template_path = os.path.abspath(os.path.dirname(__file__) + '/' + '../report/report.Rmd')
         selections += f" --report {report_template_path}"
+=======
+        selections += f" --report {args.report}"
+>>>>>>> ceb3820df4e85460f1141aca84532358fb734952
     #add other arguments
     other_args = f"--name_split_on {args.sep} --outdir {args.output}"
     #build command

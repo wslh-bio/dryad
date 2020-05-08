@@ -229,6 +229,7 @@ process prokka {
 //CG Step3: Align with Roary
 process roary {
   publishDir "${params.outdir}/results",mode:'copy'
+
   numGenomes = 0
   input:
   file(genomes) from annotated_genomes.collect()
@@ -386,7 +387,7 @@ process mash {
   set val(name), file(assembly) from assembled_genomes_mash
 
   output:
-  file "${name}.mash.txt"
+  file "${name}.mash.txt" 
 
   script:
   """
@@ -418,7 +419,7 @@ if (params.report != "") {
     .set { report }
 
   process render{
-    publishDir "${params.outdir}/results", mode: 'copy', pattern: "*.[pdf,Rmd]"
+    publishDir "${params.outdir}/results", mode: 'copy'
 
     input:
     file snp from snp_mat
@@ -428,11 +429,11 @@ if (params.report != "") {
 
     output:
     file "cluster_report.pdf"
-    file "report_template.Rmd"
 
     shell:
     """
-    Rscript /reports/render_dryad.R ${snp} ${tree} ${ar} ${rmd}
+    cp ${rmd} ./report_template.Rmd
+    Rscript /reports/render_dryad.R ${snp} ${tree} report_template.Rmd ${ar}
     mv report.pdf cluster_report.pdf
     """
   }
