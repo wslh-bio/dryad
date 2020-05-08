@@ -14,7 +14,7 @@ import re, sys
 
 def main():
     #get nextflow executable
-    lib_path = os.path.abspath(os.path.dirname(__file__) + '/' + '../lib')
+    lib_path = os.path.abspath(os.path.dirname(__file__) + '/lib')
     dryad_path = os.path.abspath(os.path.dirname(__file__))
     nextflow_path = os.path.join(lib_path,'nextflow')
 
@@ -79,7 +79,7 @@ def main():
         work = f"-w {output_work}"
 
     rmd = os.path.abspath(args.rmd)
-    logo_path = os.path.abspath(os.path.dirname(__file__) + '/' + 'assets/dryad_logo_250.png')
+    logo_path = os.path.abspath(os.path.dirname(__file__) + '/assets/dryad_logo_250.png')
     snp_mat = "--snp_matrix " + os.path.abspath(args.snp_matrix)
     cg_tree = "--cg_tree " + os.path.abspath(args.cg_tree)
     if args.ar:

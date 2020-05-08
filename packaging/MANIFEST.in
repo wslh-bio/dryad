@@ -1,4 +1,1 @@
-recursive-include dryad/app *
-include dryad/lib/nextflow
-include dryad/report/report.Rmd
-include dryad/requirements.txt
+recursive-include dryad_app *

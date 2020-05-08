@@ -14,7 +14,7 @@ import re, sys
 
 def main():
     #get nextflow executable
-    lib_path = os.path.abspath(os.path.dirname(__file__) + '/' + '../lib')
+    lib_path = os.path.abspath(os.path.dirname(__file__) + '/lib')
     dryad_path = os.path.abspath(os.path.dirname(__file__))
     nextflow_path = os.path.join(lib_path,'nextflow')
 
@@ -96,8 +96,8 @@ def main():
     if args.snp:
         selections += f" --snp --snp_reference {args.r}"
     if args.report and args.snp and args.core_genome:
-        report_template_path = os.path.abspath(os.path.dirname(__file__) + '/' + '../report/report.Rmd')
-        logo_path = os.path.abspath(os.path.dirname(__file__) + '/' + 'assets/dryad_logo_250.png')
+        report_template_path = os.path.abspath(os.path.dirname(__file__) + '/report/report.Rmd')
+        logo_path = os.path.abspath(os.path.dirname(__file__) + '/assets/dryad_logo_250.png')
         selections += f" --report {report_template_path} --logo {logo_path}"
 
     #path for multiqc config
