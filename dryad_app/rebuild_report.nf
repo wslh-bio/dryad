@@ -15,7 +15,7 @@ Channel.fromPath(params.ar_tsv).set{ ar_tsv }
 Channel.fromPath(params.report).set{ report }
 
 process render{
-  publishDir "${params.outdir}/report", mode: 'copy', pattern: "*.[pdf,Rmd]"
+  publishDir "${params.outdir}/results", mode: 'copy'
 
   input:
   file snp from snp_mat
@@ -24,12 +24,13 @@ process render{
   file rmd from report
 
   output:
-  file "cluster_report.pdf"
-  file "report_template.Rmd"
+  file("cluster_report.pdf")
+  file("report_template.Rmd")
 
   shell:
   """
-  Rscript /reports/render_dryad.R ${snp} ${tree} ${ar} ${rmd}
+  Rscript /reports/render.R ${snp} ${tree} ${ar} ${rmd}
   mv report.pdf cluster_report.pdf
+  mv ${rmd} report_template.Rmd
   """
 }
