@@ -470,6 +470,7 @@ if (params.report != "") {
     """
     Rscript /reports/render.R ${snp} ${tree} ${ar} ${rmd}
     mv report.pdf cluster_report.pdf
+    mv ${rmd} report_template.Rmd
     """
   }
 }
