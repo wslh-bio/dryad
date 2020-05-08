@@ -79,7 +79,7 @@ def main():
         else:
             print(f"{args.profile} is not installed or found in PATH.")
     elif not profile:
-        print('Singularity or Docker is not installed or not in found in PATH.')
+        print('Singularity or Docker is not installed or not found in PATH.')
         sys.exit(1)
 
     #set work dir into local logs dir if profile not aws
