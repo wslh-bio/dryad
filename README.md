@@ -26,7 +26,7 @@ The pipeline is designed to start from raw Illumina short reads. All reads must 
 ```
 usage: dryad [-h] [--output <output_path>] [--core-genome] [--snp] [-r <path>]
              [-ar] [--sep sep_chars] [--profile {docker,singularity}]
-             [--config CONFIG] [--get_config] [--resume] [--report <path>]
+             [--config CONFIG] [--get_config] [--resume] [--report]
              [reads_path]
 
 A comprehensive tree building program.
