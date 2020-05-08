@@ -22,6 +22,7 @@ urlcolor: purplepeopleeater
 \fancyhf{}
 
 <!-- header content -->
+\fancyhead[L]{\raisebox{-0.25\height}{\includegraphics[height = 2.5cm]{dryad_logo_250.png}}}
 \fancyhead[R]{\Huge Genomic Clustering Report\\
 \Large `r paste(Sys.Date())`}
 
@@ -122,15 +123,15 @@ tip_font_size <- 2
 The dryad analyses have been completed. These results must always be used in conjunction with epidemiological data when determining if isolates are epidemiologically linked. This analysis should not be used as a replacement for a thorough epidemiological investigation.
 
 
-### Antibiotic Resistance Genes
-
-The table below contains antibiotic resistance genes identified by AMRFinderPlus in each isolate.
-
+`r if(exists("ar_df")) {
+"### Antibiotic Resistance Genes
+The table below contains antibiotic resistance genes identified by AMRFinderPlus in each isolate."
+}`
 ```{r ar-table, echo=FALSE, message=FALSE, warning=FALSE}
-
-kable(ar_df) %>%
-  kable_styling(bootstrap_options = c("striped", "bordered"), full_width = F)
-
+if (exists("ar_df")){
+  kable(ar_df) %>%
+    kable_styling(full_width = F, bootstrap_options = c("striped", "hover", "condensed"))
+}
 ```
 \newpage
 
@@ -267,4 +268,4 @@ gtree + xlim(xmin,xmax)
 
 ### Methods
 
-The figures shown here were generated using sequence data processed with our data analysis pipeline, Dryad v1.1 ([https://github.com/k-florek/dryad](https://github.com/k-florek/dryad)). SNPs were called using the Center for Food Safety and Applied Nutrition ([CFSAN](https://github.com/CFSAN-Biostatistics/snp-pipeline)) SNP pipeline within Dryad. The core-genome tree was generated using an alignment of coding regions shared across 99% of isolates. The tree was generated using a maximum-likelihood method with the GTR+G substitution model and bootstrapped with 1000 replicates. Report generated using R and designed by Abigail Shockey. If you have questions about this report please contact Kelsey Florek at [kelsey.florek@slh.wisc.edu](mailto:kelsey.florek@slh.wisc.edu).
+The figures shown here were generated using sequence data processed with our data analysis pipeline, Dryad v2.0.0 ([https://github.com/k-florek/dryad](https://github.com/k-florek/dryad)). SNPs were called using the Center for Food Safety and Applied Nutrition ([CFSAN](https://github.com/CFSAN-Biostatistics/snp-pipeline)) SNP pipeline within Dryad. The core-genome tree was generated using an alignment of coding regions shared across 99% of isolates. The tree was generated using a maximum-likelihood method with the GTR+G substitution model and bootstrapped with 1000 replicates. Report generated using R and designed by Abigail Shockey. If you have questions about this report please contact Kelsey Florek at [kelsey.florek@slh.wisc.edu](mailto:kelsey.florek@slh.wisc.edu).

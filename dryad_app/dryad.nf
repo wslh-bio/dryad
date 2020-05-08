@@ -435,6 +435,10 @@ if (params.report != "") {
     .fromPath(params.report)
     .set { report }
 
+  Channel
+    .fromPath(params.logo)
+    .set { logo }
+
   process render{
     publishDir "${params.outdir}/results", mode: 'copy'
 
@@ -443,6 +447,7 @@ if (params.report != "") {
     file tree from cgtree
     file ar from ar_tsv
     file rmd from report
+    file dryad_logo from logo
 
     output:
     file("cluster_report.pdf")
@@ -450,7 +455,8 @@ if (params.report != "") {
 
     shell:
     """
-    Rscript /reports/render.R ${snp} ${tree} ${ar} ${rmd}
+
+    Rscript /reports/render.R ${snp} ${tree} ${rmd} ${ar}
     mv report.pdf cluster_report.pdf
     mv ${rmd} report_template.Rmd
     """

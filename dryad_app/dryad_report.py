@@ -26,12 +26,13 @@ def main():
             sys.exit(2)
 
     parser = MyParser(description='Rebuild a previously generated PDF report.')
-    parser.add_argument('--snp_matrix',type=str,help="path to snp matrix")
-    parser.add_argument('--cg_tree',type=str,help="path to core genome tree")
+    parser.add_argument('rmd',type=str,help="path to Rmarkdown file (.Rmd)",nargs='?', default=False)
+    parser.add_argument('snp_matrix',type=str,help="path to snp matrix",nargs='?', default=False)
+    parser.add_argument('cg_tree',type=str,help="path to core genome tree",nargs='?', default=False)
     parser.add_argument('--ar',type=str,help="path to ar TSV file")
-    parser.add_argument('--rmd',type=str,help="path to Rmarkdown file (.Rmd)")
-    parser.add_argument('--config','-c', type=str,help="Nextflow custom configureation")
+    parser.add_argument('--profile', type=str,choices=["docker", "singularity"],help="specify nextflow profile, dryad_report will try to use docker first, then singularity")
     parser.add_argument('--get_config',action="store_true",help="get a Nextflow configuration template for dryad")
+    parser.add_argument('--config','-c', type=str,help="Nextflow custom configuration")
 
     args = parser.parse_args()
 
@@ -41,6 +42,12 @@ def main():
         dest_path = os.path.join(os.getcwd(),date.today().strftime("%y-%m-%d")+"_dryad.config")
         copyfile(config_path,dest_path)
         sys.exit()
+
+    #check for reads_path
+    if not args.rmd or not args.snp_matrix or not args.cg_tree:
+        parser.print_help()
+        sys.exit(1)
+
 
     #check if we are using docker or singularity
     if which('docker'):
@@ -56,27 +63,35 @@ def main():
         config = "-C " + os.path.abspath(args.config)
         profile = ""
     elif args.profile:
-        profile = args.profile
+        if which(args.profile):
+            profile = '-profile ' + args.profile
+        else:
+            print(f"{args.profile} is not installed or found in PATH.")
     elif not profile:
-        print('Singularity or Docker is not installed or not in found in PATH.')
+        print('Singularity or Docker is not installed or not found in PATH.')
         sys.exit(1)
 
     #set work dir into local logs dir if profile not aws
     work = ""
+    output_path = os.path.join(os.getcwd(),'rebuild_results')
+    output_work = os.path.join(output_path,'report_work')
     if profile:
-        work = f"-w {args.output}/logs/work"
+        work = f"-w {output_work}"
 
-    if args.rebuild_report:
-        snp_mat = os.path.abspath(args.snp_matrix)
-        cg_tree = os.path.abspath(args.cg_tree)
-        ar_tsv = os.path.abspath(args.ar)
-        rmd = os.path.abspath(args.rmd)
+    rmd = os.path.abspath(args.rmd)
+    logo_path = os.path.abspath(os.path.dirname(__file__) + '/' + 'assets/dryad_logo_250.png')
+    snp_mat = "--snp_matrix " + os.path.abspath(args.snp_matrix)
+    cg_tree = "--cg_tree " + os.path.abspath(args.cg_tree)
+    if args.ar:
+        ar_tsv = "--ar_tsv " + os.path.abspath(args.ar)
+    else:
+        ar_tsv = ""
 
-        #build command
-        command = nextflow_path
-        command = command + f" {config} run {dryad_path}/rebuild_report.nf {profile} --snp_matrix {snp_mat} --cg_tree {cg_tree} --ar_tsv {ar_tsv} --rmd {rmd} {work}"
+    #build command
+    command = nextflow_path
+    command = command + f" {config} run {dryad_path}/rebuild_report.nf {profile} --logo {logo_path} --outdir {output_path} --rmd {rmd} {snp_mat} {cg_tree} {ar_tsv} {work}"
 
     #run command using nextflow in a subprocess
-    print("Starting the Dryad pipeline:")
+    print("Rebuilding Dryad Report:")
     child = pexpect.spawn(command)
     child.interact()
