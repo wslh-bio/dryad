@@ -34,7 +34,7 @@ def main():
     parser.add_argument('-ar',default=False, action="store_true", help="detect AR mechanisms")
     parser.add_argument('--sep',metavar="sep_chars",type=str,help="dryad identifies sample names from the name of the read file by splitting the name on the specified separating characters, default \"_\"",default="_")
     parser.add_argument('--profile', type=str,choices=["docker", "singularity"],help="specify nextflow profile, dryad will try to use docker first, then singularity")
-    parser.add_argument('--config','-c', type=str,help="Nextflow custom configureation")
+    parser.add_argument('--config','-c', type=str,help="Nextflow custom configuration")
     parser.add_argument('--get_config',action="store_true",help="get a Nextflow configuration template for dryad")
     parser.add_argument('--resume', default="", action="store_const",const="-resume",help="resume a previous run")
     parser.add_argument('--report',action="store_true",help="generte a pdf report")
@@ -97,7 +97,8 @@ def main():
         selections += f" --snp --snp_reference {args.r}"
     if args.report and args.snp and args.core_genome:
         report_template_path = os.path.abspath(os.path.dirname(__file__) + '/' + '../report/report.Rmd')
-        selections += f" --report {report_template_path}"
+        logo_path = os.path.abspath(os.path.dirname(__file__) + '/' + 'assets/dryad_logo_250.png')
+        selections += f" --report {report_template_path} --logo {logo_path}"
 
     #path for multiqc config
     mqc_config_path = f"--multiqc_config " + os.path.join(dryad_path,"configs/multiqc_config.yaml")
