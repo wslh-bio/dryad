@@ -95,11 +95,17 @@ def main():
     if args.report and args.snp and args.core_genome:
         report_template_path = os.path.abspath(os.path.dirname(__file__) + '/' + '../report/report.Rmd')
         selections += f" --report {report_template_path}"
+
+    #path for multiqc config
+    mqc_config_path = f"--multiqc_config " + os.path.join(dryad_path,"configs/multiqc_config.yaml")
+    mqc_logo_path =  f"--multiqc_logo " + os.path.join(dryad_path,"assets/dryad_logo_250.png")
+
     #add other arguments
     other_args = f"--name_split_on {args.sep} --outdir {args.output}"
+
     #build command
     command = nextflow_path
-    command = command + f" {config} run {dryad_path}/dryad.nf {profile} {args.resume} --reads {args.reads_path} {selections} {other_args} {work}"
+    command = command + f" {config} run {dryad_path}/dryad.nf {profile} {args.resume} --reads {args.reads_path} {selections} {other_args} {mqc_config_path} {mqc_logo_path} -with-trace {args.output}/logs/dryad_trace.txt -with-report {args.output}/logs/dryad_execution_report.html {work}"
 
     #run command using nextflow in a subprocess
     print("Starting the Dryad pipeline:")
