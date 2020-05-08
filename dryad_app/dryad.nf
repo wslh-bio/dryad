@@ -254,6 +254,7 @@ process prokka {
 //CG Step3: Align with Roary
 process roary {
   publishDir "${params.outdir}/results",mode:'copy'
+
   numGenomes = 0
   input:
   file(genomes) from annotated_genomes.collect()
@@ -412,6 +413,24 @@ process multiqc {
   """
 }
 
+process mash {
+  errorStrategy 'ignore'
+  tag "$name"
+  publishDir "${params.outdir}/results/mash",mode:'copy'
+
+  input:
+  set val(name), file(assembly) from assembled_genomes_mash
+
+  output:
+  file "${name}.mash.txt"
+
+  script:
+  """
+  mash dist /db/RefSeqSketchesDefaults.msh ${assembly} > ${name}.txt
+  sort -gk3 ${name}.txt | head > ${name}.mash.txt
+  """
+}
+
 process mlst {
   errorStrategy 'ignore'
   publishDir "${params.outdir}/results",mode:'copy'
@@ -435,7 +454,7 @@ if (params.report != "") {
     .set { report }
 
   process render{
-    publishDir "${params.outdir}/results", mode: 'copy', pattern: "*.[pdf,Rmd]"
+    publishDir "${params.outdir}/results", mode: 'copy'
 
     input:
     file snp from snp_mat
