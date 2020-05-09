@@ -5,8 +5,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="dryad",
-    version="2.0.0",
+    name="dryad-krflore",
+    version="2.0.0a4",
     author="Kelsey Florek",
     author_email="kelsey.florek@slh.wisc.edu",
     description="A pipeline to construct reference free core-genome or SNP phylogenetic trees for examining prokaryote relatedness in outbreaks.",

@@ -8,28 +8,54 @@ params.snp_matrix = ""
 params.cg_tree = ""
 params.ar_tsv = ""
 params.rmd = ""
+params.logo = ""
 
-Channel.fromPath(params.snp_matrix).set{ snp_mat }
-Channel.fromPath(params.cg_tree).set{ cgtree }
-Channel.fromPath(params.ar_tsv).set{ ar_tsv }
-Channel.fromPath(params.report).set{ report }
+
+Channel
+  .fromPath(params.snp_matrix)
+  .set{ snp_mat }
+
+Channel
+  .fromPath(params.cg_tree)
+  .set{ cgtree }
+
+Channel
+  .fromPath(params.rmd)
+  .set{ report }
+
+Channel
+  .fromPath(params.logo)
+  .set{ logo }
+
+if(params.ar_tsv){
+  Channel
+    .fromPath(params.ar_tsv)
+    .set{ ar_tsv }
+}else{
+  Channel
+    .empty()
+    .set{ ar_tsv }
+}
+
 
 process render{
-  publishDir "${params.outdir}/report", mode: 'copy', pattern: "*.[pdf,Rmd]"
+  publishDir "${params.outdir}", mode: 'copy'
+  stageInMode 'link'
 
   input:
   file snp from snp_mat
   file tree from cgtree
   file ar from ar_tsv
   file rmd from report
+  file dryad_logo from logo
 
   output:
-  file "cluster_report.pdf"
-  file "report_template.Rmd"
+  file("cluster_report.pdf")
+  file(rmd)
 
   shell:
   """
-  Rscript /reports/render_dryad.R ${snp} ${tree} ${ar} ${rmd}
+  Rscript /reports/render.R ${snp} ${tree} ${rmd} ${ar}
   mv report.pdf cluster_report.pdf
   """
 }
