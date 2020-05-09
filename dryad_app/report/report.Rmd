@@ -49,10 +49,10 @@ library(phytools)
 library(dplyr)
 library(kableExtra)
 library(viridis)
+library(pander)
 
 date <- Sys.Date()
 
-## Figure size
 ## Figure size
 knitr::opts_chunk$set(out.width="7.5in", out.height="8in", fig.align="left")
 
@@ -122,18 +122,22 @@ tip_font_size <- 2
 
 The dryad analyses have been completed. These results must always be used in conjunction with epidemiological data when determining if isolates are epidemiologically linked. This analysis should not be used as a replacement for a thorough epidemiological investigation.
 
-
 `r if(exists("ar_df")) {
+
 "### Antibiotic Resistance Genes
+
 The table below contains antibiotic resistance genes identified by AMRFinderPlus in each isolate."
 }`
+
 ```{r ar-table, echo=FALSE, message=FALSE, warning=FALSE}
 if (exists("ar_df")){
-  kable(ar_df) %>%
-    kable_styling(full_width = F, bootstrap_options = c("striped", "hover", "condensed"))
+    pander(ar_df)
 }
+
 ```
-\newpage
+`r if(exists("ar_df")) {
+  "\newpage"
+}`
 
 ### SNP Heatmap
 
