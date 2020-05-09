@@ -1,6 +1,6 @@
 ![Dryad](dryad_app/assets/dryad_logo_500.png)
 
-Latest Release: ![Latest Release](https://img.shields.io/github/v/release/k-florek/dryad)
+![Latest Release](https://img.shields.io/github/v/release/k-florek/dryad)  
 [![Build Status](https://travis-ci.org/k-florek/dryad.svg?branch=master)](https://travis-ci.org/k-florek/dryad)
 
 Dryad is a pipeline to construct reference free core-genome or SNP phylogenetic trees for examining prokaryote relatedness in outbreaks. Dryad accomplishes this using [NextFlow](https://www.nextflow.io/) allowing the pipeline to be run in numerous environments using [docker](https://www.docker.com/) or [singularity](https://sylabs.io/) either locally or in an HPC or cloud environment. Dryad will perform both a reference free core-genome analysis based off of the approach outlined by [Oakeson et. al](https://www.ncbi.nlm.nih.gov/pubmed/30158193) and/or a SNP analysis using the [CFSAN-SNP](https://snp-pipeline.readthedocs.io/en/latest/readme.html) pipeline.
