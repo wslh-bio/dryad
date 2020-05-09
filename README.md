@@ -148,8 +148,8 @@ dryad_results
 **ar_predictions_binary.tsv** - Presence/absence matrix of antibiotic resistance genes.  
 **ar_predictions.tsv** - Antibiotic tesistance genes detected.  
 **cluster_report.pdf** - Genome cluster report.  
-**core_gene_alignment.aln** - Alignment of the core set of genes.
-**core_gene_statistics.txt** - Information about the number of core genes.
+**core_gene_alignment.aln** - Alignment of the core set of genes.  
+**core_gene_statistics.txt** - Information about the number of core genes.  
 **core_genome_tree.tree** - The core-genome phylogenetic tree created by the core-genome pipeline.  
 **mash/{sample}.mash.txt** - Species prediction for each sample.  
 **mlst.tsv** - MLST scheme predictions.  
