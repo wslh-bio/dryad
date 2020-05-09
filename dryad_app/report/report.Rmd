@@ -135,9 +135,6 @@ if (exists("ar_df")){
 }
 
 ```
-`r if(exists("ar_df")) {
-  "\newpage"
-}`
 
 ### SNP Heatmap
 
