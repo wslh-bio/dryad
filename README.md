@@ -16,12 +16,12 @@ Dryad is a pipeline to construct reference free core-genome or SNP phylogenetic 
 [Output](#output-files)  
 [Dependencies](#dependencies)  
 
-#### Installing Dryad
+### Installing Dryad
 Dryad uses a combination of nextflow and containers to function and is dependent on either [Docker](https://docs.docker.com/get-docker/) or [Singularity](https://sylabs.io/guides/3.5/user-guide/quick_start.html#quick-installation-steps).
 
 Installing dryad can be done with pip using `pip install dryad`. If you are running Dryad from the git repository, a python dependency needs to be installed via pip using `pip install -r requirements.txt`.
 
-#### Using the pipeline
+### Using the pipeline
 The pipeline is designed to start from raw Illumina short reads. All reads must be in the same directory. Then start the pipeline using `dryad` and follow the options for selecting and running the appropriate pipeline.
 ```
 usage: dryad [-h] [--output <output_path>] [--core-genome] [--snp] [-r <path>]
@@ -59,14 +59,14 @@ optional arguments:
 Both pipelines begin with a quality trimming step to trim the reads of low quality bases at the end of the read using [Trimmomatic v0.39](http://www.usadellab.org/cms/?page=trimmomatic), the removal of PhiX contamination using [BBtools v38.76](https://jgi.doe.gov/data-and-tools/bbtools/), and the assessment of read quality using [FastQC v0.11.8](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/). After processing, the reads are used by each pipeline as needed.  
 *Note: Both pipelines can be run automatically in succession using the -cg and -s parameters simultaneously.*
 
-###### Additional workflow parameters
+##### Additional workflow parameters
 In order to tweak the versions of software used or specific workflow parameters. You can obtain the configuration file using `--get_config`. Then use the custom configuration with the `--profile` flag when running dryad.
 
-#### Workflow outline
+### Workflow outline
 
 ![Workflow](dryad_workflow_2.0.0.png)
 
-#### Core Genome phylogenetic tree construction
+### Core Genome phylogenetic tree construction
 The core genome pipeline takes the trimmed and cleaned reads and infers a phylogenetic tree that can be used for inferring outbreak relatedness. This pipeline is based loosely off of the pipeline described here by [Oakeson et. al](https://www.ncbi.nlm.nih.gov/pubmed/30158193).
 
 Species and MLST type are predicted from the assemblies generated during the core genome pipeline, and assembly quality is evaluated.
@@ -99,7 +99,7 @@ QUAST evaluates genome assemblies.
 [AMRFinderPlus v3.1.1](https://github.com/ncbi/amr)
 AMRFinderPlus identifies acquired antimicrobial resistance genes.
 
-#### SNP phylogenetic tree construction
+### SNP phylogenetic tree construction
 The SNP pipeline takes the trimmed and cleaned reads and infers a phylogenetic tree that can be used for inferring outbreak relatedness. The pipeline requires the path to the raw reads (mentioned above) and a reference genome in fasta file format.
 
 The SNP pipeline uses the following applications and pipelines:
@@ -109,13 +109,13 @@ The SNP pipeline uses the following applications and pipelines:
 [IQ-Tree v1.6.7](http://www.iqtree.org/)
 IQ-Tree uses an alignment of the SNP sites to create a maximum likelihood phylogenetic tree bootstrapped 1000 times.
 
-#### Quality Assessment
+### Quality Assessment
 The results of quality checks from each pipeline are summarized using [MultiQC v1.8](https://multiqc.info/)
 
-#### Genome cluster report
+### Genome cluster report
 Dryad can generate an easily attributable analysis report. This uses RMarkdown and the results from the SNP and core genome pipelines to generate the genome cluster report. This option can be run using `--report`. The plotting defaults of the RMarkdown file (/report/report.Rmd) can be modified as necessary and rebuilt using `dryad_report`.
 
-#### Output files
+### Output files
 
 ```
 dryad_results
@@ -159,6 +159,6 @@ dryad_results
 **snp.tree** - The SNP tree created by the SNP pipeline.  
 **snpma.fasta** - The SNP alignment.  
 
-#### Authors
+### Authors
 [Kelsey Florek](https://github.com/k-florek), WSLH Bioinformatics Scientist  
 [Abigail Shockey](https://github.com/AbigailShockey), WSLH Bioinformatics Fellow
