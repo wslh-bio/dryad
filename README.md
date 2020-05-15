@@ -19,7 +19,7 @@ Dryad is a pipeline to construct reference free core-genome or SNP phylogenetic 
 ### Installing Dryad
 Dryad uses a combination of nextflow and containers to function and is dependent on either [Docker](https://docs.docker.com/get-docker/) or [Singularity](https://sylabs.io/guides/3.5/user-guide/quick_start.html#quick-installation-steps).
 
-Installing dryad can be done with pip using `pip install dryad`. If you are running Dryad from the git repository, a python dependency needs to be installed via pip using `pip install -r requirements.txt`.
+Installing dryad can be done with pip using `pip install dryad` and updated using `pip install -U dryad`. If you are running Dryad from the git repository, a python dependency needs to be installed via pip using `pip install -r requirements.txt`.
 
 ### Using the pipeline
 The pipeline is designed to start from raw Illumina short reads. All reads must be in the same directory. Then start the pipeline using `dryad` and follow the options for selecting and running the appropriate pipeline.
