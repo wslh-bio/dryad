@@ -6,7 +6,7 @@
 
 //setup channel to read in and pair the fastq files
 Channel
-    .fromFilePairs( "${params.reads}/*{R1,R2,_1,_2}*.fastq.gz", size: 2 )
+    .fromFilePairs( "${params.reads}/*{R1,R2,_1,_2}*.{fastq,fq}.gz", size: 2 )
     .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads} Path must not end with /" }
     .set { raw_reads }
 
@@ -22,16 +22,18 @@ process preProcess {
   set val(name), file(reads) from raw_reads
 
   output:
-  tuple name, file("*{R1,R2,_1,_2}.fastq.gz") into read_files_fastqc, read_files_trimming
+  tuple name, file(outfiles) into read_files_fastqc, read_files_trimming
 
   script:
   if(params.name_split_on!=""){
     name = name.split(params.name_split_on)[0]
+    outfiles = ["${name}_R1.fastq.gz","${name}_R2.fastq.gz"]
     """
     mv ${reads[0]} ${name}_R1.fastq.gz
     mv ${reads[1]} ${name}_R2.fastq.gz
     """
   }else{
+    outfiles = reads
     """
     """
   }
@@ -64,15 +66,15 @@ process trim {
   set val(name), file(reads) from read_files_trimming
 
   output:
-  tuple name, file("${name}*{_1,_2}.fastq.gz") into trimmed_reads
+  tuple name, file("${name}_trimmed{_1,_2}.fastq.gz") into trimmed_reads
   file("${name}.trim.stats.txt") into trimmomatic_stats
 
   script:
   """
   cpus=`grep -c ^processor /proc/cpuinfo`
   java -jar /Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads \$cpus ${reads} -baseout ${name}.fastq.gz SLIDINGWINDOW:${params.windowsize}:${params.qualitytrimscore} MINLEN:${params.minlength} 2> ${name}.trim.stats.txt
-  mv ${name}*1P.fastq.gz ${name}_1.fastq.gz
-  mv ${name}*2P.fastq.gz ${name}_2.fastq.gz
+  mv ${name}*1P.fastq.gz ${name}_trimmed_1.fastq.gz
+  mv ${name}*2P.fastq.gz ${name}_trimmed_2.fastq.gz
   """
 }
 //Step2: Remove PhiX contamination
@@ -125,7 +127,9 @@ if (params.snp) {
 
       readDict = {}
       for file in fwd_reads:
-        sid = os.path.basename(file).split('_')[0]
+        sid = os.path.basename(file).split('_')
+        sid = sid[0:(len(sid)-1)]
+        sid = '_'.join(sid)
         fwd_read = glob.glob(sid+"_1.clean.fastq.gz")[0]
         rev_read = glob.glob(sid+"_2.clean.fastq.gz")[0]
         readDict[sid] = [fwd_read,rev_read]
@@ -181,8 +185,7 @@ process shovill {
 
   shell:
   '''
-  ram=`awk '/MemAvailable/ { printf "%.0f \\n", $2/1024/1024 }' /proc/meminfo`
-  shovill --cpus 0 --ram $ram  --outdir . --R1 !{reads[0]} --R2 !{reads[1]} --force
+  shovill --outdir . --R1 !{reads[0]} --R2 !{reads[1]} --force
   mv contigs.fa !{name}.contigs.fa
   '''
 }
@@ -429,18 +432,42 @@ process mlst {
   """
 }
 
-if (params.report) {
+if (params.report && !params.ar) {
 
-  Channel
-    .fromPath(params.report)
-    .set { report }
-
-  Channel
-    .fromPath(params.logo)
-    .set { logo }
+  report = file(params.report)
+  logo = file(params.logo)
 
   process render{
     publishDir "${params.outdir}/results", mode: 'copy'
+    stageInMode = "copy"
+
+    input:
+    file snp from snp_mat
+    file tree from cgtree
+    file rmd from report
+    file dryad_logo from logo
+
+    output:
+    file("cluster_report.pdf")
+    file("report_template.Rmd")
+
+    shell:
+    """
+    Rscript /reports/render.R ${snp} ${tree} ${rmd}
+    mv report.pdf cluster_report.pdf
+    mv ${rmd} report_template.Rmd
+    """
+  }
+}
+
+if (params.report && params.ar) {
+
+  report = file(params.report)
+  logo = file(params.logo)
+
+  process renderWithAR{
+    publishDir "${params.outdir}/results", mode: 'copy'
+    stageInMode = "copy"
 
     input:
     file snp from snp_mat
@@ -455,7 +482,6 @@ if (params.report) {
 
     shell:
     """
-
     Rscript /reports/render.R ${snp} ${tree} ${rmd} ${ar}
     mv report.pdf cluster_report.pdf
     mv ${rmd} report_template.Rmd
