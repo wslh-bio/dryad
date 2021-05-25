@@ -1,6 +1,0 @@
-#!/usr/bin/env python3
-
-import dryad_app.dryad as dryad
-
-if __name__ == '__main__':
-    dryad.main()

@@ -1,12 +1,10 @@
-![Dryad](dryad_app/assets/dryad_logo_250.png)
+![Dryad](/assets/dryad_logo_250.png)
 
-![Latest Release](https://img.shields.io/github/v/release/k-florek/dryad)  
-[![Build Status](https://travis-ci.org/k-florek/dryad.svg?branch=master)](https://travis-ci.org/k-florek/dryad)
+## Note: Dryad is currently undergoing large changes
 
-Dryad is a pipeline to construct reference free core-genome or SNP phylogenetic trees for examining prokaryote relatedness in outbreaks. Dryad accomplishes this using [NextFlow](https://www.nextflow.io/) allowing the pipeline to be run in numerous environments using [docker](https://www.docker.com/) or [singularity](https://sylabs.io/) either locally or in an HPC or cloud environment. Dryad will perform both a reference free core-genome analysis based off of the approach outlined by [Oakeson et. al](https://www.ncbi.nlm.nih.gov/pubmed/30158193) and/or a SNP analysis using the [CFSAN-SNP](https://snp-pipeline.readthedocs.io/en/latest/readme.html) pipeline.
+Dryad is a [NextFlow](https://www.nextflow.io/) pipeline to construct reference free core-genome or SNP phylogenetic trees for examining prokaryote relatedness in outbreaks. Dryad will performs both a reference free core-genome analysis based off of the approach outlined by [Oakeson et. al](https://www.ncbi.nlm.nih.gov/pubmed/30158193) and/or a SNP analysis using the [CFSAN-SNP](https://snp-pipeline.readthedocs.io/en/latest/readme.html) pipeline.
 
 ### Table of Contents:
-[Installation](#installing-dryad)  
 [Usage](#using-the-pipeline)  
 [Workflow outline](#workflow-outline)  
 [Core-genome](#core-Genome-phylogenetic-tree-construction)  
@@ -16,55 +14,15 @@ Dryad is a pipeline to construct reference free core-genome or SNP phylogenetic 
 [Output](#output-files)  
 [Dependencies](#dependencies)  
 
-### Installing Dryad
-Dryad uses a combination of nextflow and containers to function and is dependent on either [Docker](https://docs.docker.com/get-docker/) or [Singularity](https://sylabs.io/guides/3.5/user-guide/quick_start.html#quick-installation-steps).
-
-Installing dryad can be done with pip using `pip install dryad` and updated using `pip install -U dryad`. If you are running Dryad from the git repository, a python dependency needs to be installed via pip using `pip install -r requirements.txt`.
-
 ### Using the pipeline
-The pipeline is designed to start from raw Illumina short reads. All reads must be in the same directory. Then start the pipeline using `dryad` and follow the options for selecting and running the appropriate pipeline.
-```
-usage: dryad [-h] [--output <output_path>] [--core-genome] [--snp] [-r <path>]
-             [-ar] [--sep sep_chars] [--profile {docker,singularity}]
-             [--config CONFIG] [--get_config] [--resume] [--report]
-             [reads_path]
-
-A comprehensive tree building program.
-
-positional arguments:
-  reads_path            path to the directory of raw reads in the fastq format
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --output <output_path>, -o <output_path>
-                        path to ouput directory, default "dryad_results"
-  --core-genome, -cg    construct a core-genome tree
-  --snp, -s             construct a SNP tree, requires a reference sequence in
-                        fasta format (-r)
-  -r <path>             reference sequence for SNP pipeline
-  -ar                   detect AR mechanisms
-  --sep sep_chars       dryad identifies sample names from the name of the
-                        read file by splitting the name on the specified
-                        separating characters, default "_"
-  --profile {docker,singularity}
-                        specify nextflow profile, dryad will try to use docker
-                        first, then singularity
-  --config CONFIG, -c CONFIG
-                        Nextflow custom configureation
-  --get_config          get a Nextflow configuration template for dryad
-  --resume              resume a previous run
-  --report <path>       RMarkdown file for report.
-```
-
-Both pipelines begin with a quality trimming step to trim the reads of low quality bases at the end of the read using [Trimmomatic v0.39](http://www.usadellab.org/cms/?page=trimmomatic), the removal of PhiX contamination using [BBtools v38.76](https://jgi.doe.gov/data-and-tools/bbtools/), and the assessment of read quality using [FastQC v0.11.8](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/). After processing, the reads are used by each pipeline as needed.  
-*Note: Both pipelines can be run automatically in succession using the -cg and -s parameters simultaneously.*
-
-##### Additional workflow parameters
-In order to tweak the versions of software used or specific workflow parameters. You can obtain the configuration file using `--get_config`. Then use the custom configuration with the `--profile` flag when running dryad.
+The pipeline is designed to start from raw Illumina short reads. All reads must be in the same directory. Then start the pipeline using `nextflow run k-florek/dryad`.
 
 ### Workflow outline
 
-![Workflow](dryad_workflow_2.0.0.png)
+![Workflow](/assets/dryad_workflow_2.0.0.png)
+
+Both pipelines begin with a quality trimming step to trim the reads of low quality bases at the end of the read using [Trimmomatic v0.39](http://www.usadellab.org/cms/?page=trimmomatic), the removal of PhiX contamination using [BBtools v38.76](https://jgi.doe.gov/data-and-tools/bbtools/), and the assessment of read quality using [FastQC v0.11.8](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/). After processing, the reads are used by each pipeline as needed.  
+*Note: Both pipelines can be run automatically in succession using the -cg and -s parameters simultaneously.*
 
 ### Core Genome phylogenetic tree construction
 The core genome pipeline takes the trimmed and cleaned reads and infers a phylogenetic tree that can be used for inferring outbreak relatedness. This pipeline is based loosely off of the pipeline described here by [Oakeson et. al](https://www.ncbi.nlm.nih.gov/pubmed/30158193).
@@ -161,4 +119,4 @@ dryad_results
 
 ### Authors
 [Kelsey Florek](https://github.com/k-florek), WSLH Bioinformatics Scientist  
-[Abigail Shockey](https://github.com/AbigailShockey), WSLH Bioinformatics Fellow
+[Abigail Shockey](https://github.com/AbigailShockey), WSLH Bioinformatics Scientist
