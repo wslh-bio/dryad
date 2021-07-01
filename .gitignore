@@ -1,5 +1,1 @@
-__pycache__
-*.pyc
-packaging/dist/*
-packaging/build/*
-packaging/*.egg-info/*
+
