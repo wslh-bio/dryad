@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-//Description: Workflow for building various trees from raw illumina reads
+//Description: Workflow for generating a genomic comparison between HAI/AR samples.
 //Author: Kelsey Florek and Abigail Shockey
 //email: kelsey.florek@slh.wisc.edu, abigail.shockey@slh.wisc.edu
 
@@ -8,21 +8,33 @@
 Channel
     .fromFilePairs( "${params.reads}/*{R1,R2,_1,_2}*.{fastq,fq}.gz", size: 2 )
     .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads} Path must not end with /" }
-    .set { raw_reads }
+    .into { raw_reads; raw_reads_count }
 
-if (params.snp) {
+//check we have at least 3 samples
+Channel
+    .from(raw_reads_count)
+    .collect()
+    .subscribe {
+      int size = it.queue[0].size()
+      if(size < 3){
+        println "Dryad requires 3 or more samples."
+        System.exit(1)
+      }
+    }
+
+if (params.snp_reference) {
     Channel
         .fromPath(params.snp_reference)
         .set { snp_reference }
 }
 
-//Step0: Preprocess reads - change name to end at first underscore
+//Step0: Preprocess reads - change names
 process preProcess {
   input:
   set val(name), file(reads) from raw_reads
 
   output:
-  tuple name, file(outfiles) into read_files_fastqc, read_files_trimming
+  tuple name, file(outfiles) into read_files_fastqc, read_files_trimming, read_files_kraken
 
   script:
   if(params.name_split_on!=""){
@@ -39,13 +51,44 @@ process preProcess {
   }
 }
 
-//Step1a: FastQC
-process fastqc {
+//Step1: Trim reads and remove PhiX contamination
+process clean_reads {
   tag "$name"
-  publishDir "${params.outdir}/logs/fastqc", mode: 'copy',saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
+  publishDir "${params.outdir}/results/trimming", mode: 'copy',pattern:"*.trim.txt"
 
   input:
-  set val(name), file(reads) from read_files_fastqc
+  set val(name), file(reads) from read_files_trimming
+
+  output:
+  tuple name, file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_shovill, cleaned_reads_fastqc, cleaned_reads_snp
+  file("${name}.phix.stats.txt") into phix_cleanning_stats
+  file("${name}.adapters.stats.txt") into adapter_cleanning_stats
+  file("${name}.trim.txt") into trim_stats
+
+  script:
+  """
+  bbduk.sh in1=${reads[0]} in2=${reads[1]} out1=${name}.trimmed_1.fastq.gz out2=${name}.trimmed_2.fastq.gz qtrim=window,${params.windowsize} trimq=${params.qualitytrimscore} minlength=${params.minlength} tbo tbe &> ${name}.out
+
+  repair.sh in1=${name}.trimmed_1.fastq.gz in2=${name}.trimmed_2.fastq.gz out1=${name}.paired_1.fastq.gz out2=${name}.paired_2.fastq.gz
+
+  bbduk.sh in1=${name}.paired_1.fastq.gz in2=${name}.paired_2.fastq.gz out1=${name}.rmadpt_1.fastq.gz out2=${name}.rmadpt_2.fastq.gz ref=/bbmap/resources/adapters.fa stats=${name}.adapters.stats.txt ktrim=r k=23 mink=11 hdist=1 tpe tbo
+
+  bbduk.sh in1=${name}.rmadpt_1.fastq.gz in2=${name}.rmadpt_2.fastq.gz out1=${name}_clean_1.fastq.gz out2=${name}_clean_2.fastq.gz outm=${name}.matched_phix.fq ref=/bbmap/resources/phix174_ill.ref.fa.gz k=31 hdist=1 stats=${name}.phix.stats.txt
+
+  grep -E 'Input:|QTrimmed:|Trimmed by overlap:|Total Removed:|Result:' ${name}.out > ${name}.trim.txt
+  """
+}
+
+//Combine raw reads channel and cleaned reads channel
+combined_reads = read_files_fastqc.concat(cleaned_reads_fastqc)
+
+//QC Step: FastQC
+process fastqc {
+  tag "$name"
+  publishDir "${params.outdir}/fastqc", mode: 'copy',saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
+
+  input:
+  set val(name), file(reads) from combined_reads
 
   output:
   file("*_fastqc.{zip,html}") into fastqc_results
@@ -56,50 +99,137 @@ process fastqc {
   """
 }
 
-//Step1b: Trim with Trimmomatic
-process trim {
-  tag "$name"
-  if(params.savetrimmedreads){
-    publishDir "${params.outdir}/trimmed", mode: 'copy'
-  }
-  input:
-  set val(name), file(reads) from read_files_trimming
-
-  output:
-  tuple name, file("${name}_trimmed{_1,_2}.fastq.gz") into trimmed_reads
-  file("${name}.trim.stats.txt") into trimmomatic_stats
-
-  script:
-  """
-  cpus=`grep -c ^processor /proc/cpuinfo`
-  java -jar /Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads \$cpus ${reads} -baseout ${name}.fastq.gz SLIDINGWINDOW:${params.windowsize}:${params.qualitytrimscore} MINLEN:${params.minlength} 2> ${name}.trim.stats.txt
-  mv ${name}*1P.fastq.gz ${name}_trimmed_1.fastq.gz
-  mv ${name}*2P.fastq.gz ${name}_trimmed_2.fastq.gz
-  """
-}
-//Step2: Remove PhiX contamination
-process cleanreads {
-  tag "$name"
-  publishDir "${params.outdir}/logs/cleanedreads", mode: 'copy',pattern:"*.stats.txt"
+process fastqc_summary {
+  publishDir "${params.outdir}/fastqc", mode: 'copy'
 
   input:
-  set val(name), file(reads) from trimmed_reads
+  file(fastqc) from fastqc_results.collect()
 
   output:
-  tuple name, file("${name}{_1,_2}.clean.fastq.gz") into cleaned_reads_cg
-  file("${name}{_1,_2}.clean.fastq.gz") into cleaned_reads_snp
-  file("${name}.phix.stats.txt") into phix_cleanning_stats
-  file("${name}.adapters.stats.txt") into adapter_cleanning_stats
+  file("fq_summary.txt") into fastqc_summary
 
-  script:
+  shell:
   """
-  repair.sh in1=${reads[0]} in2=${reads[1]} out1=${name}.paired_1.fastq.gz out2=${name}.paired_2.fastq.gz
-  bbduk.sh in1=${name}.paired_1.fastq.gz in2=${name}.paired_2.fastq.gz out1=${name}.rmadpt_1.fastq.gz out2=${name}.rmadpt_2.fastq.gz ref=/bbmap/resources/adapters.fa stats=${name}.adapters.stats.txt ktrim=r k=23 mink=11 hdist=1 tpe tbo
-  bbduk.sh in1=${name}.rmadpt_1.fastq.gz in2=${name}.rmadpt_2.fastq.gz out1=${name}_1.clean.fastq.gz out2=${name}_2.clean.fastq.gz outm=${name}.matched_phix.fq ref=/bbmap/resources/phix174_ill.ref.fa.gz k=31 hdist=1 stats=${name}.phix.stats.txt
+  zips=`ls *.zip`
+
+  for i in \$zips; do
+      unzip -o \$i &>/dev/null;
+  done
+
+  fq_folders=\${zips}
+
+  for folder in \$fq_folders; do
+    folder=\${folder%.*}
+    cat \$folder/summary.txt >> fq_summary.txt
+    ls .
+  done;
+
+  sed -i 's/.fastq.gz//g' fq_summary.txt
   """
 }
 
-if (params.snp) {
+//CG Step1: Assemble trimmed reads with Shovill and map reads back to assembly
+process shovill {
+  errorStrategy 'ignore'
+  tag "$name"
+  publishDir "${params.outdir}/results/assembled", mode: 'copy',pattern:"*.fa"
+  publishDir "${params.outdir}/results/alignments", mode: 'copy',pattern:"*.sam"
+
+  input:
+  set val(name), file(reads) from cleaned_reads_shovill
+
+  output:
+  tuple name, file("${name}.contigs.fa") into assembled_genomes_annotation, assembled_genomes_quality
+  tuple name, file("${name}.sam") into sam_files
+
+  script:
+  """
+  shovill --cpus ${task.cpus} --ram ${task.memory} --outdir ./output --R1 ${reads[0]} --R2 ${reads[1]} --force
+  mv ./output/contigs.fa ${name}.contigs.fa
+  bwa index ${name}.contigs.fa
+  bwa mem ${name}.contigs.fa ${reads[0]} ${reads[1]} > ${name}.sam
+  """
+}
+
+//QC Step: Index and sort bam file then calculate coverage
+process samtools {
+  tag "$name"
+
+  publishDir "${params.outdir}/results/alignments", mode: 'copy',pattern:"*.bam"
+  publishDir "${params.outdir}/results/coverage", mode: 'copy', pattern:"*_depth.tsv*"
+
+  input:
+  set val(name), file(sam) from sam_files
+
+  output:
+  file("${name}_depth.tsv") into cov_files
+
+  shell:
+  """
+  samtools view -S -b ${name}.sam > ${name}.bam
+  samtools sort ${name}.bam > ${name}.sorted.bam
+  samtools index ${name}.sorted.bam
+  samtools depth -a ${name}.sorted.bam > ${name}_depth.tsv
+  """
+}
+
+//QC Step: Calculate coverage stats
+process coverage_stats {
+  publishDir "${params.outdir}/results/coverage", mode: 'copy'
+
+  input:
+  file(cov) from cov_files.collect()
+
+  output:
+  file('coverage_stats.txt')
+
+  script:
+  '''
+  #!/usr/bin/env python3
+  import glob
+  import os
+  from numpy import median
+  from numpy import average
+
+  results = []
+
+  files = glob.glob("*_depth.tsv*")
+  for file in files:
+    nums = []
+    sid = os.path.basename(file).split('_')[0]
+    with open(file,'r') as inFile:
+      for line in inFile:
+        nums.append(int(line.strip().split()[2]))
+      med = median(nums)
+      avg = average(nums)
+      results.append(f"{sid}\\t{med}\\t{avg}\\n")
+
+  with open('coverage_stats.txt', 'w') as outFile:
+    outFile.write("Sample\\tMedian Coverage\\tAverage Coverage\\n")
+    for result in results:
+      outFile.write(result)
+  '''
+}
+
+//QC Step: Run Quast on assemblies
+process quast {
+  errorStrategy 'ignore'
+  publishDir "${params.outdir}/quast",mode:'copy'
+
+  input:
+  set val(name), file(assembly) from assembled_genomes_quality
+
+  output:
+  file("${name}.quast.tsv") into quast_files
+
+  script:
+  """
+  quast.py ${assembly} -o .
+  mv report.txt ${name}.quast.tsv
+  """
+}
+
+if (params.snp_reference) {
     //SNP Step1: Run CFSAN-SNP Pipeline
     process cfsan {
       publishDir "${params.outdir}/results", mode: 'copy'
@@ -171,72 +301,15 @@ if (params.snp) {
     }
 }
 
-//CG Step1: Assemble trimmed reads with Shovill
-process shovill {
-  errorStrategy 'ignore'
-  tag "$name"
-  publishDir "${params.outdir}/results/assembled", mode: 'copy'
-
-  input:
-  set val(name), file(reads) from cleaned_reads_cg
-
-  output:
-  tuple name, file("${name}.contigs.fa") into assembled_genomes_quality, assembled_genomes_annotation, assembled_genomes_ar, assembled_genomes_mash, assembled_genomes_mlst
-
-  shell:
-  '''
-  shovill --outdir . --R1 !{reads[0]} --R2 !{reads[1]} --force
-  mv contigs.fa !{name}.contigs.fa
-  '''
-}
-
-process mash {
-  errorStrategy 'ignore'
-  tag "$name"
-  publishDir "${params.outdir}/results/mash",mode:'copy'
-
-  input:
-  set val(name), file(assembly) from assembled_genomes_mash
-
-  output:
-  file("${name}.mash.txt") into mash_result
-
-  script:
-  """
-  mash dist /db/RefSeqSketchesDefaults.msh ${assembly} > ${name}.txt
-  sort -gk3 ${name}.txt | head > ${name}.mash.txt
-  """
-}
-
-//CG Step2a: Assembly Quality Report
-process quast {
-  errorStrategy 'ignore'
-  publishDir "${params.outdir}/logs/quast",mode:'copy'
-
-  input:
-  set val(name), file(assembly) from assembled_genomes_quality
-
-  output:
-  file("${name}.quast.tsv") into quast_report
-
-  script:
-  """
-  quast.py ${assembly} -o .
-  mv report.txt ${name}.quast.tsv
-  """
-}
-
-
-//CG Step2b: Annotate with prokka
+//CG Step2: Annotate with prokka
+//TODO: add genus and species
 process prokka {
   errorStrategy 'ignore'
   tag "$name"
   publishDir "${params.outdir}/results/annotated",mode:'copy'
 
   input:
-  file(mash) from mash_result
   set val(name), file(assembly) from assembled_genomes_annotation
-
 
   output:
   file("${name}.gff") into annotated_genomes
@@ -247,9 +320,7 @@ process prokka {
 
   script:
   """
-  #genus=`awk 'FNR == 1 {split(\$1,a,"-\\.-|\\.fna");print a[2]}'  ${name}.mash.txt | awk '{split(\$1,a,"_");print a[1]}'`
-  #species=`awk 'FNR == 1 {split(\$1,a,"-\\.-|\\.fna");print a[2]}'  ${name}.mash.txt | awk '{split(\$1,a,"_");print a[2]}'`
-  prokka --cpu 0 --force --compliant --prefix ${name} --genus "" --species ""  --mincontiglen 500 --outdir . ${assembly} > ${name}.log
+  prokka --cpu 0 --force --compliant --prefix ${name} --mincontiglen 500 --outdir . ${assembly} > ${name}.log
   mv ${name}.txt ${name}.prokka.stats.txt
   """
 }
@@ -298,193 +369,78 @@ process cg_tree {
     """
 }
 
-//AR Step1: Find AR genes with amrfinder+
-process amrfinder {
+//Kraken Step 1: Run Kraken
+process kraken {
   tag "$name"
-  publishDir "${params.outdir}/results/amrfinder",mode:'copy'
+  publishDir "${params.outdir}/results/kraken", mode: 'copy', pattern: "*_kraken2_report.txt*"
 
   input:
-  set val(name), file(assembly) from assembled_genomes_ar
+  set val(name), file(reads) from read_files_kraken
 
   output:
-  file("${name}.tsv") into ar_predictions
-
-  when:
-  params.ar == true
+  tuple name, file("${name}_kraken2_report.txt") into kraken_files
 
   script:
   """
-  amrfinder -n ${assembly} -o ${name}.tsv
+  kraken2 --db /kraken2-db/minikraken2_v1_8GB --threads ${task.cpus} --report ${name}_kraken2_report.txt --paired ${reads[0]} ${reads[1]}
   """
 }
 
-//AR Step 2: Summarize amrfinder+ results as a binary presence/absence matrix
-process amrfinder_summary {
+//Kraken Step 2: Summarize kraken results
+process kraken_summary {
   tag "$name"
   publishDir "${params.outdir}/results",mode:'copy'
 
   input:
-  file(predictions) from ar_predictions.collect()
+  file(files) from kraken_files.collect()
 
   output:
-  file("ar_predictions_binary.tsv") into ar_matrix
-  file("ar_predictions.tsv") into ar_tsv
-
-  when:
-  params.ar == true
+  file("kraken_results.txt") into kraken_tsv
 
   script:
   """
   #!/usr/bin/env python3
-
   import os
   import glob
   import pandas as pd
-  import csv
+  from pandas import DataFrame
 
-  files = glob.glob("*.tsv")
-  hits = []
+  files = glob.glob("*kraken2_report*")
 
+  results = []
   for file in files:
-    sample = os.path.basename(file).split(".")[0]
-    print(sample)
-    with open(file,"r") as inFile:
-        csvreader = csv.reader(inFile,delimiter="\t",)
-        next(csvreader)
-        for row in csvreader:
-            gene = row[5]
-            identity = row[15]
-            coverage = row[16]
-            hits.append([sample,gene,identity,coverage])
+      sample_id = os.path.basename(file).split(".")[0].replace("_kraken2_report","")
+      df = []
+      dfs = []
+      with open(file,"r") as inFile:
+          for line in inFile:
+              line = line.strip()
+              sline = line.split("\t")
+              if sline[5] == "unclassified":
+                  df.append(sline)
+              if sline[3] == "S":
+                  df.append(sline)
 
-    vals = []
-    binary = []
+      pandf = DataFrame(df, columns=['Percentage','Num_Covered','Num_Assigned','Rank','TaxID','Name'])
+      pandf['Name'] = pandf['Name'].str.lstrip()
+      pandf = pandf.sort_values(by=['Percentage'], ascending=False)
+      unclass = pandf[pandf["Name"]=="unclassified"]
+      pandf = pandf[pandf["Name"]!="unclassified"]
+      pandf = pandf.head(2)
+      dfs = pd.concat([unclass,pandf])
+      dfs = dfs.assign(Sample=sample_id)
+      dfs = dfs[['Sample','Percentage','Name']]
+      dfs = dfs.reset_index(drop=True)
+      print(dfs)
 
-    for hit in hits:
-      sample = hit[0]
-      gene = hit[1]
-      identity = hit[2]
-      coverage = hit[3]
-      vals.append([sample,gene,identity,coverage])
-      if float(identity) >= 90 and float(coverage) >= 90:
-          binary.append([sample, gene, 1])
-      if float(identity) < 90 or float(coverage) < 90:
-          binary.append([sample, gene, 0])
+      unclassified = dfs.iloc[0]['Percentage'] + "%"
+      first_species = dfs.iloc[1]['Name'] + " (" + dfs.iloc[1]['Percentage'] + "%)"
+      second_species = dfs.iloc[2]['Name'] + " (" + dfs.iloc[2]['Percentage'] + "%)"
+      combined = [[sample_id, unclassified, first_species, second_species]]
+      result = DataFrame(combined, columns=['Sample','Unclassified Reads (%)','Primary Species (%)','Secondary Species (%)'])
+      results.append(result)
 
-    df = pd.DataFrame(vals, columns = ["Sample", "Gene", "Identity", "Coverage"])
-    df.to_csv("ar_predictions.tsv", sep='\t', encoding='utf-8', index = False)
-
-    binary_df = pd.DataFrame(binary, columns = ["Sample", "Gene", "Value"])
-    binary_df = binary_df.pivot_table(index = "Sample", columns = "Gene", values = "Value", fill_value = 0)
-    binary_df.to_csv("ar_predictions_binary.tsv", sep='\t', encoding='utf-8')
+  df_concat = pd.concat(results)
+  df_concat.to_csv(f'kraken_results.txt',sep='\\t', index=False, header=True, na_rep='NaN')
   """
-}
-
-Channel
-  .fromPath(params.multiqc_config)
-  .set { mqc_config }
-
-Channel
-  .fromPath(params.multiqc_logo)
-  .set { mqc_logo }
-
-//Collect Results
-process multiqc {
-  publishDir "${params.outdir}/results", mode: 'copy'
-  echo true
-
-  input:
-  //file multiqc_config
-  file logo from mqc_logo
-  file config from mqc_config
-  file fastq_results from fastqc_results.collect()
-  path trimmomatic from trimmomatic_stats.collect()
-  path q_report from quast_report
-  file cg_stats from core_aligned_stats
-  file phix_removal from phix_cleanning_stats.collect()
-  file adapter_removal from adapter_cleanning_stats.collect()
-  file prokka_logs from prokka_stats.collect()
-
-
-  output:
-  file("*multiqc_report.html") into multiqc_report
-  file("*_data")
-
-  script:
-  """
-  multiqc . >/dev/null 2>&1
-  """
-}
-
-process mlst {
-  errorStrategy 'ignore'
-  publishDir "${params.outdir}/results",mode:'copy'
-
-  input:
-  file(assemblies) from assembled_genomes_mlst.collect()
-
-  output:
-  file("mlst.tsv")
-
-  script:
-  """
-  mlst --nopath *.fa > mlst.tsv
-  """
-}
-
-if (params.report && !params.ar) {
-
-  report = file(params.report)
-  logo = file(params.logo)
-
-  process render{
-    publishDir "${params.outdir}/results", mode: 'copy'
-    stageInMode = "copy"
-
-    input:
-    file snp from snp_mat
-    file tree from cgtree
-    file rmd from report
-    file dryad_logo from logo
-
-    output:
-    file("cluster_report.pdf")
-    file("report_template.Rmd")
-
-    shell:
-    """
-    Rscript /reports/render.R ${snp} ${tree} ${rmd}
-    mv report.pdf cluster_report.pdf
-    mv ${rmd} report_template.Rmd
-    """
-  }
-}
-
-if (params.report && params.ar) {
-
-  report = file(params.report)
-  logo = file(params.logo)
-
-  process renderWithAR{
-    publishDir "${params.outdir}/results", mode: 'copy'
-    stageInMode = "copy"
-
-    input:
-    file snp from snp_mat
-    file tree from cgtree
-    file ar from ar_tsv
-    file rmd from report
-    file dryad_logo from logo
-
-    output:
-    file("cluster_report.pdf")
-    file("report_template.Rmd")
-
-    shell:
-    """
-    Rscript /reports/render.R ${snp} ${tree} ${rmd} ${ar}
-    mv report.pdf cluster_report.pdf
-    mv ${rmd} report_template.Rmd
-    """
-  }
 }
