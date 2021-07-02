@@ -54,13 +54,14 @@ process preProcess {
 //Step1: Trim reads and remove PhiX contamination
 process clean_reads {
   tag "$name"
-  publishDir "${params.outdir}/results/trimming", mode: 'copy',pattern:"*.trim.txt"
+  publishDir "${params.outdir}/trimming", mode: 'copy',pattern:"*.trim.txt"
 
   input:
   set val(name), file(reads) from read_files_trimming
 
   output:
-  tuple name, file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_shovill, cleaned_reads_fastqc, cleaned_reads_snp
+  tuple name, file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_shovill, cleaned_reads_fastqc
+  file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_snp
   file("${name}.phix.stats.txt") into phix_cleanning_stats
   file("${name}.adapters.stats.txt") into adapter_cleanning_stats
   file("${name}.trim.txt") into trim_stats
@@ -132,8 +133,8 @@ process fastqc_summary {
 process shovill {
   errorStrategy 'ignore'
   tag "$name"
-  publishDir "${params.outdir}/results/assembled", mode: 'copy',pattern:"*.fa"
-  publishDir "${params.outdir}/results/alignments", mode: 'copy',pattern:"*.sam"
+  publishDir "${params.outdir}/assembled", mode: 'copy',pattern:"*.fa"
+  publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sam"
 
   input:
   set val(name), file(reads) from cleaned_reads_shovill
@@ -155,8 +156,8 @@ process shovill {
 process samtools {
   tag "$name"
 
-  publishDir "${params.outdir}/results/alignments", mode: 'copy',pattern:"*.bam"
-  publishDir "${params.outdir}/results/coverage", mode: 'copy', pattern:"*_depth.tsv*"
+  publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.bam"
+  publishDir "${params.outdir}/coverage", mode: 'copy', pattern:"*_depth.tsv*"
 
   input:
   set val(name), file(sam) from sam_files
@@ -175,7 +176,7 @@ process samtools {
 
 //QC Step: Calculate coverage stats
 process coverage_stats {
-  publishDir "${params.outdir}/results/coverage", mode: 'copy'
+  publishDir "${params.outdir}/coverage", mode: 'copy'
 
   input:
   file(cov) from cov_files.collect()
@@ -232,7 +233,7 @@ process quast {
 if (params.snp_reference) {
     //SNP Step1: Run CFSAN-SNP Pipeline
     process cfsan {
-      publishDir "${params.outdir}/results", mode: 'copy'
+      publishDir "${params.outdir}", mode: 'copy'
 
       input:
       file(reads) from cleaned_reads_snp.collect()
@@ -242,34 +243,31 @@ if (params.snp_reference) {
       file("snp_distance_matrix.tsv") into snp_mat
       file("snpma.fasta") into snp_alignment
 
-      when:
-      params.snp == true
-
       script:
       """
       #!/usr/bin/env python
       import subprocess
       import glob
-      import os
+      import os,sys
 
-      fwd_reads = glob.glob("*_1.clean.fastq.gz")
+      fwd_reads = glob.glob("*_clean_1.fastq.gz")
       fwd_reads.sort()
+      rev_reads = glob.glob("*_clean_2.fastq.gz")
+      rev_reads.sort()
 
-      readDict = {}
-      for file in fwd_reads:
-        sid = os.path.basename(file).split('_')
-        sid = sid[0:(len(sid)-1)]
-        sid = '_'.join(sid)
-        fwd_read = glob.glob(sid+"_1.clean.fastq.gz")[0]
-        rev_read = glob.glob(sid+"_2.clean.fastq.gz")[0]
-        readDict[sid] = [fwd_read,rev_read]
+      if len(fwd_reads) != len(rev_reads):
+        sys.exit("Uneven number of forward and reverse reads.")
 
       os.mkdir("input_reads")
-      for key in readDict:
-        print key
-        os.mkdir(os.path.join("input_reads",key))
-        os.rename(readDict[key][0],os.path.join(*["input_reads",key,readDict[key][0]]))
-        os.rename(readDict[key][1],os.path.join(*["input_reads",key,readDict[key][1]]))
+
+      c = 0
+      while c < len(fwd_reads):
+        name = os.path.basename(fwd_reads[c]).split('_clean_1')[0]
+        path = os.path.join("input_reads",name)
+        os.mkdir(path)
+        os.rename(fwd_reads[c],os.path.join(path,fwd_reads[c]))
+        os.rename(rev_reads[c],os.path.join(path,rev_reads[c]))
+        c += 1
 
       command = "cfsan_snp_pipeline run ${reference} -o . -s input_reads"
       process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
@@ -281,7 +279,7 @@ if (params.snp_reference) {
 
     //SNP Step2: Run IQTREE on snp alignment
     process snp_tree {
-      publishDir "${params.outdir}/results", mode: 'copy'
+      publishDir "${params.outdir}", mode: 'copy'
 
       input:
       file(snp_fasta) from snp_alignment
@@ -306,7 +304,7 @@ if (params.snp_reference) {
 process prokka {
   errorStrategy 'ignore'
   tag "$name"
-  publishDir "${params.outdir}/results/annotated",mode:'copy'
+  publishDir "${params.outdir}/annotated",mode:'copy'
 
   input:
   set val(name), file(assembly) from assembled_genomes_annotation
@@ -314,9 +312,6 @@ process prokka {
   output:
   file("${name}.gff") into annotated_genomes
   file("${name}.prokka.stats.txt") into prokka_stats
-
-  when:
-  params.cg == true
 
   script:
   """
@@ -327,7 +322,7 @@ process prokka {
 
 //CG Step3: Align with Roary
 process roary {
-  publishDir "${params.outdir}/results",mode:'copy'
+  publishDir "${params.outdir}",mode:'copy'
 
   numGenomes = 0
   input:
@@ -350,7 +345,7 @@ process roary {
 
 //CG Step4: IQTree for core-genome
 process cg_tree {
-  publishDir "${params.outdir}/results",mode:'copy'
+  publishDir "${params.outdir}",mode:'copy'
 
   input:
   file(alignedGenomes) from core_aligned_genomes
@@ -372,7 +367,7 @@ process cg_tree {
 //Kraken Step 1: Run Kraken
 process kraken {
   tag "$name"
-  publishDir "${params.outdir}/results/kraken", mode: 'copy', pattern: "*_kraken2_report.txt*"
+  publishDir "${params.outdir}/kraken", mode: 'copy', pattern: "*_kraken2_report.txt*"
 
   input:
   set val(name), file(reads) from read_files_kraken
@@ -389,7 +384,7 @@ process kraken {
 //Kraken Step 2: Summarize kraken results
 process kraken_summary {
   tag "$name"
-  publishDir "${params.outdir}/results",mode:'copy'
+  publishDir "${params.outdir}",mode:'copy'
 
   input:
   file(files) from kraken_files.collect()
