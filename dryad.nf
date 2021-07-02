@@ -65,6 +65,7 @@ process clean_reads {
   file("${name}.phix.stats.txt") into phix_cleanning_stats
   file("${name}.adapters.stats.txt") into adapter_cleanning_stats
   file("${name}.trim.txt") into trim_stats
+  tuple file("${name}.phix.stats.txt"),file("${name}.adapters.stats.txt"),file("${name}.trim.txt") into multiqc_clean_reads
 
   script:
   """
@@ -92,7 +93,7 @@ process fastqc {
   set val(name), file(reads) from combined_reads
 
   output:
-  file("*_fastqc.{zip,html}") into fastqc_results
+  file("*_fastqc.{zip,html}") into fastqc_results, fastqc_multiqc
 
   script:
   """
@@ -164,6 +165,7 @@ process samtools {
 
   output:
   file("${name}_depth.tsv") into cov_files
+  file("${name}.stats.txt") into stats_multiqc
 
   shell:
   """
@@ -171,6 +173,7 @@ process samtools {
   samtools sort ${name}.bam > ${name}.sorted.bam
   samtools index ${name}.sorted.bam
   samtools depth -a ${name}.sorted.bam > ${name}_depth.tsv
+  samtools stats ${name}.sorted.bam > ${name}.stats.txt
   """
 }
 
@@ -221,7 +224,7 @@ process quast {
   set val(name), file(assembly) from assembled_genomes_quality
 
   output:
-  file("${name}.quast.tsv") into quast_files
+  file("${name}.quast.tsv") into quast_files, quast_multiqc
 
   script:
   """
@@ -311,7 +314,7 @@ process prokka {
 
   output:
   file("${name}.gff") into annotated_genomes
-  file("${name}.prokka.stats.txt") into prokka_stats
+  file("${name}.prokka.stats.txt") into prokka_stats, prokka_multiqc
 
   script:
   """
@@ -373,7 +376,7 @@ process kraken {
   set val(name), file(reads) from read_files_kraken
 
   output:
-  tuple name, file("${name}_kraken2_report.txt") into kraken_files
+  tuple name, file("${name}_kraken2_report.txt") into kraken_files, kraken_multiqc
 
   script:
   """
@@ -437,5 +440,35 @@ process kraken_summary {
 
   df_concat = pd.concat(results)
   df_concat.to_csv(f'kraken_results.txt',sep='\\t', index=False, header=True, na_rep='NaN')
+  """
+}
+
+Channel
+  .from("$baseDir/multiqc_config.yaml")
+  .set { multiqc_config }
+
+Channel
+  .from("$baseDir/assets/dryad_logo_250.png")
+  .set { logo }
+
+//QC Step: MultiQC
+process multiqc {
+  publishDir "${params.outdir}",mode:'copy'
+
+  input:
+  file(a) from multiqc_clean_reads.collect()
+  file(b) from fastqc_multiqc.collect()
+  file(c) from stats_multiqc.collect()
+  file(d) from prokka_multiqc.collect()
+  file(e) from kraken_multiqc.collect()
+  file(config) from multiqc_config
+  file(f) from logo
+
+  output:
+  file("*.html") into multiqc_output
+
+  script:
+  """
+  multiqc -c ${config} .
   """
 }
