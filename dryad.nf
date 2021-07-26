@@ -3,24 +3,34 @@
 //Description: Workflow for generating a genomic comparison between HAI/AR samples.
 //Author: Kelsey Florek and Abigail Shockey
 //email: kelsey.florek@slh.wisc.edu, abigail.shockey@slh.wisc.edu
+if(params.test){
+  testIDS = ['SRR14311557','SRR14311556','SRR14311555','SRR14311554',
+    'SRR14311553','SRR14311552','SRR14613509','SRR14874874']
+  println "Running test analysis using the following samples:"
+  println testIDS
+  Channel
+      .fromSRA(testIDS)
+      .into { raw_reads; raw_reads_count }
+  params.snp_reference = "$baseDir/assets/ASM211692v1.fasta"
 
-//setup channel to read in and pair the fastq files
-Channel
-    .fromFilePairs( "${params.reads}/*{R1,R2,_1,_2}*.{fastq,fq}.gz", size: 2 )
-    .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads} Path must not end with /" }
-    .into { raw_reads; raw_reads_count }
-
-//check we have at least 3 samples
-Channel
-    .from(raw_reads_count)
-    .collect()
-    .subscribe {
-      int size = it.queue[0].size()
-      if(size < 3){
-        println "Dryad requires 3 or more samples."
-        System.exit(1)
+} else{
+  //setup channel to read in and pair the fastq files
+  Channel
+      .fromFilePairs( "${params.reads}/*{R1,R2,_1,_2}*.{fastq,fq}.gz", size: 2 )
+      .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads} Path must not end with /" }
+      .into { raw_reads; raw_reads_count }
+  //check we have at least 3 samples
+  Channel
+      .from(raw_reads_count)
+      .collect()
+      .subscribe {
+        int size = it.queue[0].size()
+        if(size < 3){
+          println "Dryad requires 3 or more samples."
+          System.exit(1)
+        }
       }
-    }
+}
 
 if (params.snp_reference) {
     Channel
