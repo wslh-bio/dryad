@@ -3,6 +3,9 @@
 //Description: Workflow for generating a genomic comparison between HAI/AR samples.
 //Author: Kelsey Florek and Abigail Shockey
 //email: kelsey.florek@slh.wisc.edu, abigail.shockey@slh.wisc.edu
+
+params.test = false
+
 if(params.test){
   testIDS = ['SRR14311557','SRR14311556','SRR14311555','SRR14311554',
     'SRR14311553','SRR14311552','SRR14613509','SRR14874874']
@@ -36,6 +39,9 @@ if (params.snp_reference) {
     Channel
         .fromPath(params.snp_reference)
         .set { snp_reference }
+    Channel
+        .from("$baseDir/snppipeline.conf")
+        .set { snp_config }
 }
 
 //Step0: Preprocess reads - change names
@@ -74,24 +80,18 @@ process clean_reads {
   file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_snp
   file("${name}.phix.stats.txt") into phix_cleanning_stats
   file("${name}.adapters.stats.txt") into adapter_cleanning_stats
-  file("${name}.trim.txt") into trim_stats
   tuple file("${name}.phix.stats.txt"),file("${name}.adapters.stats.txt"),file("${name}.trim.txt") into multiqc_clean_reads
 
   script:
   """
   bbduk.sh in1=${reads[0]} in2=${reads[1]} out1=${name}.trimmed_1.fastq.gz out2=${name}.trimmed_2.fastq.gz qtrim=window,${params.windowsize} trimq=${params.qualitytrimscore} minlength=${params.minlength} tbo tbe &> ${name}.out
-
   repair.sh in1=${name}.trimmed_1.fastq.gz in2=${name}.trimmed_2.fastq.gz out1=${name}.paired_1.fastq.gz out2=${name}.paired_2.fastq.gz
-
   bbduk.sh in1=${name}.paired_1.fastq.gz in2=${name}.paired_2.fastq.gz out1=${name}.rmadpt_1.fastq.gz out2=${name}.rmadpt_2.fastq.gz ref=/bbmap/resources/adapters.fa stats=${name}.adapters.stats.txt ktrim=r k=23 mink=11 hdist=1 tpe tbo
-
   bbduk.sh in1=${name}.rmadpt_1.fastq.gz in2=${name}.rmadpt_2.fastq.gz out1=${name}_clean_1.fastq.gz out2=${name}_clean_2.fastq.gz outm=${name}.matched_phix.fq ref=/bbmap/resources/phix174_ill.ref.fa.gz k=31 hdist=1 stats=${name}.phix.stats.txt
-
   grep -E 'Input:|QTrimmed:|Trimmed by overlap:|Total Removed:|Result:' ${name}.out > ${name}.trim.txt
   """
 }
 
-//Combine raw reads channel and cleaned reads channel
 combined_reads = read_files_fastqc.concat(cleaned_reads_fastqc)
 
 //QC Step: FastQC
@@ -103,40 +103,11 @@ process fastqc {
   set val(name), file(reads) from combined_reads
 
   output:
-  file("*_fastqc.{zip,html}") into fastqc_results, fastqc_multiqc
+  file("*_fastqc.{zip,html}") into fastqc_results
 
   script:
   """
   fastqc -q  ${reads}
-  """
-}
-
-process fastqc_summary {
-  publishDir "${params.outdir}/fastqc", mode: 'copy'
-
-  input:
-  file(fastqc) from fastqc_results.collect()
-
-  output:
-  file("fq_summary.txt") into fastqc_summary
-
-  shell:
-  """
-  zips=`ls *.zip`
-
-  for i in \$zips; do
-      unzip -o \$i &>/dev/null;
-  done
-
-  fq_folders=\${zips}
-
-  for folder in \$fq_folders; do
-    folder=\${folder%.*}
-    cat \$folder/summary.txt >> fq_summary.txt
-    ls .
-  done;
-
-  sed -i 's/.fastq.gz//g' fq_summary.txt
   """
 }
 
@@ -198,7 +169,7 @@ process coverage_stats {
   file('coverage_stats.txt')
 
   script:
-  '''
+  """
   #!/usr/bin/env python3
   import glob
   import os
@@ -222,9 +193,8 @@ process coverage_stats {
     outFile.write("Sample\\tMedian Coverage\\tAverage Coverage\\n")
     for result in results:
       outFile.write(result)
-  '''
+  """
 }
-
 //QC Step: Run Quast on assemblies
 process quast {
   errorStrategy 'ignore'
@@ -234,7 +204,7 @@ process quast {
   set val(name), file(assembly) from assembled_genomes_quality
 
   output:
-  file("${name}.quast.tsv") into quast_files, quast_multiqc
+  file("${name}.quast.tsv") into quast_multiqc
 
   script:
   """
@@ -251,7 +221,7 @@ if (params.snp_reference) {
       input:
       file(reads) from cleaned_reads_snp.collect()
       file(reference) from snp_reference
-
+      file(config) from snp_config
       output:
       file("snp_distance_matrix.tsv") into snp_mat
       file("snpma.fasta") into snp_alignment
@@ -324,15 +294,14 @@ process prokka {
 
   output:
   file("${name}.gff") into annotated_genomes
-  file("${name}.prokka.stats.txt") into prokka_stats, prokka_multiqc
+  file("${name}.prokka.stats.txt") into prokka_multiqc
 
   script:
   """
-  prokka --cpu 0 --force --compliant --prefix ${name} --mincontiglen 500 --outdir . ${assembly} > ${name}.log
+  prokka --cpu ${task.cpus} --force --compliant --prefix ${name} --mincontiglen 500 --outdir . ${assembly} > ${name}.log
   mv ${name}.txt ${name}.prokka.stats.txt
   """
 }
-
 //CG Step3: Align with Roary
 process roary {
   publishDir "${params.outdir}",mode:'copy'
@@ -461,18 +430,17 @@ Channel
   .from("$baseDir/assets/dryad_logo_250.png")
   .set { logo }
 
-//QC Step: MultiQC
 process multiqc {
   publishDir "${params.outdir}",mode:'copy'
 
   input:
   file(a) from multiqc_clean_reads.collect()
-  file(b) from fastqc_multiqc.collect()
   file(c) from stats_multiqc.collect()
-  file(d) from prokka_multiqc.collect()
   file(e) from kraken_multiqc.collect()
-  file(config) from multiqc_config
   file(f) from logo
+  file(config) from multiqc_config
+  file(d) from prokka_multiqc.collect()
+  file(r) from fastqc_results.collect()
 
   output:
   file("*.html") into multiqc_output
