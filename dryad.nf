@@ -38,7 +38,7 @@ if(params.test){
 if (params.snp_reference) {
     Channel
         .fromPath(params.snp_reference)
-        .set { snp_reference }
+        .into { snp_reference;mapping_reference }
     Channel
         .from("$baseDir/snppipeline.conf")
         .set { snp_config }
@@ -76,7 +76,7 @@ process clean_reads {
   set val(name), file(reads) from read_files_trimming
 
   output:
-  tuple name, file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_shovill, cleaned_reads_fastqc
+  tuple name, file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_shovill, cleaned_reads_fastqc, cleaned_reads_mapping
   file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_snp
   file("${name}.phix.stats.txt") into phix_cleanning_stats
   file("${name}.adapters.stats.txt") into adapter_cleanning_stats
@@ -103,7 +103,7 @@ process fastqc {
   set val(name), file(reads) from combined_reads
 
   output:
-  file("*_fastqc.{zip,html}") into fastqc_results
+  file("*_fastqc.{zip,html}") into fastqc_results, fastqc_multiqc
 
   script:
   """
@@ -306,6 +306,93 @@ if (params.snp_reference) {
         fi
         """
     }
+    process mapping {
+      tag "$name"
+      publishDir "${params.outdir}/mapping/depth", mode: 'copy',pattern:"*.depth.tsv"
+      publishDir "${params.outdir}/mapping/stats", mode: 'copy',pattern:"*.stats.txt"
+      publishDir "${params.outdir}/mapping/bams", mode: 'copy',pattern:"*.sorted.bam*"
+
+      input:
+      file(reference) from mapping_reference.first()
+      set val(name), file(reads) from cleaned_reads_mapping
+
+      output:
+      tuple name, file("${name}.depth.tsv") into depth_results
+      tuple name, file("${name}.mapped.tsv") into mapped_results
+      file("*.stats.txt")
+      file("*.sorted.bam*")
+
+      script:
+      """
+      bwa index ${reference}
+      bwa mem ${reference} ${reads[0]} ${reads[1]} > ${name}.sam
+      samtools view -S -b ${name}.sam > ${name}.bam
+      samtools sort ${name}.bam > ${name}.sorted.bam
+      samtools index ${name}.sorted.bam
+      samtools depth -a ${name}.sorted.bam > ${name}.depth.tsv
+      samtools stats ${name}.sorted.bam > ${name}.stats.txt
+      samtools view -c -F 260 ${name}.sorted.bam > ${name}.mapped.tsv
+      samtools view -c ${name}.sorted.bam >> ${name}.mapped.tsv
+      """
+    }
+
+    process mapping_stats {
+      publishDir "${params.outdir}/mapping", mode: 'copy',pattern:"*.tsv"
+
+      input:
+      file(depth) from depth_results.collect()
+      file(mapped) from mapped_results.collect()
+
+      output:
+      file("mapping_results.tsv")
+
+      script:
+      """
+      #!/usr/bin/env python3
+
+      import pandas as pd
+      import os
+      import glob
+      from functools import reduce
+
+      depth_files = glob.glob("*.depth.tsv")
+      depth_dfs = []
+      cols = ["Sample","Base Pairs Mapped to Reference >1X (%)","Base Pairs Mapped to Reference >40X (%)"]
+      depth_dfs.append(cols)
+
+      for file in depth_files:
+          sampleID = os.path.basename(file).split(".")[0]
+          depth_df = pd.read_csv(file, sep="\\t", header=None)
+          overForty = int((len(depth_df[(depth_df[2]>40)])/len(depth_df)) * 100)
+          overOne = int((len(depth_df[(depth_df[2]>1)])/len(depth_df)) * 100)
+          stats = [sampleID,overOne,overForty]
+          depth_dfs.append(stats)
+
+      depth_df = pd.DataFrame(depth_dfs[1:], columns=depth_dfs[0])
+
+      read_files = glob.glob("*.mapped.tsv")
+      read_dfs = []
+      cols = ["Sample","Reads Mapped to Reference (%)"]
+      read_dfs.append(cols)
+
+      for file in read_files:
+          sampleID = os.path.basename(file).split(".")[0]
+          read_df = pd.read_csv(file, sep="\\t", header=None)
+          mapped_reads = read_df.iloc[0][0]
+          all_reads = read_df.iloc[1][0]
+          percent_mapped = int((mapped_reads/all_reads) * 100)
+          stats = [sampleID,percent_mapped]
+          read_dfs.append(stats)
+
+      read_dfs = pd.DataFrame(read_dfs[1:], columns=read_dfs[0])
+
+      dfs = [depth_df,read_dfs]
+      merged = reduce(lambda  left,right: pd.merge(left,right,on=["Sample"],
+                                                  how="left"), dfs)
+
+      merged.to_csv("mapping_results.tsv",sep="\\t", index=False, header=True, na_rep="NaN")
+      """
+    }
 }
 
 //CG Step2: Annotate with prokka
@@ -466,7 +553,7 @@ process multiqc {
   file(f) from logo
   file(config) from multiqc_config
   file(d) from prokka_multiqc.collect()
-  file(r) from fastqc_results.collect()
+  file(r) from fastqc_multiqc.collect()
 
   output:
   file("*.html") into multiqc_output
