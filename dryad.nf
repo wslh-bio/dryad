@@ -76,7 +76,7 @@ process clean_reads {
   set val(name), file(reads) from read_files_trimming
 
   output:
-  tuple name, file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_shovill, cleaned_reads_fastqc, cleaned_reads_mapping
+  tuple name, file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_shovill, cleaned_reads_fastqc, cleaned_reads_mapping, cleaned_reads_kraken
   file("${name}_clean{_1,_2}.fastq.gz") into cleaned_reads_snp
   file("${name}.phix.stats.txt") into phix_cleanning_stats
   file("${name}.adapters.stats.txt") into adapter_cleanning_stats
@@ -119,7 +119,7 @@ process fastqc_summary {
   file(fastqc) from fastqc_results.collect()
 
   output:
-  file("fq_summary.txt") into fastqc_summary
+  file("fastqc_summary.txt") into fastqc_summary
 
   shell:
   """
@@ -130,10 +130,87 @@ process fastqc_summary {
   fq_folders=\${zips}
   for folder in \$fq_folders; do
     folder=\${folder%.*}
-    cat \$folder/summary.txt >> fq_summary.txt
+    cat \$folder/summary.txt >> fastqc_summary.txt
     ls .
   done;
-  sed -i 's/.fastq.gz//g' fq_summary.txt
+  sed -i 's/.fastq.gz//g' fastqc_summary.txt
+  """
+}
+
+//Kraken Step 1: Run Kraken
+process kraken {
+  tag "$name"
+  publishDir "${params.outdir}/kraken", mode: 'copy', pattern: "*_kraken2_report.txt*"
+
+  input:
+  set val(name), file(reads) from cleaned_reads_kraken
+
+  output:
+  tuple name, file("${name}_kraken2_report.txt") into kraken_files, kraken_multiqc
+
+  script:
+  """
+  kraken2 --db /kraken2-db/minikraken2_v1_8GB --threads ${task.cpus} --report ${name}_kraken2_report.txt --paired ${reads[0]} ${reads[1]}
+  """
+}
+
+//Kraken Step 2: Summarize kraken results
+process kraken_summary {
+  tag "$name"
+  publishDir "${params.outdir}",mode:'copy'
+
+  input:
+  file(files) from kraken_files.collect()
+
+  output:
+  file("kraken_results.tsv") into kraken_tsv
+  file("kraken_results.tsv") into kraken_prokka
+
+  script:
+  """
+  #!/usr/bin/env python3
+  import os
+  import glob
+  import pandas as pd
+  from pandas import DataFrame
+
+  files = glob.glob("*kraken2_report*")
+
+  results = []
+  for file in files:
+      sample_id = os.path.basename(file).split(".")[0].replace("_kraken2_report","")
+      df = []
+      dfs = []
+      with open(file,"r") as inFile:
+          for line in inFile:
+              line = line.strip()
+              sline = line.split("\t")
+              if sline[5] == "unclassified":
+                  df.append(sline)
+              if sline[3] == "S":
+                  df.append(sline)
+
+      pandf = DataFrame(df, columns=['Percentage','Num_Covered','Num_Assigned','Rank','TaxID','Name'])
+      pandf['Name'] = pandf['Name'].str.lstrip()
+      pandf = pandf.sort_values(by=['Percentage'], ascending=False)
+      unclass = pandf[pandf["Name"]=="unclassified"]
+      pandf = pandf[pandf["Name"]!="unclassified"]
+      pandf = pandf.head(2)
+      dfs = pd.concat([unclass,pandf])
+      dfs = dfs.assign(Sample=sample_id)
+      dfs = dfs[['Sample','Percentage','Name']]
+      dfs = dfs.reset_index(drop=True)
+      print(dfs)
+
+      unclassified = dfs.iloc[0]['Percentage'] + "%"
+      first_species = dfs.iloc[1]['Name'] + " (" + dfs.iloc[1]['Percentage'] + "%)"
+      second_species = dfs.iloc[2]['Name'] + " (" + dfs.iloc[2]['Percentage'] + "%)"
+      combined = [[sample_id, unclassified, first_species, second_species]]
+      result = DataFrame(combined, columns=['Sample','Unclassified Reads (%)','Primary Species (%)','Secondary Species (%)'])
+      results.append(result)
+
+  df_concat = pd.concat(results)
+  df_concat.to_csv(f'kraken_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -148,7 +225,7 @@ process shovill {
   set val(name), file(reads) from cleaned_reads_shovill
 
   output:
-  tuple name, file("${name}.contigs.fa") into assembled_genomes_annotation, assembled_genomes_quality
+  tuple name, file("${name}.contigs.fa") into assembled_genomes_quality, assembled_genomes_prokka
   tuple name, file("${name}.sam") into sam_files
 
   script:
@@ -237,6 +314,107 @@ process quast {
   quast.py ${assembly} -o .
   mv report.txt ${name}.quast.tsv
   """
+}
+
+//AR Setup amrfinder files
+process prokka_setup {
+  tag "$name"
+
+  input:
+  file(kraken) from kraken_prokka
+  set val(name), file(input) from assembled_genomes_prokka
+
+  output:
+  tuple name, file("${name}.*.fa") into prokka_input
+
+  script:
+  """
+  #!/usr/bin/env python3
+  import os
+  import pandas as pd
+  import shutil
+
+  genomeFile = '${input}'
+  sid = genomeFile.split('.')[0]
+  df = pd.read_csv('kraken_results.tsv', header=0, delimiter='\\t')
+  df = df[df['Sample'] == sid]
+  taxa = df.iloc[0]['Primary Species (%)']
+  taxa = taxa.split(' ')
+  taxa = taxa[0] + '_' + taxa[1]
+  shutil.copyfile(genomeFile, f'{sid}.{taxa}.fa')
+  """
+}
+
+process prokka {
+  errorStrategy 'ignore'
+  tag "$name"
+  publishDir "${params.outdir}/annotated",mode:'copy'
+
+  input:
+  set val(name), file(assembly) from prokka_input
+
+  output:
+  file("${name}.gff") into annotated_genomes
+  file("${name}.prokka.stats.txt") into prokka_multiqc
+
+  script:
+  """
+  filename=${assembly}
+  handle=\${filename%.*}
+  taxa=\${handle##*.}
+  genus=\${taxa%_*}
+  species=\${taxa##*_}
+
+  prokka --cpu ${task.cpus} --force --compliant --prefix ${name} --genus \$genus --species \$species --mincontiglen 500 --outdir . ${assembly} > ${name}.log
+  mv ${name}.txt ${name}.prokka.stats.txt
+  """
+}
+
+//CG Step2: Annotate with prokka
+//TODO: add genus and species
+
+//CG Step3: Align with Roary
+process roary {
+  publishDir "${params.outdir}",mode:'copy'
+
+  numGenomes = 0
+  input:
+  file(genomes) from annotated_genomes.collect()
+
+  output:
+  file("core_gene_alignment.aln") into core_aligned_genomes
+  file("core_genome_statistics.txt") into core_aligned_stats
+
+  script:
+  if(params.roary_mafft == true){
+    mafft="-n"
+  }else{mafft=""}
+  """
+  cpus=`grep -c ^processor /proc/cpuinfo`
+  roary -e ${mafft} -p \$cpus ${genomes}
+  mv summary_statistics.txt core_genome_statistics.txt
+  """
+}
+
+//CG Step4: IQTree for core-genome
+process cg_tree {
+  publishDir "${params.outdir}",mode:'copy'
+
+  input:
+  file(alignedGenomes) from core_aligned_genomes
+
+  output:
+  file("core_genome.tree") optional true into cgtree
+
+  script:
+    """
+    numGenomes=`grep -o '>' core_gene_alignment.aln | wc -l`
+    if [ \$numGenomes -gt 3 ]
+    then
+      iqtree -nt AUTO -s core_gene_alignment.aln -m ${params.cg_tree_model} -bb 1000
+      mv core_gene_alignment.aln.contree core_genome.tree
+    fi
+    """
 }
 
 if (params.snp_reference) {
@@ -393,146 +571,6 @@ if (params.snp_reference) {
       merged.to_csv("mapping_results.tsv",sep="\\t", index=False, header=True, na_rep="NaN")
       """
     }
-}
-
-//CG Step2: Annotate with prokka
-//TODO: add genus and species
-process prokka {
-  errorStrategy 'ignore'
-  tag "$name"
-  publishDir "${params.outdir}/annotated",mode:'copy'
-
-  input:
-  set val(name), file(assembly) from assembled_genomes_annotation
-
-  output:
-  file("${name}.gff") into annotated_genomes
-  file("${name}.prokka.stats.txt") into prokka_multiqc
-
-  script:
-  """
-  prokka --cpu ${task.cpus} --force --compliant --prefix ${name} --mincontiglen 500 --outdir . ${assembly} > ${name}.log
-  mv ${name}.txt ${name}.prokka.stats.txt
-  """
-}
-//CG Step3: Align with Roary
-process roary {
-  publishDir "${params.outdir}",mode:'copy'
-
-  numGenomes = 0
-  input:
-  file(genomes) from annotated_genomes.collect()
-
-  output:
-  file("core_gene_alignment.aln") into core_aligned_genomes
-  file("core_genome_statistics.txt") into core_aligned_stats
-
-  script:
-  if(params.roary_mafft == true){
-    mafft="-n"
-  }else{mafft=""}
-  """
-  cpus=`grep -c ^processor /proc/cpuinfo`
-  roary -e ${mafft} -p \$cpus ${genomes}
-  mv summary_statistics.txt core_genome_statistics.txt
-  """
-}
-
-//CG Step4: IQTree for core-genome
-process cg_tree {
-  publishDir "${params.outdir}",mode:'copy'
-
-  input:
-  file(alignedGenomes) from core_aligned_genomes
-
-  output:
-  file("core_genome.tree") optional true into cgtree
-
-  script:
-    """
-    numGenomes=`grep -o '>' core_gene_alignment.aln | wc -l`
-    if [ \$numGenomes -gt 3 ]
-    then
-      iqtree -nt AUTO -s core_gene_alignment.aln -m ${params.cg_tree_model} -bb 1000
-      mv core_gene_alignment.aln.contree core_genome.tree
-    fi
-    """
-}
-
-//Kraken Step 1: Run Kraken
-process kraken {
-  tag "$name"
-  publishDir "${params.outdir}/kraken", mode: 'copy', pattern: "*_kraken2_report.txt*"
-
-  input:
-  set val(name), file(reads) from read_files_kraken
-
-  output:
-  tuple name, file("${name}_kraken2_report.txt") into kraken_files, kraken_multiqc
-
-  script:
-  """
-  kraken2 --db /kraken2-db/minikraken2_v1_8GB --threads ${task.cpus} --report ${name}_kraken2_report.txt --paired ${reads[0]} ${reads[1]}
-  """
-}
-
-//Kraken Step 2: Summarize kraken results
-process kraken_summary {
-  tag "$name"
-  publishDir "${params.outdir}",mode:'copy'
-
-  input:
-  file(files) from kraken_files.collect()
-
-  output:
-  file("kraken_results.txt") into kraken_tsv
-
-  script:
-  """
-  #!/usr/bin/env python3
-  import os
-  import glob
-  import pandas as pd
-  from pandas import DataFrame
-
-  files = glob.glob("*kraken2_report*")
-
-  results = []
-  for file in files:
-      sample_id = os.path.basename(file).split(".")[0].replace("_kraken2_report","")
-      df = []
-      dfs = []
-      with open(file,"r") as inFile:
-          for line in inFile:
-              line = line.strip()
-              sline = line.split("\t")
-              if sline[5] == "unclassified":
-                  df.append(sline)
-              if sline[3] == "S":
-                  df.append(sline)
-
-      pandf = DataFrame(df, columns=['Percentage','Num_Covered','Num_Assigned','Rank','TaxID','Name'])
-      pandf['Name'] = pandf['Name'].str.lstrip()
-      pandf = pandf.sort_values(by=['Percentage'], ascending=False)
-      unclass = pandf[pandf["Name"]=="unclassified"]
-      pandf = pandf[pandf["Name"]!="unclassified"]
-      pandf = pandf.head(2)
-      dfs = pd.concat([unclass,pandf])
-      dfs = dfs.assign(Sample=sample_id)
-      dfs = dfs[['Sample','Percentage','Name']]
-      dfs = dfs.reset_index(drop=True)
-      print(dfs)
-
-      unclassified = dfs.iloc[0]['Percentage'] + "%"
-      first_species = dfs.iloc[1]['Name'] + " (" + dfs.iloc[1]['Percentage'] + "%)"
-      second_species = dfs.iloc[2]['Name'] + " (" + dfs.iloc[2]['Percentage'] + "%)"
-      combined = [[sample_id, unclassified, first_species, second_species]]
-      result = DataFrame(combined, columns=['Sample','Unclassified Reads (%)','Primary Species (%)','Secondary Species (%)'])
-      results.append(result)
-
-  df_concat = pd.concat(results)
-  df_concat.to_csv(f'kraken_results.txt',sep='\\t', index=False, header=True, na_rep='NaN')
-  """
 }
 
 Channel
