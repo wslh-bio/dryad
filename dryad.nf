@@ -81,6 +81,7 @@ process clean_reads {
   file("${name}.phix.stats.txt") into phix_cleanning_stats
   file("${name}.adapters.stats.txt") into adapter_cleanning_stats
   tuple file("${name}.phix.stats.txt"),file("${name}.adapters.stats.txt"),file("${name}.trim.txt") into multiqc_clean_reads
+  file("${name}.trim.txt") into bbduk_files
 
   script:
   """
@@ -89,6 +90,46 @@ process clean_reads {
   bbduk.sh in1=${name}.paired_1.fastq.gz in2=${name}.paired_2.fastq.gz out1=${name}.rmadpt_1.fastq.gz out2=${name}.rmadpt_2.fastq.gz ref=/bbmap/resources/adapters.fa stats=${name}.adapters.stats.txt ktrim=r k=23 mink=11 hdist=1 tpe tbo
   bbduk.sh in1=${name}.rmadpt_1.fastq.gz in2=${name}.rmadpt_2.fastq.gz out1=${name}_clean_1.fastq.gz out2=${name}_clean_2.fastq.gz outm=${name}.matched_phix.fq ref=/bbmap/resources/phix174_ill.ref.fa.gz k=31 hdist=1 stats=${name}.phix.stats.txt
   grep -E 'Input:|QTrimmed:|Trimmed by overlap:|Total Removed:|Result:' ${name}.out > ${name}.trim.txt
+  """
+}
+
+process bbduk_summary {
+  publishDir "${params.outdir}/trimming",mode:'copy'
+
+  input:
+  file(files) from bbduk_files.collect()
+
+  output:
+  file("bbduk_results.tsv") into bbduk_tsv
+
+  script:
+  """
+  #!/usr/bin/env python3
+  import os
+  import glob
+  import pandas as pd
+  from pandas import DataFrame
+
+  files = glob.glob("*.txt")
+
+  results = []
+  for file in files:
+      sample_id = os.path.basename(file).split(".")[0]
+      vals = []
+      vals.append(sample_id)
+      with open(file,"r") as inFile:
+          for i, line in enumerate(inFile):
+              if i == 0:
+                  num_reads = line.strip().split("\\t")[1].replace(" reads ","")
+                  vals.append(num_reads)
+              if i == 3:
+                  rm_reads = line.strip().split("\\t")[1].replace("reads ","")
+                  rm_reads = rm_reads.rstrip()
+                  vals.append(rm_reads)
+      results.append(vals)
+
+  df = DataFrame(results,columns=['Sample','Total Reads','Reads Removed'])
+  df.to_csv(f'bbduk_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -248,7 +289,7 @@ process samtools {
   set val(name), file(sam) from sam_files
 
   output:
-  file("${name}_depth.tsv") into cov_files
+  file("${name}.depth.tsv") into cov_files
   file("${name}.stats.txt") into stats_multiqc
 
   shell:
@@ -256,7 +297,7 @@ process samtools {
   samtools view -S -b ${name}.sam > ${name}.bam
   samtools sort ${name}.bam > ${name}.sorted.bam
   samtools index ${name}.sorted.bam
-  samtools depth -a ${name}.sorted.bam > ${name}_depth.tsv
+  samtools depth -a ${name}.sorted.bam > ${name}.depth.tsv
   samtools stats ${name}.sorted.bam > ${name}.stats.txt
   """
 }
@@ -269,7 +310,7 @@ process coverage_stats {
   file(cov) from cov_files.collect()
 
   output:
-  file('coverage_stats.txt')
+  file('coverage_stats.tsv') into coverage_tsv
 
   script:
   """
@@ -281,38 +322,78 @@ process coverage_stats {
 
   results = []
 
-  files = glob.glob("*_depth.tsv*")
+  files = glob.glob("*.depth.tsv*")
   for file in files:
     nums = []
-    sid = os.path.basename(file).split('_')[0]
+    sid = os.path.basename(file).split('.')[0]
     with open(file,'r') as inFile:
       for line in inFile:
         nums.append(int(line.strip().split()[2]))
-      med = median(nums)
-      avg = average(nums)
+      med = int(median(nums))
+      avg = int(average(nums))
       results.append(f"{sid}\\t{med}\\t{avg}\\n")
 
-  with open('coverage_stats.txt', 'w') as outFile:
+  with open('coverage_stats.tsv', 'w') as outFile:
     outFile.write("Sample\\tMedian Coverage\\tAverage Coverage\\n")
     for result in results:
       outFile.write(result)
   """
 }
+
 //QC Step: Run Quast on assemblies
 process quast {
+  tag "$name"
+
   errorStrategy 'ignore'
-  publishDir "${params.outdir}/quast",mode:'copy'
+  publishDir "${params.outdir}/quast",mode:'copy',pattern: "${name}.quast.tsv"
 
   input:
   set val(name), file(assembly) from assembled_genomes_quality
 
   output:
-  file("${name}.quast.tsv") into quast_multiqc
+  file("${name}.quast.tsv") into quast_files
+  file("${name}.report.quast.tsv") into quast_multiqc
 
   script:
   """
   quast.py ${assembly} -o .
-  mv report.txt ${name}.quast.tsv
+  mv report.tsv ${name}.report.quast.tsv
+  mv transposed_report.tsv ${name}.quast.tsv
+  """
+}
+
+process quast_summary {
+  publishDir "${params.outdir}/quast",mode:'copy'
+
+  input:
+  file(files) from quast_files.collect()
+
+  output:
+  file("quast_results.tsv") into quast_tsv
+
+  script:
+  """
+  #!/usr/bin/env python3
+  import os
+  import glob
+  import pandas as pd
+  from pandas import DataFrame
+
+  files = glob.glob("*.quast.tsv")
+
+  dfs = []
+
+  for file in files:
+      sample_id = os.path.basename(file).split(".")[0]
+      df = pd.read_csv(file, sep='\\t')
+      df = df.iloc[:,[1,7,17]]
+      df = df.assign(Sample=sample_id)
+      df = df.rename(columns={'# contigs (>= 0 bp)':'Contigs','Total length (>= 0 bp)':'Assembly Length (bp)'})
+      df = df[['Sample', 'Contigs','Assembly Length (bp)', 'N50']]
+      dfs.append(df)
+
+  dfs_concat = pd.concat(dfs)
+  dfs_concat.to_csv(f'quast_results.tsv',sep='\\t', index=False, header=True, na_rep='NaN')
   """
 }
 
@@ -522,7 +603,7 @@ if (params.snp_reference) {
       file(mapped) from mapped_results.collect()
 
       output:
-      file("mapping_results.tsv")
+      file("mapping_results.tsv") into mapping_tsv
 
       script:
       """
@@ -571,6 +652,48 @@ if (params.snp_reference) {
       merged.to_csv("mapping_results.tsv",sep="\\t", index=False, header=True, na_rep="NaN")
       """
     }
+}
+
+
+//Merge results
+process merge_results {
+  publishDir "${params.outdir}/", mode: 'copy'
+
+  input:
+  file(bbduk) from bbduk_tsv
+  file(quast) from quast_tsv
+  file(coverage) from coverage_tsv
+  file(kraken) from kraken_tsv
+  file(mapping) from mapping_tsv
+
+  output:
+  file('spriggan_report.csv')
+
+  script:
+  """
+  #!/usr/bin/env python3
+
+  import os
+  import glob
+  import pandas as pd
+  from functools import reduce
+
+  files = glob.glob('*.tsv')
+
+  dfs = []
+
+  for file in files:
+      df = pd.read_csv(file, header=0, delimiter='\\t')
+      dfs.append(df)
+
+  merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],
+                                              how='left'), dfs)
+
+  merged = merged[['Sample','Total Reads','Reads Removed','Median Coverage','Average Coverage','Contigs','Assembly Length (bp)','N50','Primary Species (%)','Secondary Species (%)','Unclassified Reads (%)','Reads Mapped to Reference (%)','Base Pairs Mapped to Reference >1X (%)','Base Pairs Mapped to Reference >40X (%)']]
+  merged = merged.rename(columns={'Contigs':'Contigs (#)','Average Coverage':'Mean Coverage'})
+
+  merged.to_csv('dryad_report.csv', index=False, sep=',', encoding='utf-8')
+  """
 }
 
 Channel
