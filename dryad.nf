@@ -501,7 +501,7 @@ process cg_tree {
     """
 }
 
-if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test_snp) {
+if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test_snp & params.test) {
     //SNP Step1: Run CFSAN-SNP Pipeline
     process cfsan {
       publishDir "${params.outdir}", mode: 'copy'
