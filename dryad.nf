@@ -5,7 +5,7 @@
 //email: kelsey.florek@slh.wisc.edu, abigail.shockey@slh.wisc.edu
 
 params.test = false
-
+params.test_snp = true
 if(params.test){
   testIDS = ['SRR14311557','SRR14311556','SRR14311555','SRR14311554',
     'SRR14311553','SRR14311552','SRR14613509','SRR14874874']
@@ -14,8 +14,12 @@ if(params.test){
   Channel
       .fromSRA(testIDS)
       .into { raw_reads; raw_reads_count }
-  params.snp_reference = "$baseDir/assets/ASM211692v1.fasta"
-
+  Channel
+      .fromPath("$baseDir/assets/ASM211692v1.fasta")
+      .into { snp_reference;mapping_reference }
+  Channel
+      .from("$baseDir/snppipeline.conf")
+      .set { snp_config }
 } else{
   //setup channel to read in and pair the fastq files
   Channel
@@ -33,15 +37,14 @@ if(params.test){
           System.exit(1)
         }
       }
-}
-
-if (params.snp_reference) {
-    Channel
-        .fromPath(params.snp_reference)
-        .into { snp_reference;mapping_reference }
-    Channel
-        .from("$baseDir/snppipeline.conf")
-        .set { snp_config }
+  if (params.snp_reference) {
+      Channel
+          .fromPath(params.snp_reference)
+          .into { snp_reference;mapping_reference }
+      Channel
+          .from("$baseDir/snppipeline.conf")
+          .set { snp_config }
+  }
 }
 
 //Step0: Preprocess reads - change names
@@ -498,7 +501,7 @@ process cg_tree {
     """
 }
 
-if (params.snp_reference) {
+if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test_snp) {
     //SNP Step1: Run CFSAN-SNP Pipeline
     process cfsan {
       publishDir "${params.outdir}", mode: 'copy'
