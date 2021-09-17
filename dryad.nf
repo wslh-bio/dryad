@@ -670,7 +670,7 @@ process merge_results {
   file(mapping) from mapping_tsv
 
   output:
-  file('spriggan_report.csv')
+  file('dryad_report.csv')
 
   script:
   """
