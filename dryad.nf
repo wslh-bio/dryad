@@ -688,7 +688,7 @@ process merge_results {
   merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],
                                               how='left'), dfs)
 
-  merged = merged[['Sample','Total Reads','Reads Removed','Median Coverage (Mapped to Assembly)','Mean Coverage (Mapped to Assembly)','Contigs','Assembly Length (bp)','N50','Primary Species (%)','Secondary Species (%)','Unclassified Reads (%)','Reads Mapped to Reference (%)','Base Pairs Mapped to Reference >1X (%)','Base Pairs Mapped to Reference >40X (%)']]
+  merged[['Reads Mapped to Reference (%)','Base Pairs Mapped to Reference >1X (%)','Base Pairs Mapped to Reference >40X (%)']] = merged[['Reads Mapped to Reference (%)','Base Pairs Mapped to Reference >1X (%)','Base Pairs Mapped to Reference >40X (%)']].astype(str) + '%'
   merged = merged.rename(columns={'Contigs':'Contigs (#)'})
 
   merged.to_csv('dryad_report.csv', index=False, sep=',', encoding='utf-8')
