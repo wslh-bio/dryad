@@ -600,58 +600,63 @@ process assembly_coverage_stats {
   """
 }
 
-//QC Step: Calculate mapping stats for reads mapped to reference
-process reference_mapping_stats {
-  publishDir "${params.outdir}/coverage", mode: 'copy'
+if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test_snp & params.test) {
+    //QC Step: Calculate mapping stats for reads mapped to reference
+    process reference_mapping_stats {
+      publishDir "${params.outdir}/coverage", mode: 'copy'
 
-  input:
-  file(depth) from reference_depth_results.collect()
-  file(mapped) from reference_mapped_results.collect()
+      input:
+      file(depth) from reference_depth_results.collect()
+      file(mapped) from reference_mapped_results.collect()
 
-  output:
-  file('mapping_results.tsv') into reference_mapping_tsv
+      output:
+      file('mapping_results.tsv') into reference_mapping_tsv
 
-  script:
-  """
-  #!/usr/bin/env python3
-  import pandas as pd
-  import os
-  import glob
-  from functools import reduce
+      script:
+      """
+      #!/usr/bin/env python3
+      import pandas as pd
+      import os
+      import glob
+      from functools import reduce
 
-  depth_files = glob.glob("*.reference.depth.tsv")
-  depth_dfs = []
-  cols = ["Sample","Base Pairs Mapped to Reference >1X (%)","Base Pairs Mapped to Reference >40X (%)"]
-  depth_dfs.append(cols)
+      depth_files = glob.glob("*.reference.depth.tsv")
+      depth_dfs = []
+      cols = ["Sample","Base Pairs Mapped to Reference >1X (%)","Base Pairs Mapped to Reference >40X (%)"]
+      depth_dfs.append(cols)
 
-  for file in depth_files:
-      sampleID = os.path.basename(file).split(".")[0]
-      depth_df = pd.read_csv(file, sep="\\t", header=None)
-      overForty = int((len(depth_df[(depth_df[2]>40)])/len(depth_df)) * 100)
-      overOne = int((len(depth_df[(depth_df[2]>1)])/len(depth_df)) * 100)
-      stats = [sampleID, overOne, overForty]
-      depth_dfs.append(stats)
-  depth_df = pd.DataFrame(depth_dfs[1:], columns=depth_dfs[0])
+      for file in depth_files:
+          sampleID = os.path.basename(file).split(".")[0]
+          depth_df = pd.read_csv(file, sep="\\t", header=None)
+          overForty = int((len(depth_df[(depth_df[2]>40)])/len(depth_df)) * 100)
+          overOne = int((len(depth_df[(depth_df[2]>1)])/len(depth_df)) * 100)
+          stats = [sampleID, overOne, overForty]
+          depth_dfs.append(stats)
+      depth_df = pd.DataFrame(depth_dfs[1:], columns=depth_dfs[0])
 
-  read_files = glob.glob("*.reference.mapped.tsv")
-  read_dfs = []
-  cols = ["Sample","Reads Mapped to Reference (%)"]
-  read_dfs.append(cols)
-  for file in read_files:
-      sampleID = os.path.basename(file).split(".")[0]
-      read_df = pd.read_csv(file, sep="\\t", header=None)
-      mapped_reads = read_df.iloc[0][0]
-      all_reads = read_df.iloc[1][0]
-      percent_mapped = int((mapped_reads/all_reads) * 100)
-      stats = [sampleID,percent_mapped]
-      read_dfs.append(stats)
-  read_dfs = pd.DataFrame(read_dfs[1:], columns=read_dfs[0])
+      read_files = glob.glob("*.reference.mapped.tsv")
+      read_dfs = []
+      cols = ["Sample","Reads Mapped to Reference (%)"]
+      read_dfs.append(cols)
+      for file in read_files:
+          sampleID = os.path.basename(file).split(".")[0]
+          read_df = pd.read_csv(file, sep="\\t", header=None)
+          mapped_reads = read_df.iloc[0][0]
+          all_reads = read_df.iloc[1][0]
+          percent_mapped = int((mapped_reads/all_reads) * 100)
+          stats = [sampleID,percent_mapped]
+          read_dfs.append(stats)
+      read_dfs = pd.DataFrame(read_dfs[1:], columns=read_dfs[0])
 
-  dfs = [depth_df, read_dfs]
-  merged = reduce(lambda  left,right: pd.merge(left,right,on=["Sample"], how="left"), dfs)
-  merged = merged[['Reads Mapped to Reference (%)','Base Pairs Mapped to Reference >1X (%)','Base Pairs Mapped to Reference >40X (%)']].astype(str) + '%'
-  merged.to_csv("mapping_results.tsv",sep="\\t", index=False, header=True, na_rep="NaN")
-  """
+      dfs = [depth_df, read_dfs]
+      merged = reduce(lambda  left,right: pd.merge(left,right,on=["Sample"], how="left"), dfs)
+      merged[['Reads Mapped to Reference (%)','Base Pairs Mapped to Reference >1X (%)','Base Pairs Mapped to Reference >40X (%)']] = merged[['Reads Mapped to Reference (%)','Base Pairs Mapped to Reference >1X (%)','Base Pairs Mapped to Reference >40X (%)']].astype(str) + '%'
+      merged.to_csv("mapping_results.tsv",sep="\\t", index=False, header=True, na_rep="NaN")
+      """
+    }
+}
+else {
+  reference_mapping_tsv = mapping_reference
 }
 
 //Merge results
@@ -688,7 +693,6 @@ process merge_results {
   merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],
                                               how='left'), dfs)
 
-  merged[['Reads Mapped to Reference (%)','Base Pairs Mapped to Reference >1X (%)','Base Pairs Mapped to Reference >40X (%)']] = merged[['Reads Mapped to Reference (%)','Base Pairs Mapped to Reference >1X (%)','Base Pairs Mapped to Reference >40X (%)']].astype(str) + '%'
   merged = merged.rename(columns={'Contigs':'Contigs (#)'})
 
   merged.to_csv('dryad_report.csv', index=False, sep=',', encoding='utf-8')
