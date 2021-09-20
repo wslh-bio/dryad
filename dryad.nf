@@ -201,7 +201,7 @@ process kraken {
 //Kraken Step 2: Summarize kraken results
 process kraken_summary {
   tag "$name"
-  publishDir "${params.outdir}",mode:'copy'
+  publishDir "${params.outdir}/kraken",mode:'copy'
 
   input:
   file(files) from kraken_files.collect()
@@ -270,78 +270,17 @@ process shovill {
 
   output:
   tuple name, file("${name}.contigs.fa") into assembled_genomes_quality, assembled_genomes_prokka
-  tuple name, file("${name}.sam") into sam_files
+  tuple name, file("${name}.assembly.sam") into assembly_sams
 
   script:
   """
   shovill --cpus ${task.cpus} --ram ${task.memory} --outdir ./output --R1 ${reads[0]} --R2 ${reads[1]} --force
   mv ./output/contigs.fa ${name}.contigs.fa
   bwa index ${name}.contigs.fa
-  bwa mem ${name}.contigs.fa ${reads[0]} ${reads[1]} > ${name}.sam
+  bwa mem ${name}.contigs.fa ${reads[0]} ${reads[1]} > ${name}.assembly.sam
   """
 }
 
-//QC Step: Index and sort bam file then calculate coverage
-process samtools {
-  tag "$name"
-
-  publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.bam"
-  publishDir "${params.outdir}/coverage", mode: 'copy', pattern:"*_depth.tsv*"
-
-  input:
-  set val(name), file(sam) from sam_files
-
-  output:
-  file("${name}.depth.tsv") into cov_files
-  file("${name}.stats.txt") into stats_multiqc
-
-  shell:
-  """
-  samtools view -S -b ${name}.sam > ${name}.bam
-  samtools sort ${name}.bam > ${name}.sorted.bam
-  samtools index ${name}.sorted.bam
-  samtools depth -a ${name}.sorted.bam > ${name}.depth.tsv
-  samtools stats ${name}.sorted.bam > ${name}.stats.txt
-  """
-}
-
-//QC Step: Calculate coverage stats
-process coverage_stats {
-  publishDir "${params.outdir}/coverage", mode: 'copy'
-
-  input:
-  file(cov) from cov_files.collect()
-
-  output:
-  file('coverage_stats.tsv') into coverage_tsv
-
-  script:
-  """
-  #!/usr/bin/env python3
-  import glob
-  import os
-  from numpy import median
-  from numpy import average
-
-  results = []
-
-  files = glob.glob("*.depth.tsv*")
-  for file in files:
-    nums = []
-    sid = os.path.basename(file).split('.')[0]
-    with open(file,'r') as inFile:
-      for line in inFile:
-        nums.append(int(line.strip().split()[2]))
-      med = int(median(nums))
-      avg = int(average(nums))
-      results.append(f"{sid}\\t{med}\\t{avg}\\n")
-
-  with open('coverage_stats.tsv', 'w') as outFile:
-    outFile.write("Sample\\tMedian Coverage\\tAverage Coverage\\n")
-    for result in results:
-      outFile.write(result)
-  """
-}
 
 //QC Step: Run Quast on assemblies
 process quast {
@@ -568,95 +507,152 @@ if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test
         fi
         """
     }
-    process mapping {
+    process bwa {
       tag "$name"
-      publishDir "${params.outdir}/mapping/depth", mode: 'copy',pattern:"*.depth.tsv"
-      publishDir "${params.outdir}/mapping/stats", mode: 'copy',pattern:"*.stats.txt"
-      publishDir "${params.outdir}/mapping/bams", mode: 'copy',pattern:"*.sorted.bam*"
+      publishDir "${params.outdir}/mapping/bams", mode: 'copy',pattern:"*.sam"
 
       input:
       file(reference) from mapping_reference.first()
       set val(name), file(reads) from cleaned_reads_mapping
 
       output:
-      tuple name, file("${name}.depth.tsv") into depth_results
-      tuple name, file("${name}.mapped.tsv") into mapped_results
-      file("*.stats.txt")
-      file("*.sorted.bam*")
+      tuple name, file("${name}.reference.sam") into reference_sams
 
       script:
       """
       bwa index ${reference}
-      bwa mem ${reference} ${reads[0]} ${reads[1]} > ${name}.sam
-      samtools view -S -b ${name}.sam > ${name}.bam
-      samtools sort ${name}.bam > ${name}.sorted.bam
-      samtools index ${name}.sorted.bam
-      samtools depth -a ${name}.sorted.bam > ${name}.depth.tsv
-      samtools stats ${name}.sorted.bam > ${name}.stats.txt
-      samtools view -c -F 260 ${name}.sorted.bam > ${name}.mapped.tsv
-      samtools view -c ${name}.sorted.bam >> ${name}.mapped.tsv
+      bwa mem ${reference} ${reads[0]} ${reads[1]} > ${name}.reference.sam
       """
     }
-
-    process mapping_stats {
-      publishDir "${params.outdir}/mapping", mode: 'copy',pattern:"*.tsv"
-
-      input:
-      file(depth) from depth_results.collect()
-      file(mapped) from mapped_results.collect()
-
-      output:
-      file("mapping_results.tsv") into mapping_tsv
-
-      script:
-      """
-      #!/usr/bin/env python3
-
-      import pandas as pd
-      import os
-      import glob
-      from functools import reduce
-
-      depth_files = glob.glob("*.depth.tsv")
-      depth_dfs = []
-      cols = ["Sample","Base Pairs Mapped to Reference >1X (%)","Base Pairs Mapped to Reference >40X (%)"]
-      depth_dfs.append(cols)
-
-      for file in depth_files:
-          sampleID = os.path.basename(file).split(".")[0]
-          depth_df = pd.read_csv(file, sep="\\t", header=None)
-          overForty = int((len(depth_df[(depth_df[2]>40)])/len(depth_df)) * 100)
-          overOne = int((len(depth_df[(depth_df[2]>1)])/len(depth_df)) * 100)
-          stats = [sampleID,overOne,overForty]
-          depth_dfs.append(stats)
-
-      depth_df = pd.DataFrame(depth_dfs[1:], columns=depth_dfs[0])
-
-      read_files = glob.glob("*.mapped.tsv")
-      read_dfs = []
-      cols = ["Sample","Reads Mapped to Reference (%)"]
-      read_dfs.append(cols)
-
-      for file in read_files:
-          sampleID = os.path.basename(file).split(".")[0]
-          read_df = pd.read_csv(file, sep="\\t", header=None)
-          mapped_reads = read_df.iloc[0][0]
-          all_reads = read_df.iloc[1][0]
-          percent_mapped = int((mapped_reads/all_reads) * 100)
-          stats = [sampleID,percent_mapped]
-          read_dfs.append(stats)
-
-      read_dfs = pd.DataFrame(read_dfs[1:], columns=read_dfs[0])
-
-      dfs = [depth_df,read_dfs]
-      merged = reduce(lambda  left,right: pd.merge(left,right,on=["Sample"],
-                                                  how="left"), dfs)
-
-      merged.to_csv("mapping_results.tsv",sep="\\t", index=False, header=True, na_rep="NaN")
-      """
-    }
+    sam_files = assembly_sams.concat(reference_sams)
 }
 
+else {
+  sam_files = assembly_sams
+}
+
+//QC Step: Index and sort bam file then calculate coverage
+process samtools {
+  tag "$name"
+  publishDir "${params.outdir}/mapping/bams", mode: 'copy',pattern:"*.sorted.bam*"
+  publishDir "${params.outdir}/mapping/depth", mode: 'copy',pattern:"*.depth.tsv"
+  publishDir "${params.outdir}/mapping/stats", mode: 'copy',pattern:"*.stats.txt"
+
+  input:
+  set val(name), file(sam) from sam_files
+
+  output:
+  tuple name, file("*.depth.tsv") into reference_depth_results,assembly_depth_results
+  tuple name, file("*.mapped.tsv") into reference_mapped_results,assembly_mapped_results
+  file("*.stats.txt")
+  file("*.sorted.bam*")
+
+  shell:
+  """
+  filename=${sam}
+  handle=\${filename%.*}
+  type=\${handle##*.}
+
+  samtools view -S -b ${name}.\$type.sam > ${name}.\$type.bam
+  samtools sort ${name}.\$type.bam > ${name}.\$type.sorted.bam
+  samtools index ${name}.\$type.sorted.bam
+  samtools depth -a ${name}.\$type.sorted.bam > ${name}.\$type.depth.tsv
+  samtools stats ${name}.\$type.sorted.bam > ${name}.\$type.stats.txt
+  samtools view -c -F 260 ${name}.\$type.sorted.bam > ${name}.\$type.mapped.tsv
+  samtools view -c ${name}.\$type.sorted.bam >> ${name}.\$type.mapped.tsv
+  """
+}
+
+//QC Step: Calculate coverage stats
+process assembly_coverage_stats {
+  publishDir "${params.outdir}/coverage", mode: 'copy'
+
+  input:
+  file(depth) from assembly_depth_results.collect()
+  file(mapped) from assembly_mapped_results.collect()
+
+  output:
+  file('coverage_stats.tsv') into assembly_mapping_tsv
+
+  script:
+  """
+  #!/usr/bin/env python3
+  import glob
+  import os
+  from numpy import median
+  from numpy import average
+
+  results = []
+  files = glob.glob("*.assembly.depth.tsv*")
+  for file in files:
+    nums = []
+    sid = os.path.basename(file).split('.')[0]
+    with open(file,'r') as inFile:
+      for line in inFile:
+        nums.append(int(line.strip().split()[2]))
+      med = int(median(nums))
+      avg = int(average(nums))
+      results.append(f"{sid}\\t{med}\\t{avg}\\n")
+  with open('coverage_stats.tsv', 'w') as outFile:
+    outFile.write("Sample\\tMedian Coverage (Mapped to Assembly)\\tMean Coverage (Mapped to Assembly)\\n")
+    for result in results:
+      outFile.write(result)
+  """
+}
+
+//QC Step: Calculate mapping stats for reads mapped to reference
+process reference_mapping_stats {
+  publishDir "${params.outdir}/coverage", mode: 'copy'
+
+  input:
+  file(depth) from reference_depth_results.collect()
+  file(mapped) from reference_mapped_results.collect()
+
+  output:
+  file('mapping_results.tsv') into reference_mapping_tsv
+
+  script:
+  """
+  #!/usr/bin/env python3
+  import pandas as pd
+  import os
+  import glob
+  from functools import reduce
+
+  depth_files = glob.glob("*.reference.depth.tsv")
+  depth_dfs = []
+  cols = ["Sample","Base Pairs Mapped to Reference >1X (%)","Base Pairs Mapped to Reference >40X (%)"]
+  depth_dfs.append(cols)
+
+  for file in depth_files:
+      sampleID = os.path.basename(file).split(".")[0]
+      depth_df = pd.read_csv(file, sep="\\t", header=None)
+      overForty = int((len(depth_df[(depth_df[2]>40)])/len(depth_df)) * 100)
+      overOne = int((len(depth_df[(depth_df[2]>1)])/len(depth_df)) * 100)
+      stats = [sampleID, overOne, overForty]
+      depth_dfs.append(stats)
+  depth_df = pd.DataFrame(depth_dfs[1:], columns=depth_dfs[0])
+
+  read_files = glob.glob("*.reference.mapped.tsv")
+  read_dfs = []
+  cols = ["Sample","Reads Mapped to Reference (%)"]
+  read_dfs.append(cols)
+  for file in read_files:
+      sampleID = os.path.basename(file).split(".")[0]
+      read_df = pd.read_csv(file, sep="\\t", header=None)
+      mapped_reads = read_df.iloc[0][0]
+      all_reads = read_df.iloc[1][0]
+      percent_mapped = int((mapped_reads/all_reads) * 100)
+      stats = [sampleID,percent_mapped]
+      read_dfs.append(stats)
+  read_dfs = pd.DataFrame(read_dfs[1:], columns=read_dfs[0])
+
+  dfs = [depth_df, read_dfs]
+  merged = reduce(lambda  left,right: pd.merge(left,right,on=["Sample"], how="left"), dfs)
+  merged = merged[['Reads Mapped to Reference (%)','Base Pairs Mapped to Reference >1X (%)','Base Pairs Mapped to Reference >40X (%)']].astype(str) + '%'
+  merged.to_csv("mapping_results.tsv",sep="\\t", index=False, header=True, na_rep="NaN")
+  """
+}
 
 //Merge results
 process merge_results {
@@ -665,9 +661,9 @@ process merge_results {
   input:
   file(bbduk) from bbduk_tsv
   file(quast) from quast_tsv
-  file(coverage) from coverage_tsv
+  file(assembly) from assembly_mapping_tsv
   file(kraken) from kraken_tsv
-  file(mapping) from mapping_tsv
+  file(reference) from reference_mapping_tsv
 
   output:
   file('dryad_report.csv')
@@ -692,8 +688,8 @@ process merge_results {
   merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],
                                               how='left'), dfs)
 
-  merged = merged[['Sample','Total Reads','Reads Removed','Median Coverage','Average Coverage','Contigs','Assembly Length (bp)','N50','Primary Species (%)','Secondary Species (%)','Unclassified Reads (%)','Reads Mapped to Reference (%)','Base Pairs Mapped to Reference >1X (%)','Base Pairs Mapped to Reference >40X (%)']]
-  merged = merged.rename(columns={'Contigs':'Contigs (#)','Average Coverage':'Mean Coverage'})
+  merged = merged[['Sample','Total Reads','Reads Removed','Median Coverage (Mapped to Assembly)','Mean Coverage (Mapped to Assembly)','Contigs','Assembly Length (bp)','N50','Primary Species (%)','Secondary Species (%)','Unclassified Reads (%)','Reads Mapped to Reference (%)','Base Pairs Mapped to Reference >1X (%)','Base Pairs Mapped to Reference >40X (%)']]
+  merged = merged.rename(columns={'Contigs':'Contigs (#)'})
 
   merged.to_csv('dryad_report.csv', index=False, sep=',', encoding='utf-8')
   """
@@ -712,7 +708,7 @@ process multiqc {
 
   input:
   file(a) from multiqc_clean_reads.collect()
-  file(c) from stats_multiqc.collect()
+//  file(c) from stats_multiqc.collect()
   file(e) from kraken_multiqc.collect()
   file(f) from logo
   file(config) from multiqc_config
