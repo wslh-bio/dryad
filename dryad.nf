@@ -263,7 +263,7 @@ process shovill {
   errorStrategy 'ignore'
   tag "$name"
   publishDir "${params.outdir}/assembled", mode: 'copy',pattern:"*.fa"
-  publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sam"
+  publishDir "${params.outdir}/mapping/sams", mode: 'copy',pattern:"*.sam"
 
   input:
   set val(name), file(reads) from cleaned_reads_shovill
@@ -509,7 +509,7 @@ if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test
     }
     process bwa {
       tag "$name"
-      publishDir "${params.outdir}/mapping/bams", mode: 'copy',pattern:"*.sam"
+      publishDir "${params.outdir}/mapping/sams", mode: 'copy',pattern:"*.sam"
 
       input:
       file(reference) from mapping_reference.first()
@@ -565,7 +565,7 @@ process samtools {
 
 //QC Step: Calculate coverage stats
 process assembly_coverage_stats {
-  publishDir "${params.outdir}/coverage", mode: 'copy'
+  publishDir "${params.outdir}/mapping", mode: 'copy'
 
   input:
   file(depth) from assembly_depth_results.collect()
@@ -603,7 +603,7 @@ process assembly_coverage_stats {
 if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test_snp & params.test) {
     //QC Step: Calculate mapping stats for reads mapped to reference
     process reference_mapping_stats {
-      publishDir "${params.outdir}/coverage", mode: 'copy'
+      publishDir "${params.outdir}/mapping", mode: 'copy'
 
       input:
       file(depth) from reference_depth_results.collect()
