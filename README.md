@@ -77,31 +77,51 @@ Dryad can generate an easily attributable analysis report. This uses RMarkdown a
 
 ```
 dryad_results
-├── logs
-│   ├── cleanedreads
-│   ├── dryad_execution_report.html
-│   ├── dryad_trace.txt
-│   ├── fastqc
-│   ├── quast
-│   └── work
-└── results
-    ├── amrfinder
-    ├── annotated
-    ├── ar_predictions_binary.tsv
-    ├── ar_predictions.tsv
-    ├── assembled
-    ├── cluster_report.pdf
-    ├── core_gene_alignment.aln
-    ├── core_genome_statistics.txt
-    ├── core_genome.tree
-    ├── mash
-    ├── mlst.tsv
-    ├── multiqc_data
-    ├── multiqc_report.html
-    ├── report_template.Rmd
-    ├── snp_distance_matrix.tsv
-    ├── snpma.fasta
-    └── snp.tree
+├── annotated
+│   ├── *.gff
+│   └── *.prokka.stats.txt
+├── assembled
+│   └── *.contigs.fa
+├── core_gene_alignment.aln
+├── core_genome_statistics.txt
+├── core_genome.tree
+├── dryad_report.csv
+├── assembled
+├── fastqc
+│   ├── fastqc_summary.txt
+│   ├── *.html
+│   └── zips
+│       └── *.zip 
+├── kraken
+│   ├── kraken_results.tsv
+│   └── *kraken2_report.txt
+├── mapping
+│   ├── bams
+│   │   ├── *.assembly.bam
+│   │   ├── *.assembly.bai
+│   │   ├── *.reference.bam
+│   │   └── *.reference.bai
+│   ├── coverage_stats.tsv
+│   ├── depth
+│   │   ├── *.assembly.depth.tsv
+│   │   └── *.reference.depth.tsv
+│   ├── mapping_stat.tsv
+│   ├── sams
+│   │   ├── *.assembly.sam
+│   │   └── *.reference.sam
+│   └── stats
+│       ├── *.assembly.stats.txt
+│       └── *.reference.stats.txt
+├── multiqc_report.html
+├── quast
+│   ├── quast_results.tsv
+│   └── *.quast.tsv
+├── snp_distance_matrix.tsv
+├── snpma.fasta
+├── snp.tree
+└── trimming
+    ├── bbduk_results.tsv
+    └── *.trim.txt
 ```
 **ar_predictions_binary.tsv** - Presence/absence matrix of antibiotic resistance genes.  
 **ar_predictions.tsv** - Antibiotic tesistance genes detected.  
