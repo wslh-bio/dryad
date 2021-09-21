@@ -15,7 +15,7 @@ Dryad is a [NextFlow](https://www.nextflow.io/) pipeline to construct reference 
 
 ### Using the pipeline
 The pipeline is designed to start from raw Illumina short reads. All reads must be in the same directory. Then start the pipeline using `nextflow run k-florek/dryad`.  
-  
+
 You can also test the pipeline with example data using `--test`, note this requires NextFlow version `21.07.0-edge` or greater:
 ```
 nextflow sprriggan.nf --test
@@ -25,8 +25,8 @@ nextflow sprriggan.nf --test
 
 ![Workflow](/assets/dryad_workflow_2.0.0.png)
 
-### Read trimming and quality assessment
-Read trimming and cleaning is performed using [BBtools v38.76](https://jgi.doe.gov/data-and-tools/bbtools/) to trim reads of low quality bases and remove PhiX contamination. Then [FastQC v0.11.8](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) is used assess the quality of the raw and cleaned reads. After processing, the reads are used by each pipeline as needed.  
+### Read trimming and cleaning
+Read trimming and cleaning is performed using [BBtools v38.76](https://jgi.doe.gov/data-and-tools/bbtools/) to trim reads of low quality bases and remove PhiX contamination. After processing, the reads are used by each pipeline as needed.  
 *Note: Both pipelines can be run automatically in parallel using the snp_reference parameter.*
 
 ### Core genome alignment and phylogenetic tree construction
@@ -64,9 +64,19 @@ The SNP pipeline uses the following applications and pipelines:
 [IQ-Tree v1.6.7](http://www.iqtree.org/)
 IQ-Tree uses an alignment of the SNP sites to create a maximum likelihood phylogenetic tree bootstrapped 1000 times.
 
-### Quality Assessment
-The results of quality checks from each pipeline are summarized using [MultiQC v1.8](https://multiqc.info/)
+#### Quality Assessment
 
+[FastQC v0.11.8](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) 
+FastQC is used assess the quality of the raw and cleaned reads. 
+
+[QUAST v5.0.2](http://bioinf.spbau.ru/quast)
+QUAST assesses the quality of the genome assemblies.
+
+[Samtools v1.10](http://www.htslib.org/) 
+calculates the number and depth of cleaned reads mapped to their assemblies and the reference genome. [BWA v0.7.17-r1188](http://bio-bwa.sourceforge.net/) is used for mapping reads.
+
+[MultiQC v1.8](https://multiqc.info/)
+summarizes the results of FastQC, Prokka, Samtools Stats and Kraken.
 ### Output files
 
 ```
@@ -85,7 +95,7 @@ dryad_results
 │   ├── fastqc_summary.txt
 │   ├── *.html
 │   └── zips
-│       └── *.zip 
+│       └── *.zip
 ├── kraken
 │   ├── kraken_results.tsv
 │   └── *kraken2_report.txt
