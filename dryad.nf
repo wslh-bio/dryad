@@ -47,7 +47,7 @@ if(params.test){
   }
 }
 
-//Step0: Preprocess reads - change names
+//Preprocessing Step: Change read names
 process preProcess {
   input:
   set val(name), file(reads) from raw_reads
@@ -70,7 +70,7 @@ process preProcess {
   }
 }
 
-//Step1: Trim reads and remove PhiX contamination
+//QC Step: Trim reads and remove PhiX contamination
 process clean_reads {
   tag "$name"
   publishDir "${params.outdir}/trimming", mode: 'copy',pattern:"*.trim.txt"
@@ -96,6 +96,7 @@ process clean_reads {
   """
 }
 
+//QC Step: Summarize BBduk results
 process bbduk_summary {
   publishDir "${params.outdir}/trimming",mode:'copy'
 
@@ -138,7 +139,7 @@ process bbduk_summary {
 
 combined_reads = read_files_fastqc.concat(cleaned_reads_fastqc)
 
-//QC Step: FastQC
+//QC Step: Run FastQC
 process fastqc {
   tag "$name"
   publishDir "${params.outdir}/fastqc", mode: 'copy',saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
@@ -155,7 +156,7 @@ process fastqc {
   """
 }
 
-//QC Step: Summarize FastQC
+//QC Step: Summarize FastQC results
 process fastqc_summary {
   publishDir "${params.outdir}/fastqc", mode: 'copy'
 
@@ -181,7 +182,7 @@ process fastqc_summary {
   """
 }
 
-//Kraken Step 1: Run Kraken
+//Species identification step: Run Kraken
 process kraken {
   tag "$name"
   publishDir "${params.outdir}/kraken", mode: 'copy', pattern: "*_kraken2_report.txt*"
@@ -198,7 +199,7 @@ process kraken {
   """
 }
 
-//Kraken Step 2: Summarize kraken results
+//Species identification step: Summarize Kraken results
 process kraken_summary {
   tag "$name"
   publishDir "${params.outdir}/kraken",mode:'copy'
@@ -258,7 +259,7 @@ process kraken_summary {
   """
 }
 
-//CG Step1: Assemble trimmed reads with Shovill and map reads back to assembly
+//CG Step: Assemble cleaned reads with Shovill and map reads back to the assembly with BWA
 process shovill {
   errorStrategy 'ignore'
   tag "$name"
@@ -282,7 +283,7 @@ process shovill {
 }
 
 
-//QC Step: Run Quast on assemblies
+//QC Step: Run QUAST on assemblies
 process quast {
   tag "$name"
 
@@ -304,6 +305,7 @@ process quast {
   """
 }
 
+//QC Step: Summarize QUAST results
 process quast_summary {
   publishDir "${params.outdir}/quast",mode:'copy'
 
@@ -339,7 +341,7 @@ process quast_summary {
   """
 }
 
-//AR Setup amrfinder files
+//CG Step: Set up Prokka files
 process prokka_setup {
   tag "$name"
 
@@ -368,6 +370,7 @@ process prokka_setup {
   """
 }
 
+//CG Step: Run Prokka on assemblies
 process prokka {
   errorStrategy 'ignore'
   tag "$name"
@@ -393,10 +396,7 @@ process prokka {
   """
 }
 
-//CG Step2: Annotate with prokka
-//TODO: add genus and species
-
-//CG Step3: Align with Roary
+//CG Step: Perform core genome alignment using Roary
 process roary {
   publishDir "${params.outdir}",mode:'copy'
 
@@ -419,7 +419,7 @@ process roary {
   """
 }
 
-//CG Step4: IQTree for core-genome
+//CG Step: Infer ML tree from core genome alignment using IQ-TREE
 process cg_tree {
   publishDir "${params.outdir}",mode:'copy'
 
@@ -440,8 +440,10 @@ process cg_tree {
     """
 }
 
+//Run SNP calling pipeline if a reference sequence is provided
 if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test_snp & params.test) {
-    //SNP Step1: Run CFSAN-SNP Pipeline
+
+    //SNP Step: Run CFSAN-SNP Pipeline
     process cfsan {
       publishDir "${params.outdir}", mode: 'copy'
 
@@ -487,7 +489,7 @@ if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test
       """
     }
 
-    //SNP Step2: Run IQTREE on snp alignment
+    //SNP Step: Run IQ-TREE on SNP alignment
     process snp_tree {
       publishDir "${params.outdir}", mode: 'copy'
 
@@ -507,6 +509,8 @@ if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test
         fi
         """
     }
+
+    //SNP Step: Map cleaned reads to reference sequence using BWA
     process bwa {
       tag "$name"
       publishDir "${params.outdir}/mapping/sams", mode: 'copy',pattern:"*.sam"
@@ -524,14 +528,16 @@ if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test
       bwa mem ${reference} ${reads[0]} ${reads[1]} > ${name}.reference.sam
       """
     }
+    //Combine assembly and reference alignment channels
     sam_files = assembly_sams.concat(reference_sams)
 }
 
 else {
+  //Otherwise use only assembly alignment files 
   sam_files = assembly_sams
 }
 
-//QC Step: Index and sort bam file then calculate coverage
+//QC Step: Convert SAMs to BAMs, index and sort BAM files, then calculate coverage
 process samtools {
   tag "$name"
   publishDir "${params.outdir}/mapping/bams", mode: 'copy',pattern:"*.sorted.bam*"
@@ -563,7 +569,7 @@ process samtools {
   """
 }
 
-//QC Step: Calculate coverage stats
+//QC Step: Using samtools depth, calculate coverage of cleaned reads mapped to their assemblies
 process assembly_coverage_stats {
   publishDir "${params.outdir}/mapping", mode: 'copy'
 
@@ -601,7 +607,8 @@ process assembly_coverage_stats {
 }
 
 if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test_snp & params.test) {
-    //QC Step: Calculate mapping stats for reads mapped to reference
+
+    //QC Step: Calculate coverage for reads mapped to reference
     process reference_mapping_stats {
       publishDir "${params.outdir}/mapping", mode: 'copy'
 
@@ -656,10 +663,12 @@ if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test
     }
 }
 else {
+  // Set reference_mapping_tsv to non-tsv <- change this to an empty non-tsv file at some point
   reference_mapping_tsv = mapping_reference
+//    reference_mapping_tsv = Channel.empty()
 }
 
-//Merge results
+//QC Step: Merge QC results into one tsv
 process merge_results {
   publishDir "${params.outdir}/", mode: 'copy'
 
@@ -668,6 +677,8 @@ process merge_results {
   file(quast) from quast_tsv
   file(assembly) from assembly_mapping_tsv
   file(kraken) from kraken_tsv
+  // make reference_mapping_tsv optional input
+  //file(reference) from reference_mapping_tsv.ifEmpty{ 'empty' }
   file(reference) from reference_mapping_tsv
 
   output:
