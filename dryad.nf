@@ -18,7 +18,7 @@ if(params.test){
       .fromPath("$baseDir/assets/ASM211692v1.fasta")
       .into { snp_reference;mapping_reference }
   Channel
-      .from("$baseDir/snppipeline.conf")
+      .fromPath("$baseDir/snppipeline.conf")
       .set { snp_config }
 } else{
   //setup channel to read in and pair the fastq files
@@ -42,7 +42,7 @@ if(params.test){
           .fromPath(params.snp_reference)
           .into { snp_reference;mapping_reference }
       Channel
-          .from("$baseDir/snppipeline.conf")
+          .fromPath("$baseDir/snppipeline.conf")
           .set { snp_config }
   }
 }
@@ -533,7 +533,7 @@ if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test
 }
 
 else {
-  //Otherwise use only assembly alignment files 
+  //Otherwise use only assembly alignment files
   sam_files = assembly_sams
 }
 
@@ -711,11 +711,11 @@ process merge_results {
 }
 
 Channel
-  .from("$baseDir/multiqc_config.yaml")
+  .fromPath("$baseDir/multiqc_config.yaml")
   .set { multiqc_config }
 
 Channel
-  .from("$baseDir/assets/dryad_logo_250.png")
+  .fromPath("$baseDir/assets/dryad_logo_250.png")
   .set { logo }
 
 process multiqc {
