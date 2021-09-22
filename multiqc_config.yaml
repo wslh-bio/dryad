@@ -1,13 +1,5 @@
 #################################################################
-# MultiQC Defaults
-#################################################################
-# This file contains the default configuration options
-# for MultiQC. IT SHOULD NOT BE EDITED. If you want to
-# change any of these config options, create a new file
-# in any of the following locations:
-#  1. <installation_dir>/multiqc_config.yaml (not pip or conda)
-#  2. ~/.multiqc_config.yaml
-#  3. <working directory>/multiqc_config.yaml
+# MultiQC Dryad Config
 #################################################################
 
 title: 'Dryad QC Report'
@@ -18,8 +10,8 @@ report_header_info: null
 show_analysis_paths: True
 show_analysis_time: True
 config_file: null
-custom_logo: 'dryad_logo_250.png'
-custom_logo_url: 'https://github.com/wslh-bio/dryad'
+custom_logo: dryad_logo_250.png
+custom_logo_url: https://github.com/wslh-bio/dryad
 custom_logo_title: null
 simple_output: false
 template: "default"
@@ -34,7 +26,7 @@ long_read_count_desc: "thousands"
 base_count_multiplier: 0.000001
 base_count_prefix: "Mb"
 base_count_desc: "millions"
-output_fn_name: "multiqc_report.html"
+output_fn_name: "dryad_multiqc_report.html"
 data_dir_name: "multiqc_data"
 plots_dir_name: "multiqc_plots"
 data_format: "tsv"
@@ -92,8 +84,9 @@ custom_plot_config: {}
 #custom search search patterns
 sp:
   quast:
-  fn: "*.quast.tsv"
-  shared: true
+    fn: "*.quast.tsv"
+    shared: true
+
 ignore_symlinks: false
 ignore_images: true
 fn_ignore_dirs:
@@ -140,6 +133,12 @@ custom_content:
 
 # Option to disable sample name cleaning if desired
 fn_clean_sample_names: true
+
+# Option to use the filename as the sample name if desired
+# Set to True to apply for all modules. Define a list of search pattern keys to be specific.
+use_filename_as_sample_name: false
+
+
 
 # Used for cleaning sample names. Should be strings.
 # NB: These are removed in order!
@@ -244,6 +243,9 @@ fn_clean_exts:
   - ".vep"
   - "_vep"
   - "ccs"
+  - "_NanoStats"
+  - ".cutadapt"
+  - "_kraken2_report"
 
 # These are removed after the above, only if sample names
 # start or end with this string. Again, removed in order.
@@ -270,10 +272,16 @@ fn_clean_trim:
   - "_matrix"
   - ".stats"
   - ".hist"
-
-extra_fn_clean_trim:
   - "_S*"
   - "_kraken2_report"
+  - "_clean_1"
+  - "_clean_2"
+  - "_R1_001"
+  - "_R2_001"
+  - "_R1"
+  - "_R2"
+  - "_1"
+  - "_2"
 
 # Files to ignore when indexing files.
 # Grep file match patterns.
@@ -300,7 +308,17 @@ fn_ignore_files:
 # Favourite modules that should appear at the top in preference
 # This is in addition to those below. These appear above _all_ other
 # modules (even those not present in the below list).
-top_modules: []
+top_modules:
+  - fastqc:
+      name: "FastQC Processed"
+      info: "This section is for reads that have been processed through QC to remove low quality data, adapters, and PhiX contamination."
+      path_filters:
+        - "*clean*_fastqc.zip"
+  - fastqc:
+      name: "FastQC Unprocessed"
+      info: "This section is for reads that haven't been processed through QC"
+      path_filters_exclude:
+        - "*clean*_fastqc.zip"
 
 # Order that modules should appear in report. Try to list in order of analysis.
 module_order:
@@ -325,6 +343,11 @@ module_order:
         - WGS
         - cancer
         - DNA
+  - lima:
+      module_tag:
+        - RNA
+        - DNA
+        - PacBio
   - peddy:
       module_tag:
         - DNA
@@ -499,6 +522,12 @@ module_order:
   - qc3C:
       module_tag:
         - hi-c
+  - nanostat:
+      module_tag:
+        - DNA
+        - RNA
+        - Methylation
+        - WGS
   - samblaster:
       module_tag:
         - DNA
