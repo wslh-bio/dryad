@@ -8,7 +8,7 @@ params.test = false
 params.test_snp = true
 if(params.test){
   testIDS = ['SRR14311557','SRR14311556','SRR14311555','SRR14311554',
-    'SRR14311553','SRR14311552','SRR14613509','SRR14874874']
+    'SRR14311553','SRR14311552','SRR14613509']
   println "Running test analysis using the following samples:"
   println testIDS
   Channel
@@ -391,7 +391,7 @@ process prokka {
   genus=\${taxa%_*}
   species=\${taxa##*_}
 
-  prokka --cpu ${task.cpus} --force --compliant --prefix ${name} --genus \$genus --species \$species --mincontiglen 500 --outdir . ${assembly} > ${name}.log
+  prokka --cpu ${task.cpus} --force --compliant --prefix ${name} --genus \$genus --species \$species --strain ${name} --mincontiglen 500 --outdir . ${assembly} > ${name}.log
   mv ${name}.txt ${name}.prokka.stats.txt
   """
 }
@@ -723,12 +723,15 @@ process multiqc {
 
   input:
   file(a) from multiqc_clean_reads.collect()
+  file(b) from fastqc_multiqc.collect()
 //  file(c) from stats_multiqc.collect()
-  file(e) from kraken_multiqc.collect()
-  file(f) from logo
+  file(d) from kraken_multiqc.collect()
+  file(e) from quast_multiqc.collect()
+  file(f) from prokka_multiqc.collect()
+  file(g) from logo
   file(config) from multiqc_config
-  file(d) from prokka_multiqc.collect()
-  file(r) from fastqc_multiqc.collect()
+
+
 
   output:
   file("*.html") into multiqc_output
