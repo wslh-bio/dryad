@@ -1,0 +1,37 @@
+name: dryad_build
+on: [push]
+jobs:
+  run-check:
+    if: "contains(github.event.head_commit.message, '[ci]')"
+    runs-on: ubuntu-latest
+    env:
+      NXF_VER: 21.07.0-edge
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Cache Nextflow Version
+        uses: actions/cache@v2
+        with:
+          path: ~/.nextflow
+          key: ${{ runner.os }}-build-${{ env.NXF_VER }}
+
+      - name: Get Nextflow
+        run: curl -s https://get.nextflow.io | bash
+
+      - name: Run Dryad with test data
+        env:
+          NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
+        run: |
+          cd ./tests
+          ../nextflow run ../dryad.nf --test -c autobuild.config
