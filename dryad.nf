@@ -663,9 +663,7 @@ if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test
     }
 }
 else {
-  // Set reference_mapping_tsv to non-tsv <- change this to an empty non-tsv file at some point
-  reference_mapping_tsv = mapping_reference
-//    reference_mapping_tsv = Channel.empty()
+    reference_mapping_tsv = Channel.empty()
 }
 
 //QC Step: Merge QC results into one tsv
@@ -677,9 +675,7 @@ process merge_results {
   file(quast) from quast_tsv
   file(assembly) from assembly_mapping_tsv
   file(kraken) from kraken_tsv
-  // make reference_mapping_tsv optional input
-  //file(reference) from reference_mapping_tsv.ifEmpty{ 'empty' }
-  file(reference) from reference_mapping_tsv
+  file(reference) from reference_mapping_tsv.ifEmpty{ 'empty' }
 
   output:
   file('dryad_report.csv')
