@@ -9,8 +9,8 @@ Dryad is a [NextFlow](https://www.nextflow.io/) pipeline to construct reference 
 ### Table of Contents:
 [Usage](#using-the-pipeline)  
 [Workflow outline](#workflow-outline)  
-[Core-genome](#core-Genome-phylogenetic-tree-construction)  
-[SNP](#snp-phylogenetic-tree-construction)  
+[Core-genome](#core-genome-alignment-and-phylogenetic-tree-construction)  
+[SNP](#snp-distances-calculation-and-phylogenetic-tree-construction)  
 [Quality assessment](#quality-assessment)  
 [Output](#output-files)  
 
