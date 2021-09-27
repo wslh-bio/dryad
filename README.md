@@ -1,6 +1,8 @@
 ![Dryad](/assets/dryad_logo_250.png)
 
-## Note: Dryad is currently undergoing large changes and may not be functional
+![Dryad](https://github.com/wslh-bio/dryad/actions/workflows/dryad_build.yml/badge.svg)
+![GPL-3.0](https://img.shields.io/github/license/wslh-bio/dryad)
+![GitHub Release](https://img.shields.io/github/release/wslh-bio/dryad)
 
 Dryad is a [NextFlow](https://www.nextflow.io/) pipeline to construct reference free core-genome or SNP phylogenetic trees for examining prokaryote relatedness in outbreaks. Dryad will performs both a reference free core-genome analysis based off of the approach outlined by [Oakeson et. al](https://www.ncbi.nlm.nih.gov/pubmed/30158193) and/or a SNP analysis using the [CFSAN-SNP](https://snp-pipeline.readthedocs.io/en/latest/readme.html) pipeline.
 
@@ -11,23 +13,29 @@ Dryad is a [NextFlow](https://www.nextflow.io/) pipeline to construct reference 
 [SNP](#snp-phylogenetic-tree-construction)  
 [Quality assessment](#quality-assessment)  
 [Output](#output-files)  
-[Dependencies](#dependencies)  
 
 ### Using the pipeline
-The pipeline is designed to start from raw Illumina short reads. All reads must be in the same directory. Then start the pipeline using `nextflow run k-florek/dryad`.  
+The pipeline is designed to start from raw Illumina short reads. All reads must be in the same directory. Then start the pipeline using:  
+```
+nextflow wslh-bio/dryad -r <version> --reads [path-to-reads]
+```  
+to run the SNP pipeline include the `--snp_reference` parameter:  
+```
+nextflow wslh-bio/dryad -r <version> --reads [path-to-reads] --snp_reference [path-to-reference-fasta]
+```  
 
 You can also test the pipeline with example data using `--test`, note this requires NextFlow version `21.07.0-edge` or greater:
 ```
-nextflow sprriggan.nf --test
+nextflow dryad.nf --test
 ```
 
 ### Workflow outline
 
-![Workflow](/assets/dryad_workflow_2.0.0.png)
+![Workflow](/assets/dryad_workflow_3.0.png)
 
 ### Read trimming and cleaning
 Read trimming and cleaning is performed using [BBtools v38.76](https://jgi.doe.gov/data-and-tools/bbtools/) to trim reads of low quality bases and remove PhiX contamination. After processing, the reads are used by each pipeline as needed.  
-*Note: Both pipelines can be run automatically in parallel using the snp_reference parameter.*
+*Note: Both pipelines can be run automatically in parallel by supplying the snp_reference parameter.*
 
 ### Core genome alignment and phylogenetic tree construction
 The core genome pipeline takes the trimmed and cleaned reads and infers a phylogenetic tree that can be used for inferring outbreak relatedness. This pipeline is based loosely off of the pipeline described here by [Oakeson et. al](https://www.ncbi.nlm.nih.gov/pubmed/30158193).
@@ -66,19 +74,18 @@ IQ-Tree uses an alignment of the SNP sites to create a maximum likelihood phylog
 
 #### Quality Assessment
 
-[FastQC v0.11.8](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) 
-FastQC is used assess the quality of the raw and cleaned reads. 
+[FastQC v0.11.8](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+FastQC is used assess the quality of the raw and cleaned reads.
 
 [QUAST v5.0.2](http://bioinf.spbau.ru/quast)
 QUAST assesses the quality of the genome assemblies.
 
-[Samtools v1.10](http://www.htslib.org/) 
+[Samtools v1.10](http://www.htslib.org/)
 calculates the number and depth of cleaned reads mapped to their assemblies and the reference genome. [BWA v0.7.17-r1188](http://bio-bwa.sourceforge.net/) is used for mapping reads.
 
 [MultiQC v1.8](https://multiqc.info/)
 summarizes the results of FastQC, Prokka, Samtools Stats and Kraken.
 ### Output files
-
 ```
 dryad_results
 ├── annotated
@@ -161,5 +168,5 @@ dryad_results
 **\*.trim.txt** - Trimming results from BBduk each sample  
 
 ### Authors
-[Kelsey Florek](https://github.com/k-florek), WSLH Bioinformatics Scientist  
+[Kelsey Florek](https://github.com/k-florek), WSLH Senior Genomics and Data Scientist  
 [Abigail Shockey](https://github.com/AbigailShockey), WSLH Bioinformatics Scientist
