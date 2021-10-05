@@ -192,10 +192,13 @@ process kraken {
 
   output:
   tuple name, file("${name}_kraken2_report.txt") into kraken_files, kraken_multiqc
+  file("Kraken2_DB.txt") into kraken_version
 
   script:
   """
   kraken2 --db /kraken2-db/minikraken2_v1_8GB --threads ${task.cpus} --report ${name}_kraken2_report.txt --paired ${reads[0]} ${reads[1]}
+
+  ls /kraken2-db/ > Kraken2_DB.txt
   """
 }
 
@@ -675,6 +678,7 @@ process merge_results {
   file(quast) from quast_tsv
   file(assembly) from assembly_mapping_tsv
   file(kraken) from kraken_tsv
+  file(vkraken) from kraken_version.first()
   file(reference) from reference_mapping_tsv.ifEmpty{ 'empty' }
 
   output:
@@ -689,6 +693,10 @@ process merge_results {
   import pandas as pd
   from functools import reduce
 
+  with open('Kraken2_DB.txt', 'r') as krakenFile:
+      krakenDB_version = krakenFile.readline().strip()
+
+
   files = glob.glob('*.tsv')
 
   dfs = []
@@ -699,8 +707,9 @@ process merge_results {
 
   merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],
                                               how='left'), dfs)
+  merged = merged.assign(krakenDB=krakenDB_version)
 
-  merged = merged.rename(columns={'Contigs':'Contigs (#)'})
+  merged = merged.rename(columns={'Contigs':'Contigs (#)','krakenDB':'Kraken Database Verion'})
 
   merged.to_csv('dryad_report.csv', index=False, sep=',', encoding='utf-8')
   """
