@@ -150,6 +150,7 @@ combined_reads = read_files_fastqc.concat(cleaned_reads_fastqc)
 //QC Step: Run FastQC
 process fastqc {
   tag "$name"
+  errorStrategy 'ignore'
   publishDir "${params.outdir}/fastqc", mode: 'copy',saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
 
   input:
@@ -214,7 +215,6 @@ process kraken {
 //Kraken Step 2: Summarize kraken results
 process kraken_summary {
   tag "$name"
-  errorStrategy 'ignore'
   publishDir "${params.outdir}/kraken",mode:'copy'
 
   input:
@@ -312,8 +312,8 @@ process kraken_summary {
 
 //CG Step: Assemble cleaned reads with Shovill and map reads back to the assembly with BWA
 process shovill {
-  errorStrategy 'ignore'
   tag "$name"
+  errorStrategy 'ignore'
   publishDir "${params.outdir}/assembled", mode: 'copy',pattern:"*.fa"
   publishDir "${params.outdir}/mapping/sams", mode: 'copy',pattern:"*.sam"
 
@@ -337,7 +337,6 @@ process shovill {
 //QC Step: Run QUAST on assemblies
 process quast {
   tag "$name"
-
   errorStrategy 'ignore'
   publishDir "${params.outdir}/quast",mode:'copy',pattern: "${name}.quast.tsv"
 
@@ -423,8 +422,8 @@ process prokka_setup {
 
 //CG Step: Run Prokka on assemblies
 process prokka {
-  errorStrategy 'ignore'
   tag "$name"
+  errorStrategy 'ignore'
   publishDir "${params.outdir}/annotated",mode:'copy'
 
   input:
@@ -564,6 +563,7 @@ if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test
     //SNP Step: Map cleaned reads to reference sequence using BWA
     process bwa {
       tag "$name"
+      errorStrategy 'ignore'
       publishDir "${params.outdir}/mapping/sams", mode: 'copy',pattern:"*.sam"
 
       input:
@@ -591,6 +591,7 @@ else {
 //QC Step: Convert SAMs to BAMs, index and sort BAM files, then calculate coverage
 process samtools {
   tag "$name"
+  errorStrategy 'ignore'
   publishDir "${params.outdir}/mapping/bams", mode: 'copy',pattern:"*.sorted.bam*"
   publishDir "${params.outdir}/mapping/depth", mode: 'copy',pattern:"*.depth.tsv"
   publishDir "${params.outdir}/mapping/stats", mode: 'copy',pattern:"*.stats.txt"
