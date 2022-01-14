@@ -638,22 +638,34 @@ process assembly_coverage_stats {
   import os
   from numpy import median
   from numpy import average
-
-  results = []
+  
+  # function for summarizing samtools depth files
+  def summarize_depth(file):
+      # get sample id from file name and set up data list
+      sid = os.path.basename(file).split('.')[0]
+      data = []
+      # open samtools depth file and get depth
+      with open(file,'r') as inFile:
+          for line in inFile:
+              data.append(int(line.strip().split()[2]))
+      # get median and average depth
+      med = int(median(data))
+      avg = int(average(data))
+      # return sample id, median and average depth
+      result = f"{sid}\\t{med}\\t{avg}\\n"
+      return result
+  
+  # get all samtools depth files
   files = glob.glob("*.assembly.depth.tsv*")
-  for file in files:
-    nums = []
-    sid = os.path.basename(file).split('.')[0]
-    with open(file,'r') as inFile:
-      for line in inFile:
-        nums.append(int(line.strip().split()[2]))
-      med = int(median(nums))
-      avg = int(average(nums))
-      results.append(f"{sid}\\t{med}\\t{avg}\\n")
+  
+  # summarize samtools depth files
+  results = map(summarize_depth,files)
+  
+  # write results to file
   with open('coverage_stats.tsv', 'w') as outFile:
-    outFile.write("Sample\\tMedian Coverage (Mapped to Assembly)\\tMean Coverage (Mapped to Assembly)\\n")
-    for result in results:
-      outFile.write(result)
+      outFile.write("Sample\\tMedian Coverage (Mapped to Assembly)\\tMean Coverage (Mapped to Assembly)\\n")
+      for result in results:
+          outFile.write(result)
   """
 }
 
