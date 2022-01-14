@@ -105,7 +105,7 @@ dryad_results
 │       └── *.zip
 ├── kraken
 │   ├── kraken_results.tsv
-│   └── *kraken2_report.txt
+│   └── *.kraken2.txt
 ├── mapping
 │   ├── bams
 │   │   ├── *.assembly.bam
@@ -145,7 +145,7 @@ dryad_results
 **\*.html** - HTML files of FastQC results  
 **\*.zip** - FastQC results, compressed  
 **kraken_results.tsv** - Summary table of Kraken results  
-**\*kraken2_report.txt** - Report of Kraken results for each sample  
+**\*.kraken2.txt** - Report of Kraken results for each sample  
 **\*.assembly.bam** - Alignments to an assembly BAM format  
 **\*.assembly.bai** - Index file of alignments to an assembly  
 **\*.reference.bam**  - Alignments to the reference sequence BAM format  
