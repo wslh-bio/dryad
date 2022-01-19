@@ -1,0 +1,25 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/dryad/main/nextflow_schema.json",
+    "title": "Dryad Parameters",
+    "description": "Dryad is a pipeline to construct reference free core-genome or SNP phylogenetic trees for examining prokaryote relatedness in outbreaks.",
+    "type": "object",
+    "properties": {
+        "snp_reference": {
+            "type": "string",
+            "description": "reference sequence used for the SNP pipeline (optional)"
+        },
+        "outdir": {
+            "type": "string",
+            "description": "result output directory",
+            "default": "dryad_results"
+        },
+        "reads": {
+            "type": "string",
+            "description": "directory containing gz reads in fastq/fq format"
+        }
+    },
+    "required": [
+        "reads"
+    ]
+}
