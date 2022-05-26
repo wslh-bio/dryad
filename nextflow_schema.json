@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/dryad/main/nextflow_schema.json",
+    "$id": "https://raw.githubusercontent.com/wslh-bio/dryad/main/nextflow_schema.json",
     "title": "Dryad Parameters",
     "description": "Dryad is a pipeline to construct reference free core-genome or SNP phylogenetic trees for examining prokaryote relatedness in outbreaks.",
     "type": "object",
