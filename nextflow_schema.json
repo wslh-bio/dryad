@@ -17,7 +17,40 @@
         "reads": {
             "type": "string",
             "description": "directory containing gz reads in fastq/fq format"
+        },
+        "name_split_on": {
+          "type": "string",
+          "description": "character to split sequencing names, useful for shorten sequencing result identifiers"
+        },
+        "trimdirection": {
+          "type": "string",
+          "description": "direction of read trimming, default: 'lr'"
+        },
+        "qualitytrimscore": {
+          "type": "number",
+          "description": "quality score used for bbduk trimming, default: 10"
+        },
+        "minlength": {
+          "type": "number",
+          "description": "minimum length of a passing read, default: 10"
+        },
+        "roary_mafft": {
+          "type": "boolean",
+          "description": "Use mafft for core-genome alignment, setting to false switches to PRANK, default: true"
+        },
+        "cg_tree_model": {
+          "type": "string",
+          "description": "subsititution model used for creating the phylogenetic tree, default: 'GTR+G'"
+        },
+        "test": {
+          "type": "boolean",
+          "description": "directory containing gz reads in fastq/fq format"
+        },
+        "test_snp": {
+          "type": "boolean",
+          "description": "directory containing gz reads in fastq/fq format"
         }
+
     },
     "required": [
         "reads"
