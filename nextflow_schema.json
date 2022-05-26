@@ -44,11 +44,11 @@
         },
         "test": {
           "type": "boolean",
-          "description": "directory containing gz reads in fastq/fq format"
+          "description": "set to true to test the workflow using sequences from NCBI"
         },
         "test_snp": {
           "type": "boolean",
-          "description": "directory containing gz reads in fastq/fq format"
+          "description": "test the SNP pipeline when performing a workflow test, default: true"
         }
 
     },
