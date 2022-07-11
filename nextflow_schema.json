@@ -1,0 +1,58 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/wslh-bio/dryad/main/nextflow_schema.json",
+    "title": "Dryad Parameters",
+    "description": "Dryad is a pipeline to construct reference free core-genome or SNP phylogenetic trees for examining prokaryote relatedness in outbreaks.",
+    "type": "object",
+    "properties": {
+        "snp_reference": {
+            "type": "string",
+            "description": "reference sequence used for the SNP pipeline (optional)"
+        },
+        "outdir": {
+            "type": "string",
+            "description": "result output directory",
+            "default": "dryad_results"
+        },
+        "reads": {
+            "type": "string",
+            "description": "directory containing gz reads in fastq/fq format"
+        },
+        "name_split_on": {
+          "type": "string",
+          "description": "character to split sequencing names, useful for shorten sequencing result identifiers"
+        },
+        "trimdirection": {
+          "type": "string",
+          "description": "direction of read trimming, default: 'lr'"
+        },
+        "qualitytrimscore": {
+          "type": "number",
+          "description": "quality score used for bbduk trimming, default: 10"
+        },
+        "minlength": {
+          "type": "number",
+          "description": "minimum length of a passing read, default: 10"
+        },
+        "roary_mafft": {
+          "type": "boolean",
+          "description": "Use mafft for core-genome alignment, setting to false switches to PRANK, default: true"
+        },
+        "cg_tree_model": {
+          "type": "string",
+          "description": "subsititution model used for creating the phylogenetic tree, default: 'GTR+G'"
+        },
+        "test": {
+          "type": "boolean",
+          "description": "set to true to test the workflow using sequences from NCBI"
+        },
+        "test_snp": {
+          "type": "boolean",
+          "description": "test the SNP pipeline when performing a workflow test, default: true"
+        }
+
+    },
+    "required": [
+        "reads"
+    ]
+}
