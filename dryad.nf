@@ -6,7 +6,6 @@
 
 nextflow.preview.dsl=2
 
-
 params.test = false
 params.test_snp = true
 if(params.test){
@@ -79,7 +78,8 @@ process preProcess {
 process clean_reads {
   tag "$name"
   //errorStrategy 'ignore'
-  publishDir "${params.outdir}/trimming", mode: 'copy',pattern:"*.trim.txt"
+  publishDir "${params.outdir}/trimming", mode: 'copy', pattern:"*.trim.txt"
+  publishDir "${params.outdir}/trimming", mode: 'copy', pattern:"*.adapter.stats.txt"
 
   input:
   tuple val(name), path(processed_reads)
@@ -87,7 +87,7 @@ process clean_reads {
   output:
   tuple val(name), path("${name}_clean{_1,_2}.fastq.gz"), emit: cleaned_reads
   path("${name}.trim.txt"), emit: bbduk_files
-  path("${name}.adapter.stats.txt"), emit: clean_reads_multiqc
+  path("${name}.adapter.stats.txt"), emit: bbduk_stats
   path("${name}_clean{_1,_2}.fastq.gz"), emit: cleaned_reads_cfsan
 
   script:
@@ -206,7 +206,7 @@ process kraken {
   tuple val(name), path(cleaned_reads)
 
   output:
-  path("${name}.kraken2.txt"), emit: kraken_files
+  path("${name}.kraken2.txt"), emit: kraken_reports
   path("Kraken2_DB.txt"), emit: kraken_version
 
   script:
@@ -321,8 +321,8 @@ process shovill {
   //errorStrategy 'ignore'
   tag "$name"
 
-  publishDir "${params.outdir}/assembled", mode: 'copy',pattern:"*.fa"
-  publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sam"
+  publishDir "${params.outdir}/assembled", mode: 'copy', pattern:"*.fa"
+  publishDir "${params.outdir}/mapping/sams", mode: 'copy', pattern:"*.sam"
 
   input:
   tuple val(name), path(cleaned_reads)
@@ -345,14 +345,14 @@ process quast {
 //  errorStrategy 'ignore'
   tag "$name"
 
-  publishDir "${params.outdir}/quast",mode:'copy',pattern: "${name}.quast.tsv"
+  publishDir "${params.outdir}/quast",mode:'copy', pattern: "${name}.report.quast.tsv"
 
   input:
   tuple val(name), path(assembled_genomes)
 
   output:
   path("*.transposed.quast.tsv"), emit: quast_files
-  path("*.report.quast.tsv"), emit: multiqc_quast
+  path("*.report.quast.tsv"), emit: quast_reports
 
   script:
   """
@@ -446,7 +446,6 @@ process prokka {
 
   input:
   tuple val(name), path(assembly)
-  path("*.prokka.stats.txt"), emit: prokka_stats
 
   output:
   path("${name}.gff"), emit: annotated_genomes
@@ -593,7 +592,7 @@ process snp_tree {
 process bwa {
   tag "$name"
   //errorStrategy 'ignore'
-  publishDir "${params.outdir}/mapping/sams", mode: 'copy',pattern:"*.sam"
+  publishDir "${params.outdir}/mapping/sams", mode: 'copy', pattern:"*.sam"
 
   input:
   path(reference)
@@ -614,9 +613,9 @@ process bwa {
 process samtools {
   tag "$name"
   errorStrategy 'ignore'
-  publishDir "${params.outdir}/mapping/bams", mode: 'copy',pattern:"*.sorted.bam*"
-  publishDir "${params.outdir}/mapping/depth", mode: 'copy',pattern:"*.depth.tsv"
-  publishDir "${params.outdir}/mapping/stats", mode: 'copy',pattern:"*.stats.txt"
+  publishDir "${params.outdir}/mapping/bams", mode: 'copy', pattern:"*.sorted.bam*"
+  publishDir "${params.outdir}/mapping/depth", mode: 'copy', pattern:"*.depth.tsv"
+  publishDir "${params.outdir}/mapping/stats", mode: 'copy', pattern:"*.stats.txt"
 
   input:
   tuple val(name), path(sam_files)
@@ -624,7 +623,7 @@ process samtools {
   output:
   path("*.depth.tsv"), emit: depth_results
   path("*.mapped.tsv"), emit: mapping_results
-  path("*.stats.txt")
+  path("*.stats.txt"), emit: samtools_stats
   path("*.sorted.bam*")
 
   shell:
@@ -789,37 +788,31 @@ process merge_results {
   """
 }
 
-// Channel
-//   .fromPath("$baseDir/multiqc_config.yaml")
-//   .set { multiqc_config }
-//
-// Channel
-//   .fromPath("$baseDir/assets/dryad_logo_250.png")
-//   .set { logo }
-//
-// process multiqc {
-//   publishDir "${params.outdir}",mode:'copy'
-//
-//   input:
-//   file(a) from multiqc_clean_reads.collect()
-//   file(b) from fastqc_multiqc.collect()
-// //  file(c) from stats_multiqc.collect()
-//   file(d) from kraken_multiqc.collect()
-//   file(e) from quast_multiqc.collect()
-//   file(f) from prokka_stats.collect()
-//   file(g) from logo
-//   file(config) from multiqc_config
-//
-//
-//
-//   output:
-//   file("*.html") into multiqc_output
-//
-//   script:
-//   """
-//   multiqc -c ${config} .
-//   """
-// }
+Channel
+  .fromPath("$baseDir/multiqc_config.yaml")
+  .set { multiqc_config }
+
+Channel
+  .fromPath("$baseDir/assets/dryad_logo_250.png")
+  .set { logo }
+
+//Summary Step: MultiQC
+process multiqc {
+  publishDir "${params.outdir}",mode:'copy'
+
+  input:
+  path("data*/*")
+  path(config)
+  path(logo)
+
+  output:
+  path("*.html"), emit: multiqc_output
+
+  script:
+  """
+  multiqc -c ${config} .
+  """
+}
 
 workflow {
 
@@ -835,7 +828,7 @@ workflow {
 
     fastqc(combined_reads)
 
-    fastqc_summary(fastqc.out.collect())
+    fastqc_summary(fastqc.out.fastqc_results.collect())
 
     shovill(clean_reads.out.cleaned_reads)
 
@@ -845,7 +838,7 @@ workflow {
 
     kraken(clean_reads.out.cleaned_reads)
 
-    kraken_summary(kraken.out.kraken_files.collect())
+    kraken_summary(kraken.out.kraken_reports.collect())
 
     prokka_setup(kraken_summary.out.kraken_tsv,shovill.out.assembled_genomes)
 
@@ -885,5 +878,6 @@ workflow {
     }
 
     merge_results(bbduk_summary.out.bbduk_tsv,quast_summary.out.quast_tsv,assembly_coverage_stats.out.assembly_mapping_tsv,kraken_summary.out.kraken_tsv,kraken.out.kraken_version.first(),reference_mapping_tsv.ifEmpty{ 'empty' })
-    // multiqc(clean_reads.out.bbduk_files.mix(clean_reads.out.bbduk_files,clean_reads.out.multiqc_adapters,fastqc.out.fastqc_results,samtools.out.stats_multiqc,kraken.out.kraken_files,quast.out.multiqc_quast).collect(),multiqc_config)
-}
+
+    multiqc(clean_reads.out.bbduk_stats.mix(fastqc.out.fastqc_results.collect(),kraken.out.kraken_reports.collect(),quast.out.quast_reports.collect(),prokka.out.prokka_stats.collect(),samtools.out.samtools_stats.collect()),multiqc_config,logo)
+  }
