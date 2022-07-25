@@ -99,7 +99,7 @@ process clean_reads {
 
 //Summary Step: Summarize BBDuk results
 process bbduk_summary {
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   publishDir "${params.outdir}/trimming",mode:'copy'
 
   input:
@@ -220,7 +220,7 @@ process kraken {
 //Summary Step: Summarize kraken results
 process kraken_summary {
   tag "$name"
-//   errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   publishDir "${params.outdir}/kraken",mode:'copy'
 
   input:
@@ -342,7 +342,7 @@ process shovill {
 
 //QC Step: Run QUAST on assemblies
 process quast {
-//  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   tag "$name"
 
   publishDir "${params.outdir}/quast",mode:'copy', pattern: "${name}.report.quast.tsv"
@@ -612,7 +612,7 @@ process bwa {
 //QC Step: Convert SAMs to BAMs, index and sort BAM files, then calculate coverage
 process samtools {
   tag "$name"
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   publishDir "${params.outdir}/mapping/bams", mode: 'copy', pattern:"*.sorted.bam*"
   publishDir "${params.outdir}/mapping/depth", mode: 'copy', pattern:"*.depth.tsv"
   publishDir "${params.outdir}/mapping/stats", mode: 'copy', pattern:"*.stats.txt"
