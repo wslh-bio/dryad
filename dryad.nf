@@ -879,5 +879,5 @@ workflow {
 
     merge_results(bbduk_summary.out.bbduk_tsv,quast_summary.out.quast_tsv,assembly_coverage_stats.out.assembly_mapping_tsv,kraken_summary.out.kraken_tsv,kraken.out.kraken_version.first(),reference_mapping_tsv.ifEmpty{ 'empty' })
 
-    multiqc(clean_reads.out.bbduk_stats.mix(fastqc.out.fastqc_results.collect(),kraken.out.kraken_reports.collect(),quast.out.quast_reports.collect(),prokka.out.prokka_stats.collect(),samtools.out.samtools_stats.collect()),multiqc_config,logo)
-  }
+    multiqc(clean_reads.out.bbduk_stats.mix(clean_reads.out.bbduk_stats,fastqc.out.fastqc_results,kraken.out.kraken_reports,quast.out.quast_reports,prokka.out.prokka_stats,samtools.out.samtools_stats).collect(),multiqc_config,logo)
+}
