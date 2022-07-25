@@ -80,6 +80,7 @@ process clean_reads {
   //errorStrategy 'ignore'
   publishDir "${params.outdir}/trimming", mode: 'copy', pattern:"*.trim.txt"
   publishDir "${params.outdir}/trimming", mode: 'copy', pattern:"*.adapter.stats.txt"
+  publishDir "${params.outdir}/trimming", mode: 'copy', pattern:"*.gz"
 
   input:
   tuple val(name), path(processed_reads)
