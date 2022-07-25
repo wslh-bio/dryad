@@ -87,7 +87,7 @@ process clean_reads {
   output:
   tuple val(name), path("${name}_clean{_1,_2}.fastq.gz"), emit: cleaned_reads
   path("${name}.trim.txt"), emit: bbduk_files
-  path("${name}.adapter.stats.txt"), emit: multiqc_adapters
+  path("${name}.adapter.stats.txt"), emit: clean_reads_multiqc
   path("${name}_clean{_1,_2}.fastq.gz"), emit: cleaned_reads_cfsan
 
   script:
@@ -322,7 +322,7 @@ process shovill {
   tag "$name"
 
   publishDir "${params.outdir}/assembled", mode: 'copy',pattern:"*.fa"
-  //publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sam"
+  publishDir "${params.outdir}/alignments", mode: 'copy',pattern:"*.sam"
 
   input:
   tuple val(name), path(cleaned_reads)
@@ -446,6 +446,7 @@ process prokka {
 
   input:
   tuple val(name), path(assembly)
+  path("*.prokka.stats.txt"), emit: prokka_stats
 
   output:
   path("${name}.gff"), emit: annotated_genomes
@@ -605,195 +606,189 @@ process bwa {
   """
   bwa index ${reference}
   bwa mem ${reference} ${cleaned_reads[0]} ${cleaned_reads[1]} > ${name}.reference.sam
+  ls .
   """
 }
 
-// //QC Step: Convert SAMs to BAMs, index and sort BAM files, then calculate coverage
-// process samtools {
-//   tag "$name"
-//   errorStrategy 'ignore'
-//   publishDir "${params.outdir}/mapping/bams", mode: 'copy',pattern:"*.sorted.bam*"
-//   publishDir "${params.outdir}/mapping/depth", mode: 'copy',pattern:"*.depth.tsv"
-//   publishDir "${params.outdir}/mapping/stats", mode: 'copy',pattern:"*.stats.txt"
-//
-//   input:
-//   tuple val(name), path(sam_files)
-//
-//   output:
-//   tuple name, path("*.depth.tsv"), emit: depth_results
-//   tuple name, file("*.mapped.tsv"), emit: mapping_results
-//   path("*.stats.txt")
-//   path("*.sorted.bam*")
-//
-//   shell:
-//   """
-//   filename=${sam}
-//   handle=\${filename%.*}
-//   type=\${handle##*.}
-//
-//   samtools view -S -b ${name}.\$type.sam > ${name}.\$type.bam
-//   samtools sort ${name}.\$type.bam > ${name}.\$type.sorted.bam
-//   samtools index ${name}.\$type.sorted.bam
-//   samtools depth -a ${name}.\$type.sorted.bam > ${name}.\$type.depth.tsv
-//   samtools stats ${name}.\$type.sorted.bam > ${name}.\$type.stats.txt
-//   samtools view -c -F 260 ${name}.\$type.sorted.bam > ${name}.\$type.mapped.tsv
-//   samtools view -c ${name}.\$type.sorted.bam >> ${name}.\$type.mapped.tsv
-//   """
-// }
-//
-// //QC Step: Using samtools depth, calculate coverage of cleaned reads mapped to their assemblies
-// process assembly_coverage_stats {
-//   publishDir "${params.outdir}/mapping", mode: 'copy'
-//
-//   input:
-//   path("data*/*")
-//
-//   output:
-//   path('coverage_stats.tsv'), emit: assembly_mapping_tsv
-//
-//   script:
-//   """
-//   #!/usr/bin/env python3
-//   import glob
-//   import os
-//   from numpy import median
-//   from numpy import average
-//
-//   # function for summarizing samtools depth files
-//   def summarize_depth(file):
-//       # get sample id from file name and set up data list
-//       sid = os.path.basename(file).split('.')[0]
-//       data = []
-//       # open samtools depth file and get depth
-//       with open(file,'r') as inFile:
-//           for line in inFile:
-//               data.append(int(line.strip().split()[2]))
-//       # get median and average depth
-//       med = int(median(data))
-//       avg = int(average(data))
-//       # return sample id, median and average depth
-//       result = f"{sid}\\t{med}\\t{avg}\\n"
-//       return result
-//
-//   # get all samtools depth files
-//   files = glob.glob("*.assembly.depth.tsv*")
-//
-//   # summarize samtools depth files
-//   results = map(summarize_depth,files)
-//
-//   # write results to file
-//   with open('coverage_stats.tsv', 'w') as outFile:
-//       outFile.write("Sample\\tMedian Coverage (Mapped to Assembly)\\tMean Coverage (Mapped to Assembly)\\n")
-//       for result in results:
-//           outFile.write(result)
-//   """
-// }
-//
-// if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test_snp & params.test) {
-//
-//     //QC Step: Calculate coverage for reads mapped to reference
-//     process reference_mapping_stats {
-//       publishDir "${params.outdir}/mapping", mode: 'copy'
-//
-//       input:
-//       path("data*/*")
-//
-//       output:
-//       path("mapping_results.tsv"), emit: reference_mapping_tsv
-//
-//       script:
-//       """
-//       #!/usr/bin/env python3
-//       import pandas as pd
-//       import os
-//       import glob
-//       from functools import reduce
-//
-//       depth_files = glob.glob("*.reference.depth.tsv")
-//       depth_dfs = []
-//       cols = ["Sample","Base Pairs Mapped to Reference >1X (%)","Base Pairs Mapped to Reference >40X (%)"]
-//       depth_dfs.append(cols)
-//
-//       for file in depth_files:
-//           sampleID = os.path.basename(file).split(".")[0]
-//           depth_df = pd.read_csv(file, sep="\\t", header=None)
-//           overForty = int((len(depth_df[(depth_df[2]>40)])/len(depth_df)) * 100)
-//           overOne = int((len(depth_df[(depth_df[2]>1)])/len(depth_df)) * 100)
-//           stats = [sampleID, overOne, overForty]
-//           depth_dfs.append(stats)
-//       depth_df = pd.DataFrame(depth_dfs[1:], columns=depth_dfs[0])
-//
-//       read_files = glob.glob("*.reference.mapped.tsv")
-//       read_dfs = []
-//       cols = ["Sample","Reads Mapped to Reference (%)"]
-//       read_dfs.append(cols)
-//       for file in read_files:
-//           sampleID = os.path.basename(file).split(".")[0]
-//           read_df = pd.read_csv(file, sep="\\t", header=None)
-//           mapped_reads = read_df.iloc[0][0]
-//           all_reads = read_df.iloc[1][0]
-//           percent_mapped = int((mapped_reads/all_reads) * 100)
-//           stats = [sampleID,percent_mapped]
-//           read_dfs.append(stats)
-//       read_dfs = pd.DataFrame(read_dfs[1:], columns=read_dfs[0])
-//
-//       dfs = [depth_df, read_dfs]
-//       merged = reduce(lambda  left,right: pd.merge(left,right,on=["Sample"], how="left"), dfs)
-//       merged[['Reads Mapped to Reference (%)','Base Pairs Mapped to Reference >1X (%)','Base Pairs Mapped to Reference >40X (%)']] = merged[['Reads Mapped to Reference (%)','Base Pairs Mapped to Reference >1X (%)','Base Pairs Mapped to Reference >40X (%)']].astype(str) + '%'
-//       merged.to_csv("mapping_results.tsv",sep="\\t", index=False, header=True, na_rep="NaN")
-//       """
-//     }
-// }
-// else {
-//     reference_mapping_tsv = Channel.empty()
-// }
-//
+//QC Step: Convert SAMs to BAMs, index and sort BAM files, then calculate coverage
+process samtools {
+  tag "$name"
+  errorStrategy 'ignore'
+  publishDir "${params.outdir}/mapping/bams", mode: 'copy',pattern:"*.sorted.bam*"
+  publishDir "${params.outdir}/mapping/depth", mode: 'copy',pattern:"*.depth.tsv"
+  publishDir "${params.outdir}/mapping/stats", mode: 'copy',pattern:"*.stats.txt"
+
+  input:
+  tuple val(name), path(sam_files)
+
+  output:
+  path("*.depth.tsv"), emit: depth_results
+  path("*.mapped.tsv"), emit: mapping_results
+  path("*.stats.txt")
+  path("*.sorted.bam*")
+
+  shell:
+  """
+  filename=${sam_files}
+  handle=\${filename%.*}
+  type=\${handle##*.}
+
+  samtools view -S -b ${name}.\$type.sam > ${name}.\$type.bam
+  samtools sort ${name}.\$type.bam > ${name}.\$type.sorted.bam
+  samtools index ${name}.\$type.sorted.bam
+  samtools depth -a ${name}.\$type.sorted.bam > ${name}.\$type.depth.tsv
+  samtools stats ${name}.\$type.sorted.bam > ${name}.\$type.stats.txt
+  samtools view -c -F 260 ${name}.\$type.sorted.bam > ${name}.\$type.mapped.tsv
+  samtools view -c ${name}.\$type.sorted.bam >> ${name}.\$type.mapped.tsv
+  """
+}
+
+//QC Step: Using samtools depth, calculate coverage of cleaned reads mapped to their assemblies
+process assembly_coverage_stats {
+  publishDir "${params.outdir}/mapping", mode: 'copy'
+
+  input:
+  path("data*/*")
+
+  output:
+  path('coverage_stats.tsv'), emit: assembly_mapping_tsv
+
+  script:
+  """
+  #!/usr/bin/env python3
+  import glob
+  import os
+  from numpy import median
+  from numpy import average
+
+  # function for summarizing samtools depth files
+  def summarize_depth(file):
+      # get sample id from file name and set up data list
+      sid = os.path.basename(file).split('.')[0]
+      data = []
+      # open samtools depth file and get depth
+      with open(file,'r') as inFile:
+          for line in inFile:
+              data.append(int(line.strip().split()[2]))
+      # get median and average depth
+      med = int(median(data))
+      avg = int(average(data))
+      # return sample id, median and average depth
+      result = f"{sid}\\t{med}\\t{avg}\\n"
+      return result
+
+  # get all samtools depth files
+  files = glob.glob("data*/*.assembly.depth.tsv*")
+
+  # summarize samtools depth files
+  results = map(summarize_depth,files)
+
+  # write results to file
+  with open('coverage_stats.tsv', 'w') as outFile:
+      outFile.write("Sample\\tMedian Coverage (Mapped to Assembly)\\tMean Coverage (Mapped to Assembly)\\n")
+      for result in results:
+          outFile.write(result)
+  """
+}
+
+//QC Step: Calculate coverage for reads mapped to reference
+process reference_mapping_stats {
+  publishDir "${params.outdir}/mapping", mode: 'copy'
+
+  input:
+  path("data*/*")
+
+  output:
+  path("mapping_results.tsv"), emit: reference_mapping_tsv
+
+  script:
+  """
+  #!/usr/bin/env python3
+  import pandas as pd
+  import os
+  import glob
+  from functools import reduce
+
+  depth_files = glob.glob("data*/*.reference.depth.tsv")
+  depth_dfs = []
+  cols = ["Sample","Base Pairs Mapped to Reference >1X (%)","Base Pairs Mapped to Reference >40X (%)"]
+  depth_dfs.append(cols)
+
+  for file in depth_files:
+      sampleID = os.path.basename(file).split(".")[0]
+      depth_df = pd.read_csv(file, sep="\\t", header=None)
+      overForty = int((len(depth_df[(depth_df[2]>40)])/len(depth_df)) * 100)
+      overOne = int((len(depth_df[(depth_df[2]>1)])/len(depth_df)) * 100)
+      stats = [sampleID, overOne, overForty]
+      depth_dfs.append(stats)
+  depth_df = pd.DataFrame(depth_dfs[1:], columns=depth_dfs[0])
+
+  read_files = glob.glob("data*/*.reference.mapped.tsv")
+  read_dfs = []
+  cols = ["Sample","Reads Mapped to Reference (%)"]
+  read_dfs.append(cols)
+  for file in read_files:
+      sampleID = os.path.basename(file).split(".")[0]
+      read_df = pd.read_csv(file, sep="\\t", header=None)
+      mapped_reads = read_df.iloc[0][0]
+      all_reads = read_df.iloc[1][0]
+      percent_mapped = int((mapped_reads/all_reads) * 100)
+      stats = [sampleID,percent_mapped]
+      read_dfs.append(stats)
+  read_dfs = pd.DataFrame(read_dfs[1:], columns=read_dfs[0])
+
+  dfs = [depth_df, read_dfs]
+  merged = reduce(lambda  left,right: pd.merge(left,right,on=["Sample"], how="left"), dfs)
+  merged[['Reads Mapped to Reference (%)','Base Pairs Mapped to Reference >1X (%)','Base Pairs Mapped to Reference >40X (%)']] = merged[['Reads Mapped to Reference (%)','Base Pairs Mapped to Reference >1X (%)','Base Pairs Mapped to Reference >40X (%)']].astype(str) + '%'
+  merged.to_csv("mapping_results.tsv",sep="\\t", index=False, header=True, na_rep="NaN")
+  """
+}
 // //QC Step: Merge QC results into one tsv
-// process merge_results {
-//   publishDir "${params.outdir}/", mode: 'copy'
-//
-//   input:
-//   file(bbduk) from bbduk_tsv
-//   file(quast) from quast_tsv
-//   file(assembly) from assembly_mapping_tsv
-//   file(kraken) from kraken_tsv
-//   file(vkraken) from kraken_version.first()
-//   file(reference) from reference_mapping_tsv.ifEmpty{ 'empty' }
-//
-//   output:
-//   file('dryad_report.csv')
-//
-//   script:
-//   """
-//   #!/usr/bin/env python3
-//
-//   import os
-//   import glob
-//   import pandas as pd
-//   from functools import reduce
-//
-//   with open('Kraken2_DB.txt', 'r') as krakenFile:
-//       krakenDB_version = krakenFile.readline().strip()
-//
-//
-//   files = glob.glob('*.tsv')
-//
-//   dfs = []
-//
-//   for file in files:
-//       df = pd.read_csv(file, header=0, delimiter='\\t')
-//       dfs.append(df)
-//
-//   merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],
-//                                               how='left'), dfs)
-//   merged = merged.assign(krakenDB=krakenDB_version)
-//
-//   merged = merged.rename(columns={'Contigs':'Contigs (#)','krakenDB':'Kraken Database Verion'})
-//
-//   merged.to_csv('dryad_report.csv', index=False, sep=',', encoding='utf-8')
-//   """
-// }
-//
+process merge_results {
+  publishDir "${params.outdir}/", mode: 'copy'
+
+  input:
+  path("bbduk_results.tsv")
+  path("quast_results.tsv")
+  path("coverage_stats.tsv")
+  path("kraken_results.tsv")
+  path("Kraken2_DB.txt")
+  path("mapping_results.tsv")
+
+  output:
+  file('dryad_report.csv')
+
+  script:
+  """
+  #!/usr/bin/env python3
+
+  import os
+  import glob
+  import pandas as pd
+  from functools import reduce
+
+  with open('Kraken2_DB.txt', 'r') as krakenFile:
+      krakenDB_version = krakenFile.readline().strip()
+
+
+  files = glob.glob('*.tsv')
+
+  dfs = []
+
+  for file in files:
+      df = pd.read_csv(file, header=0, delimiter='\\t')
+      dfs.append(df)
+
+  merged = reduce(lambda  left,right: pd.merge(left,right,on=['Sample'],
+                                              how='left'), dfs)
+  merged = merged.assign(krakenDB=krakenDB_version)
+
+  merged = merged.rename(columns={'Contigs':'Contigs (#)','krakenDB':'Kraken Database Verion'})
+
+  merged.to_csv('dryad_report.csv', index=False, sep=',', encoding='utf-8')
+  """
+}
+
 // Channel
 //   .fromPath("$baseDir/multiqc_config.yaml")
 //   .set { multiqc_config }
@@ -873,13 +868,22 @@ workflow {
     }
     else {
       sam_files = shovill.out.assembly_sams
+    }
+
+    samtools(sam_files)
+    assembly_coverage_stats(samtools.out.depth_results.collect())
+
+    if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test_snp & params.test) {
+      depth = samtools.out.depth_results
+      mapping = samtools.out.mapping_results
+      reference_samtools_results = depth.concat(mapping)
+      reference_mapping_stats(reference_samtools_results.collect())
+      reference_mapping_tsv = reference_mapping_stats.out.reference_mapping_tsv
+    }
+    else {
       reference_mapping_tsv = Channel.empty()
     }
-    // samtools(sam_files)
-    // assembly_coverage_stats(samtools.out.depth_results)
-    // if (!reference_mapping_tsv.isEmpty()) {
-    //  reference_mapping_stats(samtools.out.mapping_results)
-    //}
-    // merge_results()
+
+    merge_results(bbduk_summary.out.bbduk_tsv,quast_summary.out.quast_tsv,assembly_coverage_stats.out.assembly_mapping_tsv,kraken_summary.out.kraken_tsv,kraken.out.kraken_version.first(),reference_mapping_tsv.ifEmpty{ 'empty' })
     // multiqc(clean_reads.out.bbduk_files.mix(clean_reads.out.bbduk_files,clean_reads.out.multiqc_adapters,fastqc.out.fastqc_results,samtools.out.stats_multiqc,kraken.out.kraken_files,quast.out.multiqc_quast).collect(),multiqc_config)
 }
