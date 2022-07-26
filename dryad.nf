@@ -4,7 +4,7 @@
 //Author: Kelsey Florek and Abigail Shockey
 //email: kelsey.florek@slh.wisc.edu, abigail.shockey@slh.wisc.edu
 
-nextflow.preview.dsl=2
+nextflow.enable.dsl=2
 
 params.test = false
 params.test_snp = true
@@ -329,8 +329,8 @@ process shovill {
   tuple val(name), path(cleaned_reads)
 
   output:
-  tuple name, path("${name}.contigs.fa"), emit: assembled_genomes
-  tuple name, path("${name}.assembly.sam"), emit: assembly_sams
+  tuple val(name), path("${name}.contigs.fa"), emit: assembled_genomes
+  tuple val(name), path("${name}.assembly.sam"), emit: assembly_sams
 
   script:
   """
@@ -419,7 +419,7 @@ process prokka_setup {
   tuple val(name), path(assembled_genome)
 
   output:
-  tuple name, path("${name}.*.fa"), emit: prokka_input
+  tuple val(name), path("${name}.*.fa"), emit: prokka_input
 
   script:
   """
@@ -600,7 +600,7 @@ process bwa {
   tuple val(name), path(cleaned_reads)
 
   output:
-  tuple name, path("${name}.reference.sam"), emit: reference_sams
+  tuple val(name), path("${name}.reference.sam"), emit: reference_sams
 
   script:
   """
@@ -743,7 +743,8 @@ process reference_mapping_stats {
   merged.to_csv("mapping_results.tsv",sep="\\t", index=False, header=True, na_rep="NaN")
   """
 }
-// //QC Step: Merge QC results into one tsv
+
+//QC Step: Merge QC results into one tsv
 process merge_results {
   publishDir "${params.outdir}/", mode: 'copy'
 
