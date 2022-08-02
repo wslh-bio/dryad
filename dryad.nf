@@ -51,7 +51,7 @@ if(params.test){
 
 //Preprocessing Step: Change read names
 process preProcess {
-  publishDir "${params.outdir}/reads", mode: 'copy', pattern:"*.gz"
+  //publishDir "${params.outdir}/reads", mode: 'copy', pattern:"*.gz"
 
   input:
   tuple val(name), path(reads)
@@ -78,9 +78,8 @@ process preProcess {
 process clean_reads {
   tag "$name"
   //errorStrategy 'ignore'
-  publishDir "${params.outdir}/trimming", mode: 'copy', pattern:"*.trim.txt"
-  publishDir "${params.outdir}/trimming", mode: 'copy', pattern:"*.adapter.stats.txt"
-  publishDir "${params.outdir}/trimming", mode: 'copy', pattern:"*.gz"
+  publishDir "${params.outdir}/trimming/stats", mode: 'copy', pattern:"*.trim.txt"
+  publishDir "${params.outdir}/trimming/reads", mode: 'copy', pattern:"*.gz"
 
   input:
   tuple val(name), path(processed_reads)
@@ -346,7 +345,7 @@ process quast {
   //errorStrategy 'ignore'
   tag "$name"
 
-  publishDir "${params.outdir}/quast",mode:'copy', pattern: "${name}.report.quast.tsv"
+  publishDir "${params.outdir}/quast",mode:'copy', pattern: "${name}.transposed.quast.tsv"
 
   input:
   tuple val(name), path(assembled_genomes)
