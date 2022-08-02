@@ -132,12 +132,15 @@ dryad_results
 ├── snp.tree
 └── trimming
     ├── bbduk_results.tsv
-    └── *.trim.txt
+    ├── reads
+    │   └── *_clean_*    
+    └── stats
+        └── *.trim.txt
 ```
 **\*.gff** - Gene annotations predicted by Prokka  
 **\*.prokka.stats.txt** - Prokka log files  
-**core_gene_alignment.aln** - Core-genome alignment  
 **\*.contigs.fa** - Shovill assemblies  
+**core_gene_alignment.aln** - Core-genome alignment  
 **core_genome_statistics.txt** - Text file with the number of genes in the core and accessory genomes  
 **core_genome.tree** - ML tree inferred from core-genome alignment  
 **dryad_report.csv** - Summary table of each step in dryad  
@@ -164,7 +167,8 @@ dryad_results
 **snp_distance_matrix.tsv** - SNP distance matrix  
 **snpma.fasta** - SNP alignment  
 **snp.tree** - SNP tree  
-**bbduk_results.tsv** - Summary table of trimming with BBduk  
+**bbduk_results.tsv** - Summary table of trimming with BBDuk  
+**\*\_clean\_\*** - Trimmed and cleaned reads  
 **\*.trim.txt** - Trimming results from BBduk each sample  
 
 ### Authors
