@@ -17,11 +17,11 @@ Dryad is a [NextFlow](https://www.nextflow.io/) pipeline to construct reference 
 ### Using the pipeline
 The pipeline is designed to start from raw Illumina short reads. All reads must be in the same directory. Then start the pipeline using:  
 ```
-nextflow wslh-bio/dryad -r <version> --reads [path-to-reads]
+nextflow wslh-bio/dryad -r <version> --reads [path-to-reads]  -profile [docker,singularity,aws]
 ```  
 to run the SNP pipeline include the `--snp_reference` parameter:  
 ```
-nextflow wslh-bio/dryad -r <version> --reads [path-to-reads] --snp_reference [path-to-reference-fasta]
+nextflow wslh-bio/dryad -r <version> --reads [path-to-reads] --snp_reference [path-to-reference-fasta]  -profile [docker,singularity,aws]
 ```  
 
 You can also test the pipeline with example data using `--test`, note this requires NextFlow version `21.07.0-edge` or greater:
@@ -105,7 +105,7 @@ dryad_results
 │       └── *.zip
 ├── kraken
 │   ├── kraken_results.tsv
-│   └── *kraken2_report.txt
+│   └── *.kraken2.txt
 ├── mapping
 │   ├── bams
 │   │   ├── *.assembly.bam
@@ -132,12 +132,15 @@ dryad_results
 ├── snp.tree
 └── trimming
     ├── bbduk_results.tsv
-    └── *.trim.txt
+    ├── reads
+    │   └── *_clean_*    
+    └── stats
+        └── *.trim.txt
 ```
 **\*.gff** - Gene annotations predicted by Prokka  
 **\*.prokka.stats.txt** - Prokka log files  
-**core_gene_alignment.aln** - Core-genome alignment  
 **\*.contigs.fa** - Shovill assemblies  
+**core_gene_alignment.aln** - Core-genome alignment  
 **core_genome_statistics.txt** - Text file with the number of genes in the core and accessory genomes  
 **core_genome.tree** - ML tree inferred from core-genome alignment  
 **dryad_report.csv** - Summary table of each step in dryad  
@@ -145,7 +148,7 @@ dryad_results
 **\*.html** - HTML files of FastQC results  
 **\*.zip** - FastQC results, compressed  
 **kraken_results.tsv** - Summary table of Kraken results  
-**\*kraken2_report.txt** - Report of Kraken results for each sample  
+**\*.kraken2.txt** - Report of Kraken results for each sample  
 **\*.assembly.bam** - Alignments to an assembly BAM format  
 **\*.assembly.bai** - Index file of alignments to an assembly  
 **\*.reference.bam**  - Alignments to the reference sequence BAM format  
@@ -164,7 +167,8 @@ dryad_results
 **snp_distance_matrix.tsv** - SNP distance matrix  
 **snpma.fasta** - SNP alignment  
 **snp.tree** - SNP tree  
-**bbduk_results.tsv** - Summary table of trimming with BBduk  
+**bbduk_results.tsv** - Summary table of trimming with BBDuk  
+**\*\_clean\_\*** - Trimmed and cleaned reads  
 **\*.trim.txt** - Trimming results from BBduk each sample  
 
 ### Authors
