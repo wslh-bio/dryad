@@ -20,7 +20,7 @@ if(params.test){
       .fromPath("$baseDir/assets/ASM211692v1.fasta")
       .set { snp_reference }
   Channel
-      .fromPath("$baseDir/snppipeline.conf")
+      .fromPath("$baseDir/configs/snppipeline.conf")
       .set { snp_config }
 } else{
   //setup channel to read in and pair the fastq files
@@ -44,7 +44,7 @@ if(params.test){
           .fromPath(params.snp_reference)
           .set { snp_reference }
       Channel
-          .fromPath("$baseDir/snppipeline.conf")
+          .fromPath("$baseDir/configs/snppipeline.conf")
           .set { snp_config }
   }
 }
@@ -531,6 +531,7 @@ process cfsan {
   import subprocess
   import glob
   import os,sys
+  import shutil
 
   fwd_reads = glob.glob("data*/*_clean_1.fastq.gz*")
   fwd_reads.sort()
@@ -549,8 +550,10 @@ process cfsan {
     os.mkdir(path)
     new_fwd_path = os.path.join(path,os.path.basename(fwd_reads[c]))
     new_rev_path = os.path.join(path,os.path.basename(rev_reads[c]))
-    os.rename(fwd_reads[c],new_fwd_path)
-    os.rename(rev_reads[c],new_rev_path)
+    shutil.copy(fwd_reads[c],new_fwd_path)
+    shutil.copy(rev_reads[c],new_rev_path)
+    #os.rename(fwd_reads[c],new_fwd_path)
+    #os.rename(rev_reads[c],new_rev_path)
     c += 1
 
     # name = os.path.basename(fwd_reads[c]).split('_clean_1')[0]
@@ -560,7 +563,8 @@ process cfsan {
     # os.rename(rev_reads[c],os.path.join(path,rev_reads[c]))
     # c += 1
 
-  command = "cfsan_snp_pipeline run ${reference} -c snppipeline.conf -o . -s input_reads"
+  command = "cfsan_snp_pipeline run ${reference} -c ${config} -o . -s input_reads"
+  # command = "cfsan_snp_pipeline run ${reference} -o . -s input_reads"
   process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
   output, error = process.communicate()
   print output
