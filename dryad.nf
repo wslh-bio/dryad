@@ -794,7 +794,7 @@ process merge_results {
 }
 
 Channel
-  .fromPath("$baseDir/multiqc_config.yaml")
+  .fromPath("$baseDir/configs/multiqc_config.yaml")
   .set { multiqc_config }
 
 Channel
