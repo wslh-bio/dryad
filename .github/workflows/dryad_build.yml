@@ -34,4 +34,4 @@ jobs:
           NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
         run: |
           cd ./tests
-          ../nextflow run ../dryad.nf --test -c autobuild.config
+          ../nextflow run ../dryad.nf --test -profile docker -c autobuild.config
