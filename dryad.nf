@@ -8,37 +8,39 @@ nextflow.enable.dsl=2
 
 params.test = false
 params.test_snp = true
+
 if(params.test){
   testIDS = ['SRR14311557','SRR14311556','SRR14311555','SRR14311554',
     'SRR14311553','SRR14311552','SRR14613509']
   println "Running test analysis using the following samples:"
   println testIDS
+
   Channel
       .fromSRA(testIDS)
       .set { raw_reads }
+
+  sample_count = Channel
+      .fromSRA(testIDS)
+      .count()
   Channel
       .fromPath("$baseDir/assets/ASM211692v1.fasta")
       .set { snp_reference }
   Channel
       .fromPath("$baseDir/configs/snppipeline.conf")
       .set { snp_config }
+
 } else{
   //setup channel to read in and pair the fastq files
   Channel
       .fromFilePairs( "${params.reads}/*{R1,R2,_1,_2}*.{fastq,fq}.gz", size: 2 )
       .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads} Path must not end with /" }
       .set { raw_reads }
-  //check we have at least 3 samples
-  Channel
-      .from(raw_reads)
-      .collect()
-      .subscribe {
-        int size = it.queue[0].size()
-        if(size < 3){
-          println "Dryad requires 3 or more samples."
-          System.exit(1)
-        }
-      }
+
+  sample_count = Channel
+      .fromFilePairs( "${params.reads}/*{R1,R2,_1,_2}*.{fastq,fq}.gz", size: 2 )
+      .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads} Path must not end with /" }
+      .count()
+
   if (params.snp_reference) {
       Channel
           .fromPath(params.snp_reference)
@@ -49,6 +51,28 @@ if(params.test){
   }
 }
 
+//check we have at least 3 samples
+process count_samples {
+  //errorStrategy 'ignore'
+  input:
+  val(count)
+
+  output:
+  path("number_of_samples.txt"), optional: true, emit: num_samples
+
+  script:
+  """
+  #!/bin/bash
+
+  echo ${count}
+
+  if ((${count} > 3));
+       then
+       echo "There are ${count} samples" > number_of_samples.txt
+  fi;
+  """
+}
+
 //Preprocessing Step: Change read names
 process preProcess {
   //publishDir "${params.outdir}/reads", mode: 'copy', pattern:"*.gz"
@@ -57,15 +81,15 @@ process preProcess {
   tuple val(name), path(reads)
 
   output:
-  tuple val(name), path("*_R{1,2}.fastq.gz"), emit: processed_reads
+  tuple val(name), path(outfiles), emit: processed_reads
 
   script:
   if(params.name_split_on!=""){
     name = name.split(params.name_split_on)[0]
     outfiles = ["${name}_R1.fastq.gz","${name}_R2.fastq.gz"]
     """
-    mv ${reads[0]} ${name}_R1.fastq.gz
-    mv ${reads[1]} ${name}_R2.fastq.gz
+    cp -f ${reads[0]} ${name}_R1.fastq.gz
+    cp -f ${reads[1]} ${name}_R2.fastq.gz
     """
   }else{
     outfiles = reads
@@ -345,7 +369,7 @@ process quast {
   //errorStrategy 'ignore'
   tag "$name"
 
-  publishDir "${params.outdir}/quast",mode:'copy', pattern: "${name}.transposed.quast.tsv"
+  publishDir "${params.outdir}/quast",mode:'copy', pattern: "${name}.report.quast.tsv"
 
   input:
   tuple val(name), path(assembled_genomes)
@@ -562,8 +586,8 @@ process cfsan {
     # os.rename(rev_reads[c],os.path.join(path,rev_reads[c]))
     # c += 1
 
-  command = "cfsan_snp_pipeline run ${reference} -c ${config} -o . -s input_reads"
-  # command = "cfsan_snp_pipeline run ${reference} -o . -s input_reads"
+  #command = "cfsan_snp_pipeline run ${reference} -c ${config} -o . -s input_reads"
+  command = "cfsan_snp_pipeline run ${reference} -o . -s input_reads"
   process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
   output, error = process.communicate()
   print output
@@ -820,6 +844,9 @@ process multiqc {
 }
 
 workflow {
+
+    count_samples(sample_count)
+    count_samples.out.num_samples.ifEmpty{ exit 1, "Dryad requires 3 or more samples." }
 
     preProcess(raw_reads)
 
