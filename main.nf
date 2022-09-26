@@ -583,8 +583,8 @@ process cfsan {
     # os.rename(rev_reads[c],os.path.join(path,rev_reads[c]))
     # c += 1
 
-  #command = "cfsan_snp_pipeline run ${reference} -c ${config} -o . -s input_reads"
-  command = "cfsan_snp_pipeline run ${reference} -o . -s input_reads"
+  command = "cfsan_snp_pipeline run ${reference} -c ${config} -o . -s input_reads"
+  # command = "cfsan_snp_pipeline run ${reference} -o . -s input_reads"
   process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
   output, error = process.communicate()
   print output
