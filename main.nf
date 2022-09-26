@@ -43,7 +43,8 @@ if(params.test){
           .fromPath(params.snp_reference)
           .set { snp_reference }
       Channel
-          .fromPath("$baseDir/configs/snppipeline.conf")
+          .fromPath(params.cfsan_config)
+          //.fromPath("$baseDir/configs/snppipeline.conf")
           .set { snp_config }
   }
 }
