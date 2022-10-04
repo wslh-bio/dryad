@@ -18,6 +18,10 @@ if(params.test){
   Channel
       .fromPath("$baseDir/assets/ASM211692v1.fasta")
       .into { snp_reference; mapping_reference }
+  Channel
+      .fromPath("$baseDir/snppipeline.conf")
+      .set { snp_config }
+
 } else{
 
   //setup channel to read in and pair the fastq files
@@ -43,12 +47,18 @@ if(params.test){
           .fromPath(params.snp_reference)
           .into { snp_reference; mapping_reference }
   }
+  if (params.cfsan_config) {
+      Channel
+          .fromPath(params.cfsan_config)
+          //.fromPath("$baseDir/configs/snppipeline.conf")
+          .set { snp_config }
+  }
+  else {
+      Channel
+          .fromPath("$baseDir/configs/snppipeline.conf")
+          .set { snp_config }
+  }
 }
-
-Channel
-  .fromPath(params.cfsan_config)
-   //.fromPath("$baseDir/configs/snppipeline.conf")
-   .set { snp_config }
 
 //Preprocessing Step: Change read names
 process preProcess {
@@ -572,7 +582,7 @@ if (params.snp_reference != null & !params.snp_reference.isEmpty() | params.test
         os.rename(fwd_reads[c],os.path.join(path,fwd_reads[c]))
         os.rename(rev_reads[c],os.path.join(path,rev_reads[c]))
         c += 1
-        
+
       command = "cfsan_snp_pipeline run ${reference} -c ${config} -o . -s input_reads"
       # command = "cfsan_snp_pipeline run ${reference} -o . -s input_reads"
       process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
