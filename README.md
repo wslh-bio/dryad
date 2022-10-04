@@ -17,11 +17,11 @@ Dryad is a [NextFlow](https://www.nextflow.io/) pipeline to construct reference 
 ### Using the pipeline
 The pipeline is designed to start from raw Illumina short reads. All reads must be in the same directory. Then start the pipeline using:  
 ```
-nextflow wslh-bio/dryad -r <version> --reads [path-to-reads] -profile [docker,singularity,aws]
+nextflow wslh-bio/dryad -r <version> --reads [path-to-reads]
 ```  
 to run the SNP pipeline include the `--snp_reference` parameter:  
 ```
-nextflow wslh-bio/dryad -r <version> --reads [path-to-reads] --snp_reference [path-to-reference-fasta] -profile [docker,singularity,aws]
+nextflow wslh-bio/dryad -r <version> --reads [path-to-reads] --snp_reference [path-to-reference-fasta]
 ```  
 
 You can also test the pipeline with example data using `--test`, note this requires NextFlow version `21.07.0-edge` or greater:
