@@ -24,7 +24,7 @@ to run the SNP pipeline include the `--snp_reference` parameter:
 nextflow wslh-bio/dryad -r <version> --reads [path-to-reads] --snp_reference [path-to-reference-fasta]
 ```  
 
-You can also test the pipeline with example data using `--test`, note this requires NextFlow version `21.07.0-edge` or greater:
+You can also test the pipeline with example data using `--test` Note: This requires NextFlow version `21.07.0-edge` or greater:
 ```
 nextflow dryad.nf --test
 ```
