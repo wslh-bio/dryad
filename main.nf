@@ -4,9 +4,6 @@
 //Author: Kelsey Florek and Abigail Shockey
 //email: kelsey.florek@slh.wisc.edu, abigail.shockey@slh.wisc.edu
 
-params.test = false
-params.test_snp = true
-
 if(params.test){
 
   testIDS = ['SRR14311557','SRR14311556','SRR14311555','SRR14311554',
@@ -21,10 +18,6 @@ if(params.test){
   Channel
       .fromPath("$baseDir/assets/ASM211692v1.fasta")
       .into { snp_reference; mapping_reference }
-  Channel
-      .fromPath("$baseDir/snppipeline.conf")
-      .set { snp_config }
-
 } else{
 
   //setup channel to read in and pair the fastq files
@@ -49,11 +42,13 @@ if(params.test){
       Channel
           .fromPath(params.snp_reference)
           .into { snp_reference; mapping_reference }
-      Channel
-          .fromPath("$baseDir/configs/snppipeline.conf")
-          .set { snp_config }
   }
 }
+
+Channel
+  .fromPath(params.cfsan_config)
+   //.fromPath("$baseDir/configs/snppipeline.conf")
+   .set { snp_config }
 
 //Preprocessing Step: Change read names
 process preProcess {
