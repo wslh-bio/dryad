@@ -19,7 +19,7 @@ if(params.test){
       .fromPath("$baseDir/assets/ASM211692v1.fasta")
       .into { snp_reference; mapping_reference }
   Channel
-      .fromPath("$baseDir/snppipeline.conf")
+      .fromPath("$baseDir/configs/snppipeline.conf")
       .set { snp_config }
 
 } else{
