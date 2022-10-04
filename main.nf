@@ -86,7 +86,7 @@ process clean_reads {
   //errorStrategy 'ignore'
 
   publishDir "${params.outdir}/trimming/stats", mode: 'copy', pattern:"*.trim.txt"
-  //publishDir "${params.outdir}/trimming/reads", mode: 'copy', pattern:"*.gz"
+  publishDir "${params.outdir}/trimming/reads", mode: 'copy', pattern:"*.gz"
 
   input:
   set val(name), file(reads) from processed_reads_trimming
