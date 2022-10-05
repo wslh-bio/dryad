@@ -47,13 +47,13 @@ if(params.test){
           .fromPath(params.snp_reference)
           .into { snp_reference; mapping_reference }
   }
-  if (params.cfsan_config) {
+
+  if (params.cfsan_config & params.test != true) {
       Channel
           .fromPath(params.cfsan_config)
-          //.fromPath("$baseDir/configs/snppipeline.conf")
           .set { snp_config }
   }
-  else {
+  if (params.cfsan_config & params.test) {
       Channel
           .fromPath("$baseDir/configs/snppipeline.conf")
           .set { snp_config }
@@ -842,7 +842,7 @@ process merge_results {
 }
 
 Channel
-  .fromPath("$baseDir/multiqc_config.yaml")
+  .fromPath("$baseDir/configs/multiqc_config.yaml")
   .set { multiqc_config }
 
 Channel
