@@ -48,12 +48,13 @@ if(params.test){
           .into { snp_reference; mapping_reference }
   }
 
-  if (params.cfsan_config & params.test != true) {
+  if (params.cfsan_config != "" & params.test != true) {
       Channel
           .fromPath(params.cfsan_config)
           .set { snp_config }
   }
-  if (params.cfsan_config & params.test) {
+
+  if (params.cfsan_config == "" & params.test != true) {
       Channel
           .fromPath("$baseDir/configs/snppipeline.conf")
           .set { snp_config }
