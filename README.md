@@ -31,7 +31,7 @@ nextflow dryad.nf --test
 
 ### Workflow outline
 
-![Workflow](/assets/dryad_workflow_3.0.png)
+![Workflow](/assets/dryad_workflow_3.0.1.png)
 
 ### Read trimming and cleaning
 Read trimming and cleaning is performed using [BBtools v38.76](https://jgi.doe.gov/data-and-tools/bbtools/) to trim reads of low quality bases and remove PhiX contamination. After processing, the reads are used by each pipeline as needed.  
