@@ -1,176 +1,81 @@
-![Dryad](/assets/dryad_logo_250.png)
+## Introduction
 
-![Dryad](https://github.com/wslh-bio/dryad/actions/workflows/dryad_build.yml/badge.svg)
-![GPL-3.0](https://img.shields.io/github/license/wslh-bio/dryad)
-![GitHub Release](https://img.shields.io/github/release/wslh-bio/dryad)
+**wslh-bio/dryad** is a bioinformatics pipeline that ...
 
-Dryad is a [NextFlow](https://www.nextflow.io/) pipeline to construct reference free core-genome or SNP phylogenetic trees for examining prokaryote relatedness in outbreaks. Dryad will performs both a reference free core-genome analysis based off of the approach outlined by [Oakeson et. al](https://www.ncbi.nlm.nih.gov/pubmed/30158193) and/or a SNP analysis using the [CFSAN-SNP](https://snp-pipeline.readthedocs.io/en/latest/readme.html) pipeline.
+<!-- TODO nf-core:
+   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
+   major pipeline sections and the types of output it produces. You're giving an overview to someone new
+   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
+-->
 
-### Table of Contents:
-[Usage](#using-the-pipeline)  
-[Workflow outline](#workflow-outline)  
-[Core-genome](#core-genome-alignment-and-phylogenetic-tree-construction)  
-[SNP](#snp-distances-calculation-and-phylogenetic-tree-construction)  
-[Quality assessment](#quality-assessment)  
-[Output](#output-files)  
+<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
+     workflows use the "tube map" design for that. See https://nf-co.re/docs/contributing/design_guidelines#examples for examples.   -->
+<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
-### Using the pipeline
-The pipeline is designed to start from raw Illumina short reads. All reads must be in the same directory. Then start the pipeline using:  
+1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
+2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+
+## Usage
+
+> [!NOTE]
+> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
+
+<!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
+     Explain what rows and columns represent. For instance (please edit as appropriate):
+
+First, prepare a samplesheet with your input data that looks as follows:
+
+`samplesheet.csv`:
+
+```csv
+sample,fastq_1,fastq_2
+CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
 ```
-nextflow wslh-bio/dryad -r <version> --reads [path-to-reads]
-```  
-to run the SNP pipeline include the `--snp_reference` parameter:  
+
+Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
+
+-->
+
+Now, you can run the pipeline using:
+
+<!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
+
+```bash
+nextflow run wslh-bio/dryad \
+   -profile <docker/singularity/.../institute> \
+   --input samplesheet.csv \
+   --outdir <OUTDIR>
 ```
-nextflow wslh-bio/dryad -r <version> --reads [path-to-reads] --snp_reference [path-to-reference-fasta]
-```  
 
-You can also test the pipeline with example data using `--test` Note: This requires NextFlow version `21.07.0-edge` or greater:
-```
-nextflow dryad.nf --test
-```
+> [!WARNING]
+> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
+> see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
 
-### Workflow outline
+## Credits
 
-![Workflow](/assets/dryad_workflow_3.0.1.png)
+wslh-bio/dryad was originally written by me.
 
-### Read trimming and cleaning
-Read trimming and cleaning is performed using [BBtools v38.76](https://jgi.doe.gov/data-and-tools/bbtools/) to trim reads of low quality bases and remove PhiX contamination. After processing, the reads are used by each pipeline as needed.  
-*Note: Both pipelines can be run automatically in parallel by supplying the snp_reference parameter.*
+We thank the following people for their extensive assistance in the development of this pipeline:
 
-### Core genome alignment and phylogenetic tree construction
-The core genome pipeline takes the trimmed and cleaned reads and infers a phylogenetic tree that can be used for inferring outbreak relatedness. This pipeline is based loosely off of the pipeline described here by [Oakeson et. al](https://www.ncbi.nlm.nih.gov/pubmed/30158193).
+<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
 
-Species is predicted from the cleaned reads, and assembly quality is evaluated.
+## Contributions and Support
 
-The core genome pipeline uses the following applications and pipelines:
+If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
-[Shovill v1.0.4](https://github.com/tseemann/shovill)
-Shovill is a genome assembly pipeline that uses SPAdes, but it alters certain steps to get similar results in less time.
+## Citations
 
-[Prokka v1.14.5](https://github.com/tseemann/prokka)
-Prokka is a whole genome annotation tool used to annotate the coding regions of the assembly.
+<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
+<!-- If you use wslh-bio/dryad for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
 
-[Roary v3.12.0](https://github.com/sanger-pathogens/Roary)
-Roary takes the annotated genomes and constructs a core gene alignment.
+<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
 
-[IQ-Tree v1.6.7](http://www.iqtree.org/)
-IQ-Tree uses the core gene alignment and infers a maximum likelihood phylogenetic tree bootstrapped 1000 times.
+An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 
-[QUAST v5.0.2](http://bioinf.spbau.ru/quast)
-QUAST evaluates genome assembly quality.
+This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
 
-[Kraken2 v2.0.8](https://ccb.jhu.edu/software/kraken2/)
-Kraken uses the cleaned reads to predict species and detect contamination.
-
-### SNP distances calculation and phylogenetic tree construction
-The SNP pipeline takes the trimmed and cleaned reads and infers a phylogenetic tree that can be used for inferring outbreak relatedness. The pipeline requires the path to the raw reads (mentioned above) and a reference genome in fasta file format.
-
-The SNP pipeline uses the following applications and pipelines:
-
-[CFSAN SNP Pipeline v2.0.2](https://github.com/CFSAN-Biostatistics/snp-pipeline)
-
-[IQ-Tree v1.6.7](http://www.iqtree.org/)
-IQ-Tree uses an alignment of the SNP sites to create a maximum likelihood phylogenetic tree bootstrapped 1000 times.
-
-#### Quality Assessment
-
-[FastQC v0.11.8](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
-FastQC is used assess the quality of the raw and cleaned reads.
-
-[QUAST v5.0.2](http://bioinf.spbau.ru/quast)
-QUAST assesses the quality of the genome assemblies.
-
-[Samtools v1.10](http://www.htslib.org/)
-calculates the number and depth of cleaned reads mapped to their assemblies and the reference genome. [BWA v0.7.17-r1188](http://bio-bwa.sourceforge.net/) is used for mapping reads.
-
-[MultiQC v1.8](https://multiqc.info/)
-summarizes the results of FastQC, Prokka, Samtools Stats and Kraken.
-### Output files
-```
-dryad_results
-├── annotated
-│   ├── *.gff
-│   └── *.prokka.stats.txt
-├── assembled
-│   └── *.contigs.fa
-├── core_gene_alignment.aln
-├── core_genome_statistics.txt
-├── core_genome.tree
-├── dryad_report.csv
-├── assembled
-├── fastqc
-│   ├── fastqc_summary.txt
-│   ├── *.html
-│   └── zips
-│       └── *.zip
-├── kraken
-│   ├── kraken_results.tsv
-│   └── *.kraken2.txt
-├── mapping
-│   ├── bams
-│   │   ├── *.assembly.bam
-│   │   ├── *.assembly.bai
-│   │   ├── *.reference.bam
-│   │   └── *.reference.bai
-│   ├── coverage_stats.tsv
-│   ├── depth
-│   │   ├── *.assembly.depth.tsv
-│   │   └── *.reference.depth.tsv
-│   ├── mapping_stats.tsv
-│   ├── sams
-│   │   ├── *.assembly.sam
-│   │   └── *.reference.sam
-│   └── stats
-│       ├── *.assembly.stats.txt
-│       └── *.reference.stats.txt
-├── multiqc_report.html
-├── quast
-│   ├── quast_results.tsv
-│   └── *.quast.tsv
-├── snp_distance_matrix.tsv
-├── snpma.fasta
-├── snp.tree
-└── trimming
-    ├── bbduk_results.tsv
-    ├── reads
-    │   └── *_clean_*    
-    └── stats
-        └── *.trim.txt
-```
-**\*.gff** - Gene annotations predicted by Prokka  
-**\*.prokka.stats.txt** - Prokka log files  
-**\*.contigs.fa** - Shovill assemblies  
-**core_gene_alignment.aln** - Core-genome alignment  
-**core_genome_statistics.txt** - Text file with the number of genes in the core and accessory genomes  
-**core_genome.tree** - ML tree inferred from core-genome alignment  
-**dryad_report.csv** - Summary table of each step in dryad  
-**fastqc_summary.txt** - Summary table of FastQC results  
-**\*.html** - HTML files of FastQC results  
-**\*.zip** - FastQC results, compressed  
-**kraken_results.tsv** - Summary table of Kraken results  
-**\*.kraken2.txt** - Report of Kraken results for each sample  
-**\*.assembly.bam** - Alignments to an assembly BAM format  
-**\*.assembly.bai** - Index file of alignments to an assembly  
-**\*.reference.bam**  - Alignments to the reference sequence BAM format  
-**\*.reference.bai** - Index file of alignments to the reference sequence  
-**coverage_stats.tsv** - Summary table of mean and median coverage calculated with Samtools depth  
-**\*.assembly.depth.tsv** - Raw Samtools depth output for reads mapped to an assembly  
-**\*.reference.depth.tsv** - Raw Samtools depth output for reads mapped to the reference sequence  
-**mapping_stats.tsv** - Summary table of statistics   
-**\*.assembly.sam** - Alignments to an assembly SAM format  
-**\*.reference.sam** - Alignments to the reference sequence SAM format  
-**\*.assembly.stats.txt** - Output of Samtools stats for reads mapped to an assembly  
-**\*.reference.stats.txt** - Output of Samtools stats for reads mapped to the reference sequence  
-**multiqc_report.html** - HTML report generated by MultiQC  
-**quast_results.tsv** - Summary table of QUAST results  
-**\*.quast.tsv** - QUAST results for each sample  
-**snp_distance_matrix.tsv** - SNP distance matrix  
-**snpma.fasta** - SNP alignment  
-**snp.tree** - SNP tree  
-**bbduk_results.tsv** - Summary table of trimming with BBDuk  
-**\*\_clean\_\*** - Trimmed and cleaned reads  
-**\*.trim.txt** - Trimming results from BBduk each sample  
-
-### Authors
-[Kelsey Florek](https://github.com/k-florek), WSLH Senior Genomics and Data Scientist  
-[Abigail Shockey](https://github.com/AbigailShockey), WSLH Bioinformatics and Data Scientist
+> **The nf-core framework for community-curated bioinformatics pipelines.**
+>
+> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
+>
+> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
