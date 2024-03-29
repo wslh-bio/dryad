@@ -20,9 +20,13 @@ process SNPDISTS {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    // -b Blank top left corner cell
+    // -c Use comma instead of tab in output
     """
     snp-dists \\
         $args \\
+        -b \\ 
+        -c \\
         $alignment > ${prefix}.tsv
 
     cat <<-END_VERSIONS > versions.yml
