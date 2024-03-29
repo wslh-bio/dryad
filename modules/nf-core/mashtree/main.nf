@@ -22,12 +22,10 @@ process MASHTREE {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    mashtree \\
-        $args \\
-        --numcpus $task.cpus \\
-        --outmatrix ${prefix}.tsv \\
-        --outtree ${prefix}.dnd \\
-        $seqs
+    mastree_bootstrap.pl \\
+        --reps 100 \\
+        --numcpus $task.cpus *.fasta-- \\
+        --min-depth 0 > mashtree.bootstrap.dnd
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
