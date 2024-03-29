@@ -37,6 +37,36 @@ workflow DRYAD {
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
     //
+    // MODULE: Run QUAST
+    //
+    if (!params.phoenix) {
+        QUAST (
+            ch_input_reads.sample,
+        )
+    }
+
+    // Updating versions channel
+    ch_versions = ch_versions.mix(QUAST.out.versions.first())
+
+    //
+    // MODULE: Run subworkflow of alignment based or alignment free?
+    //
+
+    // If alignment free workflow is desired
+    if (!params.alignment_based) {
+        MASHTREE (
+            INPUT_CHECK.out.reads,
+
+        )
+    }
+
+    // If alignment based workflow is desired
+    else {
+        PARSNP (ch_input_reads.sample)
+
+    }
+
+    //
     // Collate and save software versions
     //
     softwareVersionsToYAML(ch_versions)
