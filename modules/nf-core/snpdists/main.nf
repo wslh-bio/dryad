@@ -20,6 +20,7 @@ process SNPDISTS {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+
     // -b Blank top left corner cell
     // -c Use comma instead of tab in output
     """
