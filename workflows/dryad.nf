@@ -37,7 +37,7 @@ workflow DRYAD {
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
     //
-    // MODULE: Run QUAST
+    // MODULE: Run QUAST if samples are not from Phoenix
     //
     if (!params.phoenix) {
         QUAST (
@@ -54,15 +54,16 @@ workflow DRYAD {
 
     // If alignment free workflow is desired
     if (!params.alignment_based) {
-        MASHTREE (
-            INPUT_CHECK.out.reads,
-
+        ALIGNMENT_FREE (
+            INPUT_CHECK.out.reads
         )
     }
 
     // If alignment based workflow is desired
     else {
-        PARSNP (ch_input_reads.sample)
+        ALIGNMENT_BASED (
+            INPUT_CHECK.out.reads
+        )
 
     }
 
