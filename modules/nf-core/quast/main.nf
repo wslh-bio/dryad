@@ -31,7 +31,8 @@ process QUAST {
     """
     quast.py \\
         ${fasta} \\
-        -o .
+        -o . |
+        quast_summary.py
 
     ln -s ${prefix}/report.tsv ${prefix}.tsv
     [ -f  ${prefix}/contigs_reports/all_alignments_transcriptome.tsv ] && ln -s ${prefix}/contigs_reports/all_alignments_transcriptome.tsv ${prefix}_transcriptome.tsv
