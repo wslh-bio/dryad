@@ -4,8 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { FASTQC                 } from '../modules/nf-core/fastqc/main'
-include { MULTIQC                } from '../modules/nf-core/multiqc/main'
+include { QUAST                  } from '../modules/nf-core/quast/main'
 include { paramsSummaryMap       } from 'plugin/nf-validation'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -28,20 +27,11 @@ workflow DRYAD {
     ch_multiqc_files = Channel.empty()
 
     //
-    // MODULE: Run FastQC
-    //
-    FASTQC (
-        ch_samplesheet
-    )
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
-
-    //
     // MODULE: Run QUAST if samples are not from Phoenix
     //
     if (!params.phoenix) {
         QUAST (
-            ch_input_reads.sample,
+            ch_samplesheet.sample
         )
     }
 
@@ -64,8 +54,7 @@ workflow DRYAD {
         ALIGNMENT_BASED (
             INPUT_CHECK.out.reads
         )
-
-    }
+    }toList
 
     //
     // Collate and save software versions
@@ -89,15 +78,17 @@ workflow DRYAD {
     ch_multiqc_files                      = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: false))
 
     MULTIQC (
-        ch_multiqc_files.collect(),
+        ch_multiqc_files.collect( ),
         ch_multiqc_config.toList(),
         ch_multiqc_custom_config.toList(),
         ch_multiqc_logo.toList()
     )
 
     emit:
-    multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
-    versions       = ch_versions                 // channel: [ path(versions.yml) ]
+        multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
+        versions       = ch_versions                 // channel: [ path(versions.yml) ]
+        if (!params.alignment_based)
+
 }
 
 /*

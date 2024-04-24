@@ -22,4 +22,10 @@ workflow ALIGNMENT_FREE {
     MASHTREE (
         ch_input
     )
+
+    //
+    // Custom python script
+    //
+
+    
 }
