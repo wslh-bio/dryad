@@ -11,41 +11,63 @@ nextflow.enable.dsl = 2
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    VALIDATING INPUTS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+if (params.input) {ch_input = file(params.input)} else { exit 1, 'Input samplesheet file not specified!' }
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS / WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { DRYAD  } from './workflows/dryad'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_dryad_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_dryad_pipeline'
+
+include { INPUT_CHECK             } from './subworkflows/local/input_check'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     NAMED WORKFLOWS FOR PIPELINE
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+if (params.phoenix == 'false') {
+    include {QUAST} from './modules/nf-core/quast'
+}
+if (params.alignment_based == 'true') {
+    include {ALIGNMENT_BASED} from  './workflows/alignment_based'
+} else if (params.alignment_based == 'false') {
+    include {ALIGNMENT_FREE} from './workflows/alignment_free'
+}
 
 //
 // WORKFLOW: Run main analysis pipeline depending on type of input
 //
 workflow WSLHBIO_DRYAD {
 
-    take:
-    samplesheet // channel: samplesheet read in from --input
-
-    main:
-
+    ch_software_versions = Channel.empty ()
     //
-    // WORKFLOW: Run pipeline
+    // SUBWORKFLOW: Input_check
     //
-    DRYAD (
-        samplesheet
+
+    INPUT_CHECK (
+        ch_input
     )
 
-    emit:
-    multiqc_report = DRYAD.out.multiqc_report // channel: /path/to/multiqc_report.html
+    if (params.phoenix == 'false') {
+        QUAST (ch_input)
+    }
 
+    if (params.alignment_based == 'false') {
+        ALIGNMENT_FREE (INPUT_CHECK.out.sample_info)
+    }
+
+    else if (params.alignment_based == 'true') {
+        ALIGNMENT_BASED (INPUT_CHECK.out.sample_info)
+    }
 }
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -54,6 +76,7 @@ workflow WSLHBIO_DRYAD {
 
 workflow {
 
+    WSLHBIO_DRYAD ()
     main:
 
     //
