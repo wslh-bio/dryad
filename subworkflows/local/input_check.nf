@@ -2,8 +2,6 @@
 // Check input samplesheet and get read channels
 //
 
-params.options = [:]
-
 include { SAMPLESHEET_CHECK } from './check_samplesheet.py' addParams( options: params.options )
 
 workflow INPUT_CHECK {
@@ -11,12 +9,14 @@ workflow INPUT_CHECK {
     samplesheet // file: /path/to/samplesheet.csv
 
     main:
-    SAMPLESHEET_CHECK ( samplesheet )
+    SAMPLESHEET_CHECK ( 
+        samplesheet
+        )
 
     SAMPLESHEET_CHECK
         .out
         .splitCsv ( header:true, sep:',' )
-        .map { create_fastq_channels(it) }
+        .map { create_fasta_channels(it) }
         .set { sample_info }
 
     emit:
