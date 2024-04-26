@@ -25,7 +25,6 @@ if (params.input) {ch_input = file(params.input)} else { exit 1, 'Input samplesh
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_dryad_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_dryad_pipeline'
 
-include { INPUT_CHECK             } from './subworkflows/local/input_check'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,20 +50,16 @@ workflow WSLHBIO_DRYAD {
     // SUBWORKFLOW: Input_check
     //
 
-    INPUT_CHECK (
-        ch_input
-    )
-
     if (params.phoenix == 'false') {
         QUAST (ch_input)
     }
 
     if (params.alignment_based == 'false') {
-        ALIGNMENT_FREE (INPUT_CHECK.out.sample_info)
+        ALIGNMENT_FREE (ch_input)
     }
 
     else if (params.alignment_based == 'true') {
-        ALIGNMENT_BASED (INPUT_CHECK.out.sample_info)
+        ALIGNMENT_BASED (ch_input)
     }
 }
 

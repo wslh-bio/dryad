@@ -7,7 +7,7 @@ import argparse
 
 
 def parse_args(args=None):
-    Description = "Reformat nf-core/dryad samplesheet file and check its contents."
+    Description = "Reformat input samplesheet file and check its contents."
     Epilog = "Example usage: python check_samplesheet.py <FILE_IN> <FILE_OUT>"
 
     parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
@@ -16,7 +16,7 @@ def parse_args(args=None):
 
     return parser.parse_args(args)
 
-
+# Creating a directory for the samples 
 def make_dir(path):
     if len(path) > 0:
         try:
@@ -25,7 +25,7 @@ def make_dir(path):
             if exception.errno != errno.EEXIST:
                 raise exception
 
-
+# Print the error
 def print_error(error, context="Line", context_str=""):
     error_str = "ERROR: Please check samplesheet -> {}".format(error)
     if context != "" and context_str != "":
@@ -35,7 +35,7 @@ def print_error(error, context="Line", context_str=""):
     print(error_str)
     sys.exit(1)
 
-
+# CHecking the samplesheet to ensure it is formatted properly
 def check_samplesheet(file_in, file_out):
     """
     This function checks that the samplesheet follows the following structure:
@@ -44,9 +44,6 @@ def check_samplesheet(file_in, file_out):
     SAMPLE_PE,SAMPLE_PE_RUN1_1.fa.gz
     SAMPLE_PE,SAMPLE_PE_RUN2_1.fa.gz
     SAMPLE_SE,SAMPLE_SE_RUN1_1.fa.gz
-
-    For an example see:
-
     """
 
     sample_mapping_dict = {}
@@ -61,16 +58,16 @@ def check_samplesheet(file_in, file_out):
 
         ## Check sample entries
         for line in fin:
-            lspl = [x.strip().strip('"') for x in line.strip().split(",")]
+            cleaned_line = [x.strip().strip('"') for x in line.strip().split(",")]
 
             # Check valid number of columns per row
-            if len(lspl) < len(HEADER):
+            if len(cleaned_line) < len(HEADER):
                 print_error(
                     "Invalid number of columns (minimum = {})!".format(len(HEADER)),
                     "Line",
                     line,
                 )
-            num_cols = len([x for x in lspl if x])
+            num_cols = len([x for x in cleaned_line if x])
             if num_cols < MIN_COLS:
                 print_error(
                     "Invalid number of populated columns (minimum = {})!".format(MIN_COLS),
@@ -79,21 +76,21 @@ def check_samplesheet(file_in, file_out):
                 )
 
             ## Check sample name entries
-            sample, fasta_1 = lspl[: len(HEADER)]
+            sample, fasta_1 = cleaned_line[: len(HEADER)] #Will look at # of elements in header
             if sample.find(" ") != -1:
                 print(f"WARNING: Spaces have been replaced by underscores for sample: {sample}")
                 sample = sample.replace(" ", "_")
             if not sample:
                 print_error("Sample entry has not been specified!", "Line", line)
 
-            ## Check FastQ file extension
+            ## Check FastA file extension
             for fasta in [fasta_1]:
                 if fasta:
                     if fasta.find(" ") != -1:
                         print_error("FastA file contains spaces!", "Line", line)
-                    if not fasta.endswith(".fasta.gz") and not fasta.endswith(".fa.gz"):
+                    if not fasta.endswith(".fasta.gz") and not fasta.endswith(".fa.gz") and not fasta.endswith(".fa"):
                         print_error(
-                            "FastA file does not have extension '.fasta.gz' or '.fa.gz'!",
+                            "FastA file does not have extension '.fasta.gz', '.fa.gz', or '.fa'!",
                             "Line",
                             line,
                         )
@@ -101,11 +98,11 @@ def check_samplesheet(file_in, file_out):
             ## Auto-detect paired-end/single-end
             sample_info = []  ## [single_end, fasta_1]
             if sample and fasta_1 :  ## Paired-end short reads
-                sample_info = ["0", fasta_1]
+                sample_info = [fasta_1]
             else:
                 print_error("Invalid combination of columns provided!", "Line", line)
 
-            ## Create sample mapping dictionary = { sample: [ single_end, fastq_1, fastq_2 ] }
+            ## Create sample mapping dictionary = { sample: [ fasta_1 ] }
             if sample not in sample_mapping_dict:
                 sample_mapping_dict[sample] = [sample_info]
             else:
@@ -117,9 +114,11 @@ def check_samplesheet(file_in, file_out):
     ## Write validated samplesheet with appropriate columns
     if len(sample_mapping_dict) > 0:
         out_dir = os.path.dirname(file_out)
+
         make_dir(out_dir)
+
         with open(file_out, "w") as fout:
-            fout.write(",".join(["sample", "single_end", "fasta_1"]) + "\n")
+            fout.write(",".join(["sample", "fasta_1"]) + "\n")
             for sample in sorted(sample_mapping_dict.keys()):
                 ## Check that multiple runs of the same sample are of the same datatype
                 if not all(x[0] == sample_mapping_dict[sample][0][0] for x in sample_mapping_dict[sample]):

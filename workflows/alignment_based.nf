@@ -9,7 +9,7 @@ workflow ALIGNMENT_BASED {
 
     main:
         ch_versions = Channel.empty()
-        // ch_input    = ch_input_reads
+        ch_input    = ch_input_reads
     
     emit:
         tuple val(meta), path("*.dnd"), emit: tree
