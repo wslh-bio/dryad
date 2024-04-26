@@ -43,7 +43,7 @@ def check_samplesheet(file_in, file_out):
     sample,fasta
     SAMPLE_PE,SAMPLE_PE_RUN1_1.fa.gz
     SAMPLE_PE,SAMPLE_PE_RUN2_1.fa.gz
-    SAMPLE_SE,SAMPLE_SE_RUN1_1.fa.gz
+    SAMPLE_SE,SAMPLE_SE_RUN3_1.fa.gz
     """
 
     sample_mapping_dict = {}
@@ -97,7 +97,7 @@ def check_samplesheet(file_in, file_out):
 
             ## Auto-detect paired-end/single-end
             sample_info = []  ## [single_end, fasta_1]
-            if sample and fasta_1 :  ## Paired-end short reads
+            if sample and fasta_1 : 
                 sample_info = [fasta_1]
             else:
                 print_error("Invalid combination of columns provided!", "Line", line)
