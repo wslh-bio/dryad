@@ -73,6 +73,7 @@ workflow DRYAD {
         SNPDISTS (
             PARSNP.out.mblocks
         )
+        ch_versions = ch_versions.mix(SNPDISTS.out.versions.first())
 
 
 }
