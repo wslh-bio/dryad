@@ -5,7 +5,7 @@
 import nextflow.Nextflow
 import groovy.text.SimpleTemplateEngine
 
-class WorkflowSpriggan {
+class WorkflowDryad {
 
     //
     // Check and validate parameters
@@ -15,7 +15,7 @@ class WorkflowSpriggan {
         genomeExistsError(params, log)
 
 
-        if (!params.fasta) {
+        if (!params.fasta && params.alignment_based == 'true') {
             Nextflow.error "Genome fasta file not specified with e.g. '--fasta genome.fa' or via a detectable config file."
         }
     }
