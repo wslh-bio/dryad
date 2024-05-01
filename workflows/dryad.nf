@@ -43,7 +43,7 @@ workflow DRYAD {
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
     INPUT_CHECK (
-        file(params.input)
+        ch_input
     )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
