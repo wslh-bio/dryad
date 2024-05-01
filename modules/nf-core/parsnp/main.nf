@@ -6,7 +6,7 @@ process PARSNP {
         'https://depot.galaxyproject.org/singularity/parsnp:2.0.4--hdcf5f25_0'}"
 
     input:
-    path reference_fasta
+    path fasta
     path input_reads
     path outdir
 
