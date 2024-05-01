@@ -54,7 +54,7 @@ workflow DRYAD {
     //
     // SUBWORKFLOW: Alignment Free
     //
-    if (params.alignment_based == 'false') and (params.fasta == 'null') {
+    if (params.alignment_based == 'false' && params.fasta == 'null') {
         MASHTREE (
             ch_input_reads
         )
@@ -64,7 +64,7 @@ workflow DRYAD {
     //
     // SUBWORKFLOW: Alignment Based
     //
-    if (params.alignment_based == 'true') and (params.fasta != 'null') {
+    if (params.alignment_based == 'true' && params.fasta != 'null') {
         ch_reference_fasta = params.fasta
         PARSNP (
             ch_input_reads
