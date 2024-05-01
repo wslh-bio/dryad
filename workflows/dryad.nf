@@ -58,8 +58,8 @@ workflow DRYAD {
         MASHTREE (
             ch_input_reads
         )
+        ch_versions = ch_versions.mix(MASHTREE.out.versions.first())
     }
-    ch_versions = ch_versions.mix(MASHTREE.out.versions.first())
 
     //
     // SUBWORKFLOW: Alignment Based
@@ -67,15 +67,16 @@ workflow DRYAD {
     if (params.alignment_based == 'true' && params.fasta != 'null') {
         ch_reference_fasta = params.fasta
         PARSNP (
-            ch_input_reads
+            ch_input_reads,
+            params.fasta
         )
         ch_versions = ch_versions.mix(PARSNP.out.versions.first()) 
         IQTREE (
-            PARSNP.out.phylogeny
+            PARSNP.out.phylogeny.collect()
         )
         ch_versions = ch_versions.mix(IQTREE.out.versions.first())
         SNPDISTS (
-            PARSNP.out.mblocks
+            PARSNP.out.mblocks.collect()
         )
         ch_versions = ch_versions.mix(SNPDISTS.out.versions.first())
     }
