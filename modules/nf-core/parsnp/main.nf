@@ -2,11 +2,14 @@ process PARSNP {
     tag "$meta.id"
     label 'process_medium'
 
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/parsnp:2.0.5--hdcf5f25_0' }"
 
     input:
-    path fasta, tuple val(meta), path(seqs), path outdir
+    tuple val(meta), path(reads)
+    path fasta
+    path outdir
 
     output:
     path "*.xmfa"               , emit: core-genome-alignment
@@ -17,7 +20,7 @@ process PARSNP {
 
     when:
     task.ext.when == null || task.ext.when
-        
+
     script:
     """
     parsnp \\

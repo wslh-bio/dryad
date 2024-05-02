@@ -66,13 +66,19 @@ workflow DRYAD {
     // SUBWORKFLOW: Alignment Free
     //
     if (!params.alignment_based && !params.fasta) {
-        ALIGNMENT_FREE ( ch_input_reads )
+        ALIGNMENT_FREE (
+            ch_input_reads
+             )
     }
 
     //
     // SUBWORKFLOW: Alignment Based
     //
     if (params.alignment_based && params.fasta) {
-        ALIGNMENT_BASED ( ch_input_reads )
+        ALIGNMENT_BASED (
+            ch_input_reads,
+            params.fasta,
+            params.outdir
+            )
     }
 }

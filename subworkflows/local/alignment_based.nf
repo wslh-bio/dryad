@@ -9,6 +9,7 @@ workflow ALIGNMENT_BASED {
     take:
     reads       // channel: [ val(meta), [ reads ] ]
     fasta       // channel: /path/to/genome.fasta
+    outdir      // output directory
 
     main:
     ch_versions = Channel.empty()       // Creating empty version channel to get versions.yml
@@ -18,7 +19,8 @@ workflow ALIGNMENT_BASED {
 //
     PARSNP (
         reads,
-        fasta
+        fasta,
+        outdir
         )
     ch_versions = ch_versions.mix(PARSNP.out.versions.first()) 
 
