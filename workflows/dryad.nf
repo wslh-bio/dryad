@@ -32,8 +32,8 @@ WorkflowDryad.initialise(params, log)
 */
 include { INPUT_CHECK       } from '../subworkflows/local/input_check'
 include { QUAST             } from '../modules/nf-core/quast'
-include { ALIGNMENT_BASED   } '../subworkflows/local/alignment_based'
-include { ALIGNMENT_FREE    } '../subworkflows/local/alignment_free'
+include { ALIGNMENT_BASED   } from '../subworkflows/local/alignment_based'
+include { ALIGNMENT_FREE    } from '../subworkflows/local/alignment_free'
 
 workflow DRYAD {
 
