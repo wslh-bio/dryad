@@ -72,13 +72,3 @@ workflow DRYAD {
         ALIGNMENT_BASED ( ch_input_reads )
     }
 }
-
-// if (params.alignment_based == 'true') {
-//     include {ALIGNMENT_BASED} from  './workflows/alignment_based'
-// } else if (params.alignment_based == 'false') {
-//     include {ALIGNMENT_FREE} from './workflows/alignment_free'
-// }
-
-// if (params.phoenix == 'false') {
-    
-// }
