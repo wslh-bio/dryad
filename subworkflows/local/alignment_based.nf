@@ -11,7 +11,7 @@ workflow ALIGNMENT_BASED {
     fasta       // channel: /path/to/genome.fasta
 
     main:
-    ch_versions = Channel.empty()
+    ch_versions = Channel.empty()       // Creating empty version channel to get versions.yml
 
 //
 // PARSNP
