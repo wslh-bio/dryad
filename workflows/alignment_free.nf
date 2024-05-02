@@ -2,13 +2,10 @@
 // Alignment_free subworkflow
 // 
 
-if (params.input) {ch_input = file(params.input)} else { exit 1, 'Input samplesheet file not specified!' }
-
 //
 // Loading alignment free modules
 //
 include { MASHTREE } from '../modules/nf-core/mashtree'
-
 
 //
 // Creating alignment free workflow
@@ -17,6 +14,14 @@ include { MASHTREE } from '../modules/nf-core/mashtree'
 workflow ALIGNMENT_FREE {
 
     ch_versions = Channel.empty()
+
+    INPUT_CHECK (
+        ch_input
+    )
+    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+
+    INPUT_CHECK.out.reads
+        .set{ ch_input_reads}
 
     //
     // MODULE: MashTree
@@ -31,6 +36,7 @@ workflow ALIGNMENT_FREE {
                 multiple: fasta.size() > 1
                     return [ meta, fasta.flatten() ]
     }
+
     ch_versions = ch_versions.mix(MASHTREE.out.versions.first().ifEmpty(null))
 
     // take:
