@@ -1,14 +1,12 @@
 process PARSNP {
-
     tag "$meta.id"
     label 'process_medium'
+
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/parsnp:2.0.4--hdcf5f25_0'}"
+        'https://depot.galaxyproject.org/singularity/parsnp:2.0.5--hdcf5f25_0' }"
 
     input:
-    path fasta
-    path reads
-    path outdir
+    path fasta, tuple val(meta), path(seqs), path outdir
 
     output:
     path "*.xmfa"               , emit: core-genome-alignment
@@ -30,5 +28,6 @@ process PARSNP {
         cat <<-END_VERSIONS > versions.yml
         "${task.process}":
             parsnp: \$(parsnp -V | cut -d ' ' -f2 | sed 's/v//')
+        END_VERSIONS
     """
 }

@@ -24,7 +24,7 @@ process MASHTREE {
     """
     mastree_bootstrap.pl \\
         --reps 100 \\
-        --numcpus $task.cpus *.fasta-- \\
+        --numcpus ${task.cpus} ${reads}-- \\
         --min-depth 0 > mashtree.bootstrap.dnd
 
     cat <<-END_VERSIONS > versions.yml
