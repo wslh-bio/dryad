@@ -7,7 +7,7 @@ process PARSNP {
 
     input:
     path fasta
-    path input_reads
+    path reads
     path outdir
 
     output:
@@ -24,7 +24,7 @@ process PARSNP {
     """
     parsnp \\
         -r ${fasta} \\
-        -d ${input_reads} \\
+        -d ${reads} \\
         -o ${outdir}
 
         cat <<-END_VERSIONS > versions.yml
