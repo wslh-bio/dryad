@@ -3,16 +3,17 @@
     VALIDATE INPUTS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-
+// Figures out what params are nf-core and nextflow and parses them
 def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
-// Check to ensure input parameters exist
+// Checks to ensure input parameters exist
 def checkPathParamList = [ params.input ]
 for (param in checkPathParamList) {if (param) { file(param, checkIfExists: true) } }
 
-// Check for mandatory parameters
+// Checks for mandatory parameters and puts it into a channel
 if (params.input) {ch_input = file(params.input) } else { exit 1, 'Input samplesheet is not specified!'}
 
+//Starting the workflow
 WorkflowDryad.initialise(params, log)
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -37,6 +38,7 @@ include { ALIGNMENT_FREE    } from '../subworkflows/local/alignment_free'
 
 workflow DRYAD {
 
+    // Creating an empty channel to put version information into
     ch_versions = Channel.empty()
 
     //
@@ -45,6 +47,7 @@ workflow DRYAD {
     INPUT_CHECK (
         ch_input
     )
+    // Adding version information
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
     INPUT_CHECK.out.reads
@@ -56,6 +59,7 @@ workflow DRYAD {
     //
     if (!params.phoenix) {
         QUAST ( ch_input_reads )
+        ch_versions = ch_versions.mix(QUAST.out.versions)
     }
 
     //
