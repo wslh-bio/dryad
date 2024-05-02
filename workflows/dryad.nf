@@ -23,16 +23,17 @@ WorkflowDryad.initialise(params, log)
 //
 // SUBWORKFLOW: Designed for dryad 
 //
-include { INPUT_CHECK } from '../subworkflows/local/input_check'
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { QUAST     } from '../modules/nf-core/quast'
-include { ALIGNMENT_BASED } '../subworkflows/local/alignment_based'
-include { ALIGNMENT_FREE } '../subworkflows/local/alignment_free'
+include { INPUT_CHECK       } from '../subworkflows/local/input_check'
+include { QUAST             } from '../modules/nf-core/quast'
+include { ALIGNMENT_BASED   } '../subworkflows/local/alignment_based'
+include { ALIGNMENT_FREE    } '../subworkflows/local/alignment_free'
 
 workflow DRYAD {
 
@@ -51,17 +52,24 @@ workflow DRYAD {
         .set { ch_input_reads }
 
     //
+    // Phoenix
+    //
+    if (!params.phoenix) {
+        QUAST ( )
+    }
+
+    //
     // SUBWORKFLOW: Alignment Free
     //
-    if (params.alignment_based == 'false' && params.fasta == 'null') {
-        ALIGNMENT_FREE ()
+    if (!params.alignment_based && !params.fasta) {
+        ALIGNMENT_FREE ( ch_input_reads )
     }
 
     //
     // SUBWORKFLOW: Alignment Based
     //
-    if (params.alignment_based == 'true' && params.fasta != 'null') {
-        ALIGNMENT_BASED ()
+    if (params.alignment_based && params.fasta) {
+        ALIGNMENT_BASED ( ch_input_reads )
     }
 }
 
