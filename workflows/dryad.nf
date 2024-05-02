@@ -55,7 +55,7 @@ workflow DRYAD {
     // Phoenix
     //
     if (!params.phoenix) {
-        QUAST ( )
+        QUAST ( ch_input_reads )
     }
 
     //
