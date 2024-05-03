@@ -4,7 +4,8 @@ process PARSNP {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/parsnp:2.0.5--hdcf5f25_0' }"
+        'https://depot.galaxyproject.org/singularity/parsnp:2.0.5--hdcf5f25_0' :
+        'biocontainers/parsnp:2.0.5--hdcf5f25_0' }"
 
     input:
     tuple val(meta), path(reads)
@@ -15,7 +16,7 @@ process PARSNP {
     tuple val(meta), path('*.xmfa')               , emit: core-genome-alignment
     tuple val(meta), path('*.ggr')                , emit: gingr-file
     path "parsnp.snps.mblocks"                    , emit: mblocks
-    path "parsnp.tree"                            , emit: phylogeny
+    path "parsnp.tree"                            , emit: tree
     path "versions.yml"                           , emit: versions
 
     when:
