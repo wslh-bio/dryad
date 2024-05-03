@@ -27,28 +27,19 @@ workflow ALIGNMENT_BASED {
 //
 // Creating channel for phylogeny to be fed into IQTREE and 
 //
-    PARSNP
-        .out
-        .phylogeny
-        .set { ch_phylogeny }
-
-    PARSNP
-        .out
-        .mblocks
-        .set { ch_mblocks }
 
     IQTREE (
-    ch_phylogeny
+        PARSNP.out.tree
     )
     ch_versions = ch_versions.mix(IQTREE.out.versions.first())
 
     SNPDISTS (
-        ch_mblocks
+        PARSNP.out.mblocks
     )
     ch_versions = ch_versions.mix(SNPDISTS.out.versions.first())
 
     emit:
-    tuple val(meta), path("*.treefile"),    emit: phylogeny
-    tuple val(meta), path("*.tsv")     ,    emit: tsv
-    path "versions.yml"                ,    emit: versions
+    phylogeny    =      IQTREE.out.phylogeny
+    tsv          =      SNPDISTS.out.tsv
+    versions     =      ch_versions
 }
