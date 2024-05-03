@@ -14,9 +14,9 @@ process PARSNP {
     output:
     tuple val(meta), path('*.xmfa')               , emit: core-genome-alignment
     tuple val(meta), path('*.ggr')                , emit: gingr-file
-    path "parsnp.snps.mblocks"  , emit: mblocks
-    path "parsnp.tree"          , emit: phylogeny
-    path "versions.yml"         , emit: versions
+    path "parsnp.snps.mblocks"                    , emit: mblocks
+    path "parsnp.tree"                            , emit: phylogeny
+    path "versions.yml"                           , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -24,13 +24,13 @@ process PARSNP {
     script:
     """
     parsnp \\
-        -r ${fasta} \\
-        -d ${reads} \\
-        -o ${outdir}
+        -r $fasta \\
+        -d $reads \\
+        -o $outdir
 
-        cat <<-END_VERSIONS > versions.yml
-        "${task.process}":
-            parsnp: \$(parsnp -V | cut -d ' ' -f2 | sed 's/v//')
-        END_VERSIONS
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        parsnp: \$(parsnp --version | cut -d ' ' -f 2 | sed 's/v//')
+    END_VERSIONS
     """
 }
