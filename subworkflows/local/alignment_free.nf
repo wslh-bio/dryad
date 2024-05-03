@@ -31,8 +31,8 @@ workflow ALIGNMENT_FREE {
     //
 
     emit:
-    tuple val(meta), path("*.dnd"), emit: tree
-    tuple val(meta), path("*.tsv"), emit: matrix
-    path "versions.yml"           , emit: versions
+    tree        = MASHTREE.out.tree
+    matrix      = MASHTREE.out.matrix
+    versions    = ch_versions
 
 }
