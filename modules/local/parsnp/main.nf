@@ -13,8 +13,8 @@ process PARSNP {
     path outdir
 
     output:
-    tuple val(meta), path('*.xmfa')               , emit: core-genome-alignment
-    tuple val(meta), path('*.ggr')                , emit: gingr-file
+    tuple val(meta), path('*.xmfa')               , emit: core_genome_alignment
+    tuple val(meta), path('*.ggr')                , emit: gingr_file
     path "parsnp.snps.mblocks"                    , emit: mblocks
     path "parsnp.tree"                            , emit: tree
     path "versions.yml"                           , emit: versions
