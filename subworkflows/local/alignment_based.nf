@@ -22,7 +22,7 @@ workflow ALIGNMENT_BASED {
         fasta,
         outdir
         )
-    ch_versions = ch_versions.mix(PARSNP.out.versions.first()) 
+    ch_versions = ch_versions.mix(PARSNP.out.versions) 
 
 //
 // Creating channel for phylogeny to be fed into IQTREE and 
@@ -31,12 +31,12 @@ workflow ALIGNMENT_BASED {
     IQTREE (
         PARSNP.out.tree
     )
-    ch_versions = ch_versions.mix(IQTREE.out.versions.first())
+    ch_versions = ch_versions.mix(IQTREE.out.versions)
 
     SNPDISTS (
         PARSNP.out.mblocks
     )
-    ch_versions = ch_versions.mix(SNPDISTS.out.versions.first())
+    ch_versions = ch_versions.mix(SNPDISTS.out.versions)
 
     emit:
     phylogeny    =      IQTREE.out.phylogeny
