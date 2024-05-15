@@ -35,15 +35,15 @@ def print_error(error, context="Line", context_str=""):
     print(error_str)
     sys.exit(1)
 
-# CHecking the samplesheet to ensure it is formatted properly
+# Checking the samplesheet to ensure it is formatted properly
 def check_samplesheet(file_in, file_out):
     """
     This function checks that the samplesheet follows the following structure:
 
     sample,fasta
-    SAMPLE_PE,SAMPLE_PE_RUN1_1.fa.gz
-    SAMPLE_PE,SAMPLE_PE_RUN2_1.fa.gz
-    SAMPLE_SE,SAMPLE_SE_RUN3_1.fa.gz
+    SAMPLE_PE,SAMPLE_PE_RUN1.fa.gz
+    SAMPLE_PE,SAMPLE_PE_RUN2.fa.gz
+    SAMPLE_SE,SAMPLE_SE_RUN3.fa.gz
     """
 
     sample_mapping_dict = {}
