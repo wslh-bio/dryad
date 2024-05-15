@@ -9,7 +9,6 @@ process IQTREE {
 
     input:
     tuple val(meta), path(alignment)
-    val constant_sites
 
     output:
     tuple val(meta), path("*.treefile") , emit: phylogeny
