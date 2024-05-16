@@ -8,7 +8,7 @@ process QUAST {
         'biocontainers/quast:5.2.0--py39pl5321h2add14b_1' }"
 
     input:
-    tuple val(meta) , path(fasta)
+    tuple val(meta) , path(reads)
 
     output:
     tuple val(meta), path("${prefix}")                   , emit: results
@@ -24,7 +24,7 @@ process QUAST {
 
     """
     quast.py \\
-        ${fasta} \\
+        ${reads} \\
         -o . |
         quast_summary.py
 
