@@ -76,7 +76,7 @@ def check_samplesheet(file_in, file_out):
                 )
 
             ## Check sample name entries
-            sample, fasta_1 = cleaned_line[: len(HEADER)] #Will look at # of elements in header
+            sample, fasta_1 = cleaned_line[: len(HEADER)] # Will look at # of elements in header
             if sample.find(" ") != -1:
                 print(f"WARNING: Spaces have been replaced by underscores for sample: {sample}")
                 sample = sample.replace(" ", "_")
@@ -118,7 +118,7 @@ def check_samplesheet(file_in, file_out):
         make_dir(out_dir)
 
         with open(file_out, "w") as fout:
-            fout.write(",".join(["sample", "fasta_1"]) + "\n")
+            fout.write(",".join(["sample", "fasta"]) + "\n")
             for sample in sorted(sample_mapping_dict.keys()):
                 ## Check that multiple runs of the same sample are of the same datatype
                 if not all(x[0] == sample_mapping_dict[sample][0][0] for x in sample_mapping_dict[sample]):
