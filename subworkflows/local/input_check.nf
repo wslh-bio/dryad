@@ -16,7 +16,7 @@ workflow INPUT_CHECK {
         .set { reads }
 
     emit:
-    reads                                     // channel: [ val(meta), [ reads ] ]
+    reads                                     // channel: [ val(meta), [ path_to_reads ] ]
     versions = SAMPLESHEET_CHECK.out.versions // channel: [ versions.yml ]
 }
 
@@ -24,16 +24,15 @@ workflow INPUT_CHECK {
 def create_fasta_channel(LinkedHashMap row) {
     // create meta map
     def meta = [:]
-    meta.id         = row.sample
+        meta.id         = row.sample
 
-    // add path of the fasta file to the meta map
     def fasta_meta = []
 
     if (!file(row.fasta).exists()) {
-        exit 1, "ERROR: Please check input samplesheet -> Fasta file does not exist!\n${row.fasta}"
+        exit 1, "ERROR: Please check input samplesheet -> Fasta file does not exist!\n{row.fasta}"
+    } else {
+        fasta_meta = [ meta, [ file(row.fasta) ] ]
     }
-    fasta_meta = [ meta, file(row.fasta) ]
-    
-    //
+
     return fasta_meta
 }
