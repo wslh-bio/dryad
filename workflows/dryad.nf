@@ -48,11 +48,6 @@ workflow DRYAD {
         ch_input
     )
     .reads
-    .map {
-        meta, fasta ->
-        [meta, fasta.splitFasta(file:true)]
-    }
-    .transpose()
     .set { ch_input_reads }
 
     // Adding version information
