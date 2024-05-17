@@ -128,9 +128,10 @@ def check_samplesheet(file_in, file_out):
                     )
 
                 for idx, val in enumerate(sample_mapping_dict[sample]):
-                    fout.write(",".join(["{}_T{}".format(sample, idx + 1)] + val) + "\n")
+                    # fout.write(",".join(["{}_T{}".format(sample, idx + 1)] + val) + "\n")
+                    fout.write(",".join(["{}".format(sample)] + val) + "\n")
     else:
-        print_error("No entries to process!", "Samplesheet: {}".format(file_in))
+        print_error("No entry to process!", "Samplesheet: {}".format(file_in))
 
 def main(args=None):
     args = parse_args(args)
