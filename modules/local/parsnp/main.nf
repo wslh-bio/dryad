@@ -8,16 +8,15 @@ process PARSNP {
         'biocontainers/parsnp:2.0.5--hdcf5f25_0' }"
 
     input:
-    tuple val(meta), path(reads)
+    tuple val(meta), path(contigs)
     path fasta
-    path outdir
 
     output:
     tuple val(meta), path('*.xmfa')               , emit: core_genome_alignment
     tuple val(meta), path('*.ggr')                , emit: gingr_file
-    path "parsnp.snps.mblocks"                    , emit: mblocks
-    path "parsnp.tree"                            , emit: tree
-    path "versions.yml"                           , emit: versions
+    tuple val(meta), path( "parsnp_output/parsnp.snps.mblocks" )                    , emit: mblocks
+    tuple val(meta), path( "parsnp_output/parsnp.tree" )                           , emit: tree
+    tuple val(meta), path( "parsnp_output/versions.yml" )                          , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -26,8 +25,8 @@ process PARSNP {
     """
     parsnp \\
         -r $fasta \\
-        -d $reads \\
-        -o $outdir
+        -d $contigs \\
+        -o ./parsnp_output
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
