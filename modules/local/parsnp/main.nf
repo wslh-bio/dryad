@@ -1,5 +1,5 @@
 process PARSNP {
-    tag "$meta.id"
+    // tag "$meta.id"
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
@@ -8,15 +8,15 @@ process PARSNP {
         'biocontainers/parsnp:2.0.5--hdcf5f25_0' }"
 
     input:
-    tuple val(meta), path(contigs)
+    path(contigs)
     path fasta
 
     output:
-    tuple val(meta), path('*.xmfa')               , emit: core_genome_alignment
-    tuple val(meta), path('*.ggr')                , emit: gingr_file
-    tuple val(meta), path( "parsnp_output/parsnp.snps.mblocks" )                    , emit: mblocks
-    tuple val(meta), path( "parsnp_output/parsnp.tree" )                           , emit: tree
-    tuple val(meta), path( "parsnp_output/versions.yml" )                          , emit: versions
+    tuple val(meta), path('*.xmfa')                              , emit: core_genome_alignment
+    tuple val(meta), path('*.ggr')                               , emit: gingr_file
+    tuple val(meta), path( "parsnp_output/parsnp.snps.mblocks" ) , emit: mblocks
+    tuple val(meta), path( "parsnp_output/parsnp.tree" )         , emit: tree
+    tuple val(meta), path( "parsnp_output/versions.yml" )        , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
