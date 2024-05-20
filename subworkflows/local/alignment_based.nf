@@ -7,39 +7,47 @@ include { SNPDISTS }      from '../../modules/nf-core/snpdists'
 workflow ALIGNMENT_BASED {
 
     take:
-    reads       // channel: [ val(meta), [ reads ] ]
+    reads       // channel: [ val(meta), path[ reads ] ]
     fasta       // channel: /path/to/genome.fasta
     outdir      // output directory
 
     main:
     ch_versions = Channel.empty()       // Creating empty version channel to get versions.yml
 
+    reads
+        .map { sample, fasta ->
+        fasta
+        } // Produces queue channel of just fasta file paths in a list
+        .view()
+        .collect()
+        .view()
+        .set { ch_for_parsnp }
+
 //
 // PARSNP
 //
     PARSNP (
-        reads,
-        fasta,
-        outdir
+        ch_for_parsnp,
+        fasta
         )
     ch_versions = ch_versions.mix(PARSNP.out.versions) 
 
-//
-// Creating channel for phylogeny to be fed into IQTREE and 
-//
+// //
+// // Creating channel for phylogeny to be fed into IQTREE and 
+// //
 
-    IQTREE (
-        PARSNP.out.tree
-    )
-    ch_versions = ch_versions.mix(IQTREE.out.versions)
+//     IQTREE (
+//         PARSNP.out.tree
+//     )
+//     ch_versions = ch_versions.mix(IQTREE.out.versions)
 
-    SNPDISTS (
-        PARSNP.out.mblocks
-    )
-    ch_versions = ch_versions.mix(SNPDISTS.out.versions)
+//     SNPDISTS (
+//         PARSNP.out.mblocks
+//     )
+//     ch_versions = ch_versions.mix(SNPDISTS.out.versions)
 
-    emit:
-    phylogeny    =      IQTREE.out.phylogeny
-    tsv          =      SNPDISTS.out.tsv
-    versions     =      ch_versions
+//     emit:
+//     phylogeny    =      IQTREE.out.phylogeny
+//     tsv          =      SNPDISTS.out.tsv
+//     versions     =      ch_versions
 }
