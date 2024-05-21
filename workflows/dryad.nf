@@ -61,13 +61,22 @@ workflow DRYAD {
         ch_versions = ch_versions.mix(QUAST.out.versions)
     }
 
+    //
+    // Re-mapping channel to intake paths
+    //
+    ch_input_reads
+    .map { sample, fasta ->
+    fasta
+    } // Produces queue channel of just fasta file paths in a list
+    .collect()
+    .set { ch_for_alignments }
 
     //
     // SUBWORKFLOW: Alignment Free
     //
     if (!params.alignment_based && !params.fasta) {
         ALIGNMENT_FREE (
-            ch_input_reads
+            ch_for_alignments
              )
     }
 
@@ -75,15 +84,8 @@ workflow DRYAD {
     // SUBWORKFLOW: Alignment Based
     //
     if (params.alignment_based && params.fasta) {
-        ch_input_reads
-        .map { sample, fasta ->
-        fasta
-        } // Produces queue channel of just fasta file paths in a list
-        .collect()
-        .set { ch_alignment_based }
-
         ALIGNMENT_BASED (
-            ch_alignment_based,
+            ch_for_alignments,
             params.fasta,
             params.outdir
             )
