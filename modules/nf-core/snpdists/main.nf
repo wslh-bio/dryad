@@ -1,5 +1,5 @@
 process SNPDISTS {
-    tag "$meta.id"
+
     label 'process_low'
 
     conda "${moduleDir}/environment.yml"
@@ -8,27 +8,19 @@ process SNPDISTS {
         'biocontainers/snp-dists:0.8.2--h5bf99c6_0' }"
 
     input:
-    tuple val(meta), path(alignment)
+    path(mblocks)
 
     output:
-    tuple val(meta), path("*.tsv"), emit: tsv
-    path "versions.yml"           , emit: versions
+    path("snp_dists_matrix.tsv")            , emit: tsv
+    path "versions.yml"                     , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
-
-    // -b Blank top left corner cell
-    // -c Use comma instead of tab in output
     """
     snp-dists \\
-        $args \\
-        -b \\ 
-        -c \\
-        $alignment > ${prefix}.tsv
+            -b -c $mblocks > snp_dists_matrix.tsv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
