@@ -23,16 +23,11 @@ workflow ALIGNMENT_FREE {
     // MASHTREE input: tuple val(meta), path(seqs)
     //
     MASHTREE (
-        ch_samplesheet
+        reads
     )
-
-    //
-    // Custom python script
-    //
 
     emit:
     tree        = MASHTREE.out.tree
-    matrix      = MASHTREE.out.matrix
     versions    = ch_versions
 
 }
