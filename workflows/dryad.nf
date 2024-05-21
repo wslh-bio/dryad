@@ -33,6 +33,7 @@ WorkflowDryad.initialise(params, log)
 */
 include { INPUT_CHECK       } from '../subworkflows/local/input_check'
 include { QUAST             } from '../modules/local/quast'
+include { QUAST_SUMMARY     } from '../modules/local/quast_summary'
 include { ALIGNMENT_BASED   } from '../subworkflows/local/alignment_based'
 include { ALIGNMENT_FREE    } from '../subworkflows/local/alignment_free'
 
@@ -54,10 +55,13 @@ workflow DRYAD {
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
     //
-    // Phoenix
+    // QC check for Not Phoenix runs
     //
     if (!params.phoenix) {
         QUAST ( ch_input_reads )
+        QUAST_SUMMARY ( 
+            QUAST.out.transposed_report.collect()
+            )
         ch_versions = ch_versions.mix(QUAST.out.versions)
     }
 
