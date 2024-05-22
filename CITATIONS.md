@@ -10,13 +10,20 @@
 
 ## Pipeline tools
 
-- [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+## [Quast](https://quast.sourceforge.net/docs/manual.html)
+> A. Mikheenko, A. Prjibelski, V. Saveliev, D. Antipov, A. Gurevich, Versatile genome assembly evaluation with QUAST-LG, Bioinformatics (2018) 34 (13): i142-i150. doi: 10.1093/bioinformatics/bty266
 
-  > Andrews, S. (2010). FastQC: A Quality Control Tool for High Throughput Sequence Data [Online].
+## [Parsnp](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-014-0524-x)
+> Kille B, Nute MG, Huang V, Kim E, Phillippy AM, Treangen TJ: Parsnp 2.0: Scalable Core-Genome Alignment for Massive Microbial Datasets. bioRxiv (2024). doi: https://doi.org/10.1101/2024.01.30.577458
 
-- [MultiQC](https://pubmed.ncbi.nlm.nih.gov/27312411/)
+## [IQ-TREE](https://doi.org/10.1093/molbev/msaa015)
+> D.T. Hoang, O. Chernomor, A. von Haeseler, B.Q. Minh, and L.S. Vinh (2018) UFBoot2: Improving the ultrafast bootstrap approximation. Mol. Biol. Evol., 35:518–522. https://doi.org/10.1093/molbev/msx281
 
-  > Ewels P, Magnusson M, Lundin S, Käller M. MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 Oct 1;32(19):3047-8. doi: 10.1093/bioinformatics/btw354. Epub 2016 Jun 16. PubMed PMID: 27312411; PubMed Central PMCID: PMC5039924.
+## [snp-dists](https://github.com/tseemann/snp-dists)
+> T. Seemann, F. Klotzl, A. Page:
+
+## [Mashtree](https://doi.org/10.21105/joss.01762)
+> Katz, L. S., Griswold, T., Morrison, S., Caravas, J., Zhang, S., den Bakker, H.C., Deng, X., and Carleton, H. A., (2019). Mashtree: a rapid comparison of whole genome sequence files. Journal of Open Source Software, 4(44), 1762, https://doi.org/10.21105/joss.01762
 
 ## Software packaging/containerisation tools
 
