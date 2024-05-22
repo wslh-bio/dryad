@@ -14,9 +14,9 @@ Dryad processes fasta files that have been processed either by [Spriggan](https:
    - Enter assembled FASTA genomes into a samplesheet. 
    - If Phoenix was not run, Quast is used to determine assembly quality control.
    - The Quast results are summarized with a custom python script to increase readability.
-2. Assembly
+2. Alignment
    - Historical Comparison
-      - Mashtree greates a phylogenetic tree using Mash distances
+      - Mashtree generates a phylogenetic tree using Mash distances
    - Fine scale Comparison
       - Parsnp is used to perform a core genome alignment.
       - IQ-TREE is used for inferring a phylogenetic tree.
@@ -34,7 +34,8 @@ First, prepare a samplesheet with your input data that looks as follows:
 
 ```csv
 sample,fasta
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fa
+sample_1,2024_1.contigs.fa
+sample_2,2024_2.contigs.ga
 ```
 
 Each row represents a fasta file.
@@ -47,8 +48,9 @@ nextflow run wslh-bio/dryad \
    --input samplesheet.csv \
    --outdir <OUTDIR> \
 ```
+By default, Dryad runs an alignment free comparison if nothing is specified. 
 
-If you would like to run an alignment based comaprison, use:
+If you would like to run an alignment based comparison, use:
 
 ```bash
 nextflow run wslh-bio/dryad \
