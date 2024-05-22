@@ -4,7 +4,7 @@
 **wslh-bio/dryad** is a NextFlow pipeline to construct reference free core-genome historical  or SNP phylogenetic trees for examining prokaryote relatedness in outbreaks. Dryad performs both a reference free core-genome analysis based off of the approach outlined by Oakeson et. al and/or a SNP analysis using Parsnp and Mashtree.
 
 
-Dryad processes fasta files that have been processed either by [Spriggan](https://github.com/wslh-bio/spriggan) or by [Phoenix](https://github.com/CDCgov/phoenix). Dryad is split into two major workflows:
+Dryad analyzes fasta files that have been processed either by [Spriggan](https://github.com/wslh-bio/spriggan) or by [Phoenix](https://github.com/CDCgov/phoenix). Dryad is split into two major workflows:
 1. A workflow dedicated to fine scale outbreak investigations that are within a singular outbreak.
 2. A workflow dedicated to identifying historical relatedness across multiple years and multiple outbreaks.  
 
@@ -16,8 +16,10 @@ Dryad processes fasta files that have been processed either by [Spriggan](https:
    - The Quast results are summarized with a custom python script to increase readability.
 2. Alignment
    - Historical Comparison
+      - Requires >250 genomes
       - Mashtree generates a phylogenetic tree using Mash distances
    - Fine scale Comparison
+      - Requires at least 3 genomes
       - Parsnp is used to perform a core genome alignment.
       - IQ-TREE is used for inferring a phylogenetic tree.
       - Snp-dists is used to calculate the SNP distance matrix.
