@@ -1,50 +1,62 @@
 ## Introduction
+![dryad_logo](assets/dryad_logo_500.png)
 
-**wslh-bio/dryad** is a bioinformatics pipeline that ...
+**wslh-bio/dryad** is a NextFlow pipeline to construct reference free core-genome historical  or SNP phylogenetic trees for examining prokaryote relatedness in outbreaks. Dryad performs both a reference free core-genome analysis based off of the approach outlined by Oakeson et. al and/or a SNP analysis using Parsnp and Mashtree.
 
-<!-- TODO nf-core:
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
-   major pipeline sections and the types of output it produces. You're giving an overview to someone new
-   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
--->
 
-<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
-     workflows use the "tube map" design for that. See https://nf-co.re/docs/contributing/design_guidelines#examples for examples.   -->
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
+Dryad processes fasta files that have been processed either by [Spriggan](https://github.com/wslh-bio/spriggan) or by [Phoenix](https://github.com/CDCgov/phoenix). Dryad is split into two major workflows:
+1. A workflow dedicated to fine scale outbreak investigations that are within a singular outbreak.
+2. A workflow dedicated to identifying historical relatedness across multiple years and multiple outbreaks.  
 
-1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
-2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+![dryad_workflow](assets/Dryadv4Transparent.drawio.png)
+
+1. Universal Steps
+   - Enter assembled FASTA genomes into a samplesheet. 
+   - If Phoenix was not run, Quast is used to determine assembly quality control.
+   - The Quast results are summarized with a custom python script to increase readability.
+2. Assembly
+   - Historical Comparison
+      - Mashtree greates a phylogenetic tree using Mash distances
+   - Fine scale Comparison
+      - Parsnp is used to perform a core genome alignment.
+      - IQ-TREE is used for inferring a phylogenetic tree.
+      - Snp-dists is used to calculate the SNP distance matrix.
+
 
 ## Usage
 
 > [!NOTE]
 > If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
 
-<!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
-     Explain what rows and columns represent. For instance (please edit as appropriate):
-
 First, prepare a samplesheet with your input data that looks as follows:
 
 `samplesheet.csv`:
 
 ```csv
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
+sample,fasta
+CONTROL_REP1,AEG588A1_S1_L002_R1_001.fa
 ```
 
-Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
+Each row represents a fasta file.
 
--->
-
-Now, you can run the pipeline using:
-
-<!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
+If you would like to run an alignment free comparison, use:
 
 ```bash
 nextflow run wslh-bio/dryad \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
-   --outdir <OUTDIR>
+   --outdir <OUTDIR> \
+```
+
+If you would like to run an alignment based comaprison, use:
+
+```bash
+nextflow run wslh-bio/dryad \
+   -profile <docker/singularity/.../institute> \
+   --input samplesheet.csv \
+   --outdir <OUTDIR> \
+   --fasta <REFERENCE_FASTA> \
+   --alignment_based 
 ```
 
 > [!WARNING]
@@ -53,11 +65,9 @@ nextflow run wslh-bio/dryad \
 
 ## Credits
 
-wslh-bio/dryad was originally written by me.
+wslh-bio/dryad was originally written by Dr. [Kelsey Florek](https://github.com/k-florek). It has since been worked on by Dr. [Abigail Shockey](https://github.com/AbigailShockey) and [Eva Gunawan](https://github.com/evagunawan).
 
 We thank the following people for their extensive assistance in the development of this pipeline:
-
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
 
 ## Contributions and Support
 
