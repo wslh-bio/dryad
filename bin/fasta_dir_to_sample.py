@@ -21,7 +21,7 @@ def parse_args(args=None):
         type=str,
         dest="ASSEMBLY_EXTENSION",
         default=".fa",
-        help="File extension for read 1.",
+        help="File extension for assembly.",
     )
     parser.add_argument(
         "-sn",
@@ -75,7 +75,7 @@ def fasta_dir_to_samplesheet(
 
     read_dict = {}
 
-    ## Get read 1 files
+    ## Get assembly files
     for assembly_file in get_fastas(assembly_extension):
         sample = sanitize_sample(assembly_file, assembly_extension)
         if sample not in read_dict:
