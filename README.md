@@ -74,7 +74,7 @@ Dryad's main parameters and their defaults are shown in the table below:
 
 ## Workflow
 
-![dryad_workflow](assets/Dryadv4Light.drawio .png)
+![dryad_workflow](assets/Dryadv4Light.drawio.png)
 
 ### 1. Universal Steps
    - Enter assembled FASTA genomes into a samplesheet. 
