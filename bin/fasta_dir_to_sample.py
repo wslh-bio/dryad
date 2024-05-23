@@ -85,7 +85,7 @@ def fasta_dir_to_samplesheet(
     for read1_file in get_fastas(read1_extension):
         sample = sanitize_sample(read1_file, read1_extension)
         if sample not in read_dict:
-            read_dict[sample] = {"R1": [], "R2": []}
+            read_dict[sample] = {"R1": []}
         read_dict[sample]["R1"].append(read1_file)
 
     ## Write to file
