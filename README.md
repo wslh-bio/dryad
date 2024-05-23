@@ -1,48 +1,29 @@
-## Introduction
+## Dryad
 ![dryad_logo](assets/dryad_logo_500.png)
+![GPL-3.0]()
+![Github_Release]()
 
-**wslh-bio/dryad** is a NextFlow pipeline to construct reference free core-genome historical  or SNP phylogenetic trees for examining prokaryote relatedness in outbreaks. Dryad performs both a reference free core-genome analysis based off of the approach outlined by Oakeson et. al and/or a SNP analysis using Parsnp and Mashtree.
-
+**Dryad** is a [Nextflow](https://www.nextflow.io/) pipeline to construct reference free core-genome historical or SNP phylogenetic trees for examining prokaryote relatedness in outbreaks. Dryad performs both a reference free core-genome analysis based off of the approach outlined by Oakeson et. al and/or a SNP analysis using Parsnp and Mashtree.
 
 Dryad analyzes fasta files that have been processed either by [Spriggan](https://github.com/wslh-bio/spriggan) or by [Phoenix](https://github.com/CDCgov/phoenix). Dryad is split into two major workflows:
 1. A workflow dedicated to fine scale outbreak investigations that are within a singular outbreak.
 2. A workflow dedicated to identifying historical relatedness across multiple years and multiple outbreaks.  
 
-![dryad_workflow](assets/Dryadv4Transparent.drawio.png)
-
-1. Universal Steps
-   - Enter assembled FASTA genomes into a samplesheet. 
-   - If Phoenix was not run, Quast is used to determine assembly quality control.
-   - The Quast results are summarized with a custom python script to increase readability.
-2. Alignment
-   - Historical Comparison
-      - Requires >250 genomes
-      - Mashtree generates a phylogenetic tree using Mash distances
-   - Fine scale Comparison
-      - Requires at least 3 genomes
-      - Parsnp is used to perform a core genome alignment.
-      - IQ-TREE is used for inferring a phylogenetic tree.
-      - Snp-dists is used to calculate the SNP distance matrix.
-
+## Table of Contents:
+[Usage](#usage)
+[Input](#input)
+[Parameters](#parameters)
+[Workflow](#workflow)
+[Credits](#credits)
+[Contributions-and-Support](#contributions-and-support)
+[Citations](#citations)
 
 ## Usage
 
 > [!NOTE]
 > If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
 
-First, prepare a samplesheet with your input data that looks as follows:
-
-`samplesheet.csv`:
-
-```csv
-sample,fasta
-sample_1,2024_1.contigs.fa
-sample_2,2024_2.contigs.ga
-```
-
-Each row represents a fasta file.
-
-If you would like to run an alignment free comparison, use:
+To run an alignment free comparison, use:
 
 ```bash
 nextflow run wslh-bio/dryad \
@@ -63,6 +44,51 @@ nextflow run wslh-bio/dryad \
    --alignment_based 
 ```
 
+## Input
+
+Prepare a samplesheet with your input data with each row representing one fasta file. The samplesheet will look as follows:
+
+`samplesheet.csv`:
+
+| sample | fasta |
+| ------------- | ------------- | 
+| sample_1 | 2024_1.contigs.fa |
+| sample_2 | 2024_2.contigs.ga |
+
+## Parameters
+
+Dryad's main parameters and their defaults are shown in the table below:
+
+| Parameter | Parameter description and defaults | Example useage |
+| ------------- | ------------- |
+| input | Path to comma-separated file containing information about the samples in the experiment | --input <PATH_TO_SAMPLESHEET> |
+| outdir | Output directory where the results will be saved. Abolsute path must be used for storage on cloud infrastructure | --outdir <DESIRED_OUTPUT_PATH> |
+| profile | Denotes how to access containerized software | -profile aws |
+| fasta | Reference fasta used for alignment based comparisons | --fasta <PATH_TO_REF_FASTA> |
+| alignment_based | Performs a fine scale analysis within a singular outbreak | --alignment_based |
+| alignment_free | Performs a historical analysis across multiple years and outbreaks | --alignment_free |
+| task.cpus | Denotes how many cpus to use for Mashtree. Default task.cpus is 2. |--task.cpus 4 |
+| cg_tree_model | Tells IQ-TREE what to [model](http://www.iqtree.org/doc/Substitution-Models) to use. Default cg_tree_model is GTR+G | --cg_tree_model GTR+G |
+| phoenix | If the data was run run through pheonix, skips Quast and it's summary options. | --phoenix |
+
+## Workflow
+
+![dryad_workflow](assets/Dryadv4Transparent.drawio.png)
+
+### 1. Universal Steps
+   - Enter assembled FASTA genomes into a samplesheet. 
+   - If Phoenix was not run, Quast is used to determine assembly quality control.
+   - The [Quast v?????](http://bioinf.spbau.ru/quast) results are summarized with a custom python script to increase readability.
+### 2. Alignment
+   #### - Historical Comparison
+      - Requires >250 genomes
+      - [Mashtree v?????](https://github.com/lskatz/mashtree) generates a phylogenetic tree using Mash distances. 
+   #### - Fine scale Comparison
+      - Requires at least 3 genomes
+      - [Parsnp v?????](https://github.com/marbl/parsnp) is used to perform a core genome alignment.
+      - [IQ-TREE v?????](https://github.com/Cibiv/IQ-TREE) is used for inferring a phylogenetic tree.
+      - [Snp-dists v?????](https://github.com/tseemann/snp-dists) is used to calculate the SNP distance matrix.
+
 > [!WARNING]
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
 > see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
@@ -72,6 +98,9 @@ nextflow run wslh-bio/dryad \
 wslh-bio/dryad was originally written by Dr. [Kelsey Florek](https://github.com/k-florek). It has since been worked on by Dr. [Abigail Shockey](https://github.com/AbigailShockey) and [Eva Gunawan](https://github.com/evagunawan).
 
 We thank the following people for their extensive assistance in the development of this pipeline:
+[CJ Jossart](https://github.com/cjjossart)
+[Dustin Lyfoung](https://github.com/dtlyfoung)
+[Thomas Blader](https://github.com/z-tb)
 
 ## Contributions and Support
 
