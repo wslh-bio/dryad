@@ -14,6 +14,7 @@ Dryad analyzes fasta files that have been processed either by [Spriggan](https:/
 [Input](#input)
 [Parameters](#parameters)
 [Workflow](#workflow)
+[Output](#output)
 [Credits](#credits)
 [Contributions-and-Support](#contributions-and-support)
 [Citations](#citations)
@@ -89,16 +90,63 @@ Dryad's main parameters and their defaults are shown in the table below:
       - [IQ-TREE v?????](https://github.com/Cibiv/IQ-TREE) is used for inferring a phylogenetic tree.
       - [Snp-dists v?????](https://github.com/tseemann/snp-dists) is used to calculate the SNP distance matrix.
 
+## Output
+An example of Dryad's output directory structure for both alignment based and alignment free output files can be seen below. These directories will not include quast if the parameter pheonix is utilized:
+```
+alignment_based_output/
+├── iqtree
+│   └── parsnp.snps.mblocks.treefile
+├── parsnp
+│   └── parsnp_output
+│       ├── parsnp.ggr
+│       ├── parsnp.snps.mblocks
+│       ├── parsnp.tree
+│       └── parsnp.xmfa
+├── pipeline_info
+│   ├── *.html
+│   ├── *.txt
+│   └── samplesheet.valid.csv
+├── quast
+│   ├── *.quast.report.tsv
+│   ├── *.transposed.quast.report.tsv
+│   └── quast_results.tsv
+└── snpdists
+    └── snp_dists_matrix.tsv
+```
+
+```
+alignment_free_output/
+├── mashtree
+│   └── mashtree.bootstrap.dnd
+├── pipeline_info
+│   ├── *.html
+│   ├── *.txt
+│   └── samplesheet.valid.csv
+├── quast
+│   ├── *.quast.report.tsv
+│   ├── *.transposed.quast.report.tsv
+│   └── quast_results.tsv
+```
+Notable output files:
+Alignment based 
+**quast_results.tsv**
+**dnp_dists_matrix.tsv**
+**parsnp.snps.mblocks.treefile**
+
+Alignment free
+**quast_results.tsv**
+**mashtree.bootstrap.dnd**
+
+
 > [!WARNING]
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
 > see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
 
 ## Credits
 
-Dryad was originally written by Dr. [Kelsey Florek](https://github.com/k-florek). It has since been worked on by Dr. [Abigail Shockey](https://github.com/AbigailShockey) and [Eva Gunawan](https://github.com/evagunawan).
+Dryad was written by Dr. [Kelsey Florek](https://github.com/k-florek), Dr. [Abigail Shockey](https://github.com/AbigailShockey), and [Eva Gunawan](https://github.com/evagunawan).
 
-We thank the following people for their extensive assistance in the development of this pipeline:
-[CJ Jossart](https://github.com/cjjossart), [Dustin Lyfoung](https://github.com/dtlyfoung), [Thomas Blader](https://github.com/z-tb).
+We thank the bioinformatics group at the Wisconsin State Laboratory of Hygiene for all of their contributions. 
 
 ## Contributions and Support
 
@@ -107,7 +155,7 @@ If you would like to contribute to this pipeline, please see the [contributing g
 ## Citations
 
 <!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use wslh-bio/dryad for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
+<!-- If you use Dryad for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
 
 <!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
 
