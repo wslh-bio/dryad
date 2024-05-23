@@ -59,7 +59,6 @@ def fastq_s3_to_samplesheet(
     fastq_s3,
     samplesheet_file,
     read1_extension=".fa",
-    single_end=False,
     sanitise_name=False,
     sanitise_name_delimiter="_",
     sanitise_name_index=1,
