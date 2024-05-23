@@ -23,13 +23,6 @@ def parse_args(args=None):
         help="File extension for read 1.",
     )
     parser.add_argument(
-        "-se",
-        "--single_end",
-        dest="SINGLE_END",
-        action="store_true",
-        help="Single-end information will be auto-detected but this option forces paired-end FastQ files to be treated as single-end so only read 1 information is included in the samplesheet.",
-    )
-    parser.add_argument(
         "-sn",
         "--sanitise_name",
         dest="SANITISE_NAME",
@@ -139,7 +132,7 @@ def main(args=None):
     args = parse_args(args)
 
     fasta_s3_to_samplesheet(
-        fasta_s3=args.FASTQ_S3,
+        fasta_s3=args.FASTA_S3,
         samplesheet_file=args.SAMPLESHEET_FILE,
         read1_extension=args.READ1_EXTENSION,
         sanitise_name=args.SANITISE_NAME,
