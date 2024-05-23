@@ -55,8 +55,8 @@ def parse_args(args=None):
     return parser.parse_args(args)
 
 
-def fastq_s3_to_samplesheet(
-    fastq_s3,
+def fasta_s3_to_samplesheet(
+    fasta_s3,
     samplesheet_file,
     read1_extension=".fa",
     sanitise_name=False,
@@ -67,7 +67,7 @@ def fastq_s3_to_samplesheet(
     s3_client = boto3.client('s3')
 
     ##s Get bucket and prefix
-    bucket_prefix = fastq_s3.strip('s3://').strip('S3://').split('/')
+    bucket_prefix = fasta_s3.strip('s3://').strip('S3://').split('/')
     bucket = bucket_prefix[0]
     prefix = '/'.join(bucket_prefix[1:])
 
@@ -138,8 +138,8 @@ def fastq_s3_to_samplesheet(
 def main(args=None):
     args = parse_args(args)
 
-    fastq_s3_to_samplesheet(
-        fastq_s3=args.FASTQ_S3,
+    fasta_s3_to_samplesheet(
+        fasta_s3=args.FASTQ_S3,
         samplesheet_file=args.SAMPLESHEET_FILE,
         read1_extension=args.READ1_EXTENSION,
         sanitise_name=args.SANITISE_NAME,
