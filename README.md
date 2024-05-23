@@ -1,5 +1,6 @@
 ## Dryad
 ![dryad_logo](assets/dryad_logo_500.png)
+
 ![GPL-3.0](https://img.shields.io/github/license/wslh-bio/dryad)
 ![Github_Release](https://img.shields.io/github/release/wslh-bio/dryad)
 
