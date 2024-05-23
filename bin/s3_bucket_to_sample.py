@@ -4,32 +4,24 @@ import os
 import sys
 import glob
 import argparse
-
+import boto3
 
 def parse_args(args=None):
     Description = (
-        "Generate nf-core/viralrecon samplesheet from a directory of FastQ files."
+        "Generate Dryad samplesheet from a S3 bucket of FastA files."
     )
-    Epilog = "Example usage: python fastq_dir_to_samplesheet.py <FASTQ_DIR> <SAMPLESHEET_FILE>"
+    Epilog = "Example usage: python s3_bucket_to_samplesheet.py <FASTA_S3> <SAMPLESHEET_FILE>"
 
     parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
-    parser.add_argument("FASTQ_DIR", help="Folder containing raw FastQ files.")
+    parser.add_argument("FASTA_S3", help="S3 location (S3://bucket-name/key-name) containing raw FastA files.")
     parser.add_argument("SAMPLESHEET_FILE", help="Output samplesheet file.")
     parser.add_argument(
         "-r1",
         "--read1_extension",
         type=str,
         dest="READ1_EXTENSION",
-        default="_R1_001.fastq.gz",
+        default=".fa",
         help="File extension for read 1.",
-    )
-    parser.add_argument(
-        "-r2",
-        "--read2_extension",
-        type=str,
-        dest="READ2_EXTENSION",
-        default="_R2_001.fastq.gz",
-        help="File extension for read 2.",
     )
     parser.add_argument(
         "-se",
@@ -64,16 +56,23 @@ def parse_args(args=None):
     return parser.parse_args(args)
 
 
-def fastq_dir_to_samplesheet(
-    fastq_dir,
+def fastq_s3_to_samplesheet(
+    fastq_s3,
     samplesheet_file,
-    read1_extension="_R1_001.fastq.gz",
-    read2_extension="_R2_001.fastq.gz",
+    read1_extension=".fa",
     single_end=False,
     sanitise_name=False,
     sanitise_name_delimiter="_",
     sanitise_name_index=1,
 ):
+    ## Initialize AWS Client
+    s3_client = boto3.client('s3')
+
+    ##s Get bucket and prefix
+    bucket_prefix = fastq_s3.strip('s3://').strip('S3://').split('/')
+    bucket = bucket_prefix[0]
+    prefix = '/'.join(bucket_prefix[1:])
+
     def sanitize_sample(path, extension):
         """Retrieve sample id from filename"""
         sample = os.path.basename(path).replace(extension, "")
@@ -85,31 +84,34 @@ def fastq_dir_to_samplesheet(
             )
         return sample
 
-    def get_fastqs(extension):
-        """
-        Needs to be sorted to ensure R1 and R2 are in the same order
-        when merging technical replicates. Glob is not guaranteed to produce
-        sorted results.
-        See also https://stackoverflow.com/questions/6773584/how-is-pythons-glob-glob-ordered
-        """
-        return sorted(
-            glob.glob(os.path.join(fastq_dir, f"*{extension}"), recursive=False)
-        )
+    def get_fastas(extension):
+        ## object holder
+        object_list = []
+
+        ## get objects from s3 and append to list
+        response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        for content in response['Contents']:
+            if extension in content['Key']:
+                object_list.append(os.path.join('s3://',response['Name'],content['Key']))
+    
+        ## if content is in parts fetch other parts
+        if response['IsTruncated']:
+            while(response['IsTruncated']):
+                response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix, ContinuationToken=response['NextContinuationToken'])
+                for content in response['Contents']:
+                    if extension in content['Key']:
+                        object_list.append(os.path.join('s3://',response['Name'],content['Key']))
+
+        return sorted(object_list)
 
     read_dict = {}
 
     ## Get read 1 files
-    for read1_file in get_fastqs(read1_extension):
+    for read1_file in get_fastas(read1_extension):
         sample = sanitize_sample(read1_file, read1_extension)
         if sample not in read_dict:
-            read_dict[sample] = {"R1": [], "R2": []}
+            read_dict[sample] = {"R1": []}
         read_dict[sample]["R1"].append(read1_file)
-
-    ## Get read 2 files
-    if not single_end:
-        for read2_file in get_fastqs(read2_extension):
-            sample = sanitize_sample(read2_file, read2_extension)
-            read_dict[sample]["R2"].append(read2_file)
 
     ## Write to file
     if len(read_dict) > 0:
@@ -118,14 +120,11 @@ def fastq_dir_to_samplesheet(
             os.makedirs(out_dir)
 
         with open(samplesheet_file, "w") as fout:
-            header = ["sample", "fastq_1", "fastq_2"]
+            header = ["sample", "fasta"]
             fout.write(",".join(header) + "\n")
             for sample, reads in sorted(read_dict.items()):
                 for idx, read_1 in enumerate(reads["R1"]):
-                    read_2 = ""
-                    if idx < len(reads["R2"]):
-                        read_2 = reads["R2"][idx]
-                    sample_info = ",".join([sample, read_1, read_2])
+                    sample_info = ",".join([sample, read_1])
                     fout.write(f"{sample_info}\n")
     else:
         error_str = (
@@ -134,7 +133,6 @@ def fastq_dir_to_samplesheet(
         error_str += "Please check the values provided for the:\n"
         error_str += "  - Path to the directory containing the FastQ files\n"
         error_str += "  - '--read1_extension' parameter\n"
-        error_str += "  - '--read2_extension' parameter\n"
         print(error_str)
         sys.exit(1)
 
@@ -142,12 +140,10 @@ def fastq_dir_to_samplesheet(
 def main(args=None):
     args = parse_args(args)
 
-    fastq_dir_to_samplesheet(
-        fastq_dir=args.FASTQ_DIR,
+    fastq_s3_to_samplesheet(
+        fastq_s3=args.FASTQ_S3,
         samplesheet_file=args.SAMPLESHEET_FILE,
         read1_extension=args.READ1_EXTENSION,
-        read2_extension=args.READ2_EXTENSION,
-        single_end=args.SINGLE_END,
         sanitise_name=args.SANITISE_NAME,
         sanitise_name_delimiter=args.SANITISE_NAME_DELIMITER,
         sanitise_name_index=args.SANITISE_NAME_INDEX,
