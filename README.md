@@ -130,15 +130,15 @@ alignment_free_output/
 Notable output files:
 ```
 Alignment based 
-**quast_results.tsv**
-**dnp_dists_matrix.tsv**
-**parsnp.snps.mblocks.treefile**
+quast_results.tsv
+dnp_dists_matrix.tsv
+parsnp.snps.mblocks.treefile
 ```
 
 ```
 Alignment free
-**quast_results.tsv**
-**mashtree.bootstrap.dnd**
+quast_results.tsv
+mashtree.bootstrap.dnd
 ```
 
 > [!WARNING]
@@ -159,7 +159,7 @@ If you would like to contribute to this pipeline, please see the [contributing g
 
 If you use Dryad for your analysis, please cite it using the following:
 
-Florek, K., Shockey, A., & Gunawan, E. (2014). Dryad (Version 4.0.0) [https://github.com/wslh-bio/dryad].
+K. Florek, A. Shockey, & E. Gunawan (2014). Dryad (Version 4.0.0) [https://github.com/wslh-bio/dryad].
 
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 
