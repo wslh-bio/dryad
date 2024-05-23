@@ -83,7 +83,6 @@ Dryad's main parameters and their defaults are shown in the table below:
    - The [Quast v?????](http://bioinf.spbau.ru/quast) results are summarized with a custom python script to increase readability.
 ### 2. Alignment
    - Historical Comparison
-      - Requires >250 genomes
       - [Mashtree v?????](https://github.com/lskatz/mashtree) generates a phylogenetic tree using Mash distances. 
    - Fine scale Comparison
       - Requires at least 3 genomes
@@ -123,10 +122,10 @@ alignment_free_output/
 │   ├── *.html
 │   ├── *.txt
 │   └── samplesheet.valid.csv
-├── quast
-│   ├── *.quast.report.tsv
-│   ├── *.transposed.quast.report.tsv
-│   └── quast_results.tsv
+└── quast
+    ├── *.quast.report.tsv
+    ├── *.transposed.quast.report.tsv
+    └── quast_results.tsv
 ```
 Notable output files:
 ```
