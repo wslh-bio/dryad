@@ -95,7 +95,7 @@ Dryad's main parameters and their defaults are shown in the table below:
 
 ## Credits
 
-wslh-bio/dryad was originally written by Dr. [Kelsey Florek](https://github.com/k-florek). It has since been worked on by Dr. [Abigail Shockey](https://github.com/AbigailShockey) and [Eva Gunawan](https://github.com/evagunawan).
+Dryad was originally written by Dr. [Kelsey Florek](https://github.com/k-florek). It has since been worked on by Dr. [Abigail Shockey](https://github.com/AbigailShockey) and [Eva Gunawan](https://github.com/evagunawan).
 
 We thank the following people for their extensive assistance in the development of this pipeline:
 [CJ Jossart](https://github.com/cjjossart), [Dustin Lyfoung](https://github.com/dtlyfoung), [Thomas Blader](https://github.com/z-tb).
