@@ -2,7 +2,7 @@
 ![dryad_logo](assets/dryad_logo_500.png)
 
 ![GPL-3.0](https://img.shields.io/github/license/wslh-bio/dryad)
-![Github_Release](https://img.shields.io/github/release/wslh-bio/dryad)
+![Github_Release](https://img.shields.io/badge/release%20-%20v%204.0.0%20-%20blue)
 
 **Dryad** is a [Nextflow](https://www.nextflow.io/) pipeline to construct reference free core-genome historical or SNP phylogenetic trees for examining prokaryote relatedness in outbreaks. Dryad performs both a reference free core-genome analysis based off of the approach outlined by Oakeson et. al and/or a SNP analysis using Parsnp and Mashtree.
 
@@ -128,18 +128,22 @@ alignment_free_output/
     └── quast_results.tsv
 ```
 Notable output files:
-```
-Alignment based 
-quast_results.tsv
-dnp_dists_matrix.tsv
-parsnp.snps.mblocks.treefile
-```
 
-```
-Alignment free
-quast_results.tsv
-mashtree.bootstrap.dnd
-```
+**Alignment based**  
+| File | Output |
+| ------------- | ------------- |
+| quast_results.tsv | Assembly quality results |
+| snp_dists_matrix.tsv | Shows alignment of SNPs between each isolate |
+| parsnp.snps.mblocks.treefile | Creates a maximum likelihood phylogenetic tree|
+
+
+
+**Alignment free**
+| File | Output |
+| ------------- | ------------- |
+| quast_results.tsv | Assembly quality results |
+| mashtree.bootstrap.dnd | Creates a phylogenetic tree based on mash distances |
+
 
 > [!WARNING]
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
