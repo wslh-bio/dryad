@@ -39,6 +39,19 @@ include { ALIGNMENT_FREE    } from '../subworkflows/local/alignment_free'
 
 workflow DRYAD {
 
+    //
+    // Error Handling
+    //
+    if (params.alignment_free && params.fasta) {
+        error("ERROR: An alignment free comparison does not use a reference fasta. Do you want to run an alignment based comparison instead?\nDryad terminating...")
+        exit(1)
+    }
+
+    if (params.alignment_based && !params.fasta) {
+        error("ERROR: An alignment based comparison needs a reference fasta. Do you want to run an alignment free comparison instead?\nDryad terminating...")
+        exit(1)
+    }
+
     // Creating an empty channel to put version information into
     ch_versions = Channel.empty()
 
@@ -78,7 +91,7 @@ workflow DRYAD {
     //
     // SUBWORKFLOW: Alignment Free
     //
-    if (!params.alignment_based && !params.fasta) {
+    if (params.alignment_free && !params.fasta) {
         ALIGNMENT_FREE (
             ch_for_alignments
              )
