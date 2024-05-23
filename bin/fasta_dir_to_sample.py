@@ -8,19 +8,27 @@ import argparse
 
 def parse_args(args=None):
     Description = (
-        "Generate nf-core/viralrecon samplesheet from a directory of FastQ files."
+        "Generate Dryad samplesheet from a directory of FastA files."
     )
-    Epilog = "Example usage: python fastq_dir_to_samplesheet.py <FASTQ_DIR> <SAMPLESHEET_FILE>"
+    Epilog = "Example usage: python fasta_dir_to_samplesheet.py <FASTA_DIR> <SAMPLESHEET_FILE>"
 
     parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
-    parser.add_argument("FASTQ_DIR", help="Folder containing raw FastQ files.")
+    parser.add_argument("FASTA_DIR", help="Folder containing raw FastA files.")
     parser.add_argument("SAMPLESHEET_FILE", help="Output samplesheet file.")
+    parser.add_argument(
+        "-r1",
+        "--read1_extension",
+        type=str,
+        dest="READ1_EXTENSION",
+        default=".fa",
+        help="File extension for read 1.",
+    )
     parser.add_argument(
         "-sn",
         "--sanitise_name",
         dest="SANITISE_NAME",
         action="store_true",
-        help="Whether to further sanitise FastQ file name to get sample id. Used in conjunction with --sanitise_name_delimiter and --sanitise_name_index.",
+        help="Whether to further sanitise Fasta file name to get sample id. Used in conjunction with --sanitise_name_delimiter and --sanitise_name_index.",
     )
     parser.add_argument(
         "-sd",
@@ -36,17 +44,15 @@ def parse_args(args=None):
         type=int,
         dest="SANITISE_NAME_INDEX",
         default=1,
-        help="After splitting FastQ file name by --sanitise_name_delimiter all elements before this index (1-based) will be joined to create final sample name.",
+        help="After splitting FastA file name by --sanitise_name_delimiter all elements before this index (1-based) will be joined to create final sample name.",
     )
     return parser.parse_args(args)
 
 
-def fastq_dir_to_samplesheet(
-    fastq_dir,
+def fasta_dir_to_samplesheet(
+    fasta_dir,
     samplesheet_file,
-    read1_extension="_R1_001.fastq.gz",
-    read2_extension="_R2_001.fastq.gz",
-    single_end=False,
+    read1_extension=".fa",
     sanitise_name=False,
     sanitise_name_delimiter="_",
     sanitise_name_index=1,
@@ -62,7 +68,7 @@ def fastq_dir_to_samplesheet(
             )
         return sample
 
-    def get_fastqs(extension):
+    def get_fastas(extension):
         """
         Needs to be sorted to ensure R1 and R2 are in the same order
         when merging technical replicates. Glob is not guaranteed to produce
@@ -70,23 +76,17 @@ def fastq_dir_to_samplesheet(
         See also https://stackoverflow.com/questions/6773584/how-is-pythons-glob-glob-ordered
         """
         return sorted(
-            glob.glob(os.path.join(fastq_dir, f"*{extension}"), recursive=False)
+            glob.glob(os.path.join(fasta_dir, f"*{extension}"), recursive=False)
         )
 
     read_dict = {}
 
     ## Get read 1 files
-    for read1_file in get_fastqs(read1_extension):
+    for read1_file in get_fastas(read1_extension):
         sample = sanitize_sample(read1_file, read1_extension)
         if sample not in read_dict:
             read_dict[sample] = {"R1": [], "R2": []}
         read_dict[sample]["R1"].append(read1_file)
-
-    ## Get read 2 files
-    if not single_end:
-        for read2_file in get_fastqs(read2_extension):
-            sample = sanitize_sample(read2_file, read2_extension)
-            read_dict[sample]["R2"].append(read2_file)
 
     ## Write to file
     if len(read_dict) > 0:
@@ -95,23 +95,19 @@ def fastq_dir_to_samplesheet(
             os.makedirs(out_dir)
 
         with open(samplesheet_file, "w") as fout:
-            header = ["sample", "fastq_1", "fastq_2"]
+            header = ["sample", "fasta"]
             fout.write(",".join(header) + "\n")
             for sample, reads in sorted(read_dict.items()):
                 for idx, read_1 in enumerate(reads["R1"]):
-                    read_2 = ""
-                    if idx < len(reads["R2"]):
-                        read_2 = reads["R2"][idx]
-                    sample_info = ",".join([sample, read_1, read_2])
+                    sample_info = ",".join([sample, read_1])
                     fout.write(f"{sample_info}\n")
     else:
         error_str = (
-            "\nWARNING: No FastQ files found so samplesheet has not been created!\n\n"
+            "\nWARNING: No FastA files found so samplesheet has not been created!\n\n"
         )
         error_str += "Please check the values provided for the:\n"
         error_str += "  - Path to the directory containing the FastQ files\n"
         error_str += "  - '--read1_extension' parameter\n"
-        error_str += "  - '--read2_extension' parameter\n"
         print(error_str)
         sys.exit(1)
 
@@ -119,12 +115,10 @@ def fastq_dir_to_samplesheet(
 def main(args=None):
     args = parse_args(args)
 
-    fastq_dir_to_samplesheet(
-        fastq_dir=args.FASTQ_DIR,
+    fasta_dir_to_samplesheet(
+        fasta_dir=args.FASTA_DIR,
         samplesheet_file=args.SAMPLESHEET_FILE,
         read1_extension=args.READ1_EXTENSION,
-        read2_extension=args.READ2_EXTENSION,
-        single_end=args.SINGLE_END,
         sanitise_name=args.SANITISE_NAME,
         sanitise_name_delimiter=args.SANITISE_NAME_DELIMITER,
         sanitise_name_index=args.SANITISE_NAME_INDEX,
