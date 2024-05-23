@@ -60,7 +60,7 @@ Prepare a samplesheet with your input data with each row representing one fasta 
 Dryad's main parameters and their defaults are shown in the table below:
 
 | Parameter | Parameter description and defaults | Example useage |
-| ------------- | ------------- |
+| ------------- | ------------- | ------------- |
 | input | Path to comma-separated file containing information about the samples in the experiment | --input <PATH_TO_SAMPLESHEET> |
 | outdir | Output directory where the results will be saved. Abolsute path must be used for storage on cloud infrastructure | --outdir <DESIRED_OUTPUT_PATH> |
 | profile | Denotes how to access containerized software | -profile aws |
