@@ -30,7 +30,7 @@ To run an alignment free comparison, use:
 nextflow run wslh-bio/dryad \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
-   --outdir <OUTDIR> \
+   --outdir <OUTDIR>
 ```
 By default, Dryad runs an alignment free comparison if nothing is specified. 
 
