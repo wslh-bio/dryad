@@ -80,10 +80,10 @@ Dryad's main parameters and their defaults are shown in the table below:
    - If Phoenix was not run, Quast is used to determine assembly quality control.
    - The [Quast v?????](http://bioinf.spbau.ru/quast) results are summarized with a custom python script to increase readability.
 ### 2. Alignment
-   #### - Historical Comparison
+   - Historical Comparison
       - Requires >250 genomes
       - [Mashtree v?????](https://github.com/lskatz/mashtree) generates a phylogenetic tree using Mash distances. 
-   #### - Fine scale Comparison
+   - Fine scale Comparison
       - Requires at least 3 genomes
       - [Parsnp v?????](https://github.com/marbl/parsnp) is used to perform a core genome alignment.
       - [IQ-TREE v?????](https://github.com/Cibiv/IQ-TREE) is used for inferring a phylogenetic tree.
