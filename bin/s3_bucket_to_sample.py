@@ -97,7 +97,7 @@ def fasta_s3_to_samplesheet(
 
     read_dict = {}
 
-    ## Get read 1 files
+    ## Get assembly files
     for assembly_file in get_fastas(assembly_extension):
         sample = sanitize_sample(assembly_file, assembly_extension)
         if sample not in read_dict:
