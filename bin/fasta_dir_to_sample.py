@@ -16,10 +16,10 @@ def parse_args(args=None):
     parser.add_argument("FASTA_DIR", help="Folder containing raw FastA files.")
     parser.add_argument("SAMPLESHEET_FILE", help="Output samplesheet file.")
     parser.add_argument(
-        "-r1",
-        "--read1_extension",
+        "-a",
+        "--assembly_extension",
         type=str,
-        dest="READ1_EXTENSION",
+        dest="ASSEMBLY_EXTENSION",
         default=".fa",
         help="File extension for read 1.",
     )
@@ -52,7 +52,7 @@ def parse_args(args=None):
 def fasta_dir_to_samplesheet(
     fasta_dir,
     samplesheet_file,
-    read1_extension=".fa",
+    assembly_extension=".fa",
     sanitise_name=False,
     sanitise_name_delimiter="_",
     sanitise_name_index=1,
@@ -69,12 +69,6 @@ def fasta_dir_to_samplesheet(
         return sample
 
     def get_fastas(extension):
-        """
-        Needs to be sorted to ensure R1 and R2 are in the same order
-        when merging technical replicates. Glob is not guaranteed to produce
-        sorted results.
-        See also https://stackoverflow.com/questions/6773584/how-is-pythons-glob-glob-ordered
-        """
         return sorted(
             glob.glob(os.path.join(fasta_dir, f"*{extension}"), recursive=False)
         )
@@ -82,11 +76,11 @@ def fasta_dir_to_samplesheet(
     read_dict = {}
 
     ## Get read 1 files
-    for read1_file in get_fastas(read1_extension):
-        sample = sanitize_sample(read1_file, read1_extension)
+    for assembly_file in get_fastas(assembly_extension):
+        sample = sanitize_sample(assembly_file, assembly_extension)
         if sample not in read_dict:
-            read_dict[sample] = {"R1": []}
-        read_dict[sample]["R1"].append(read1_file)
+            read_dict[sample] = {"assembly": []}
+        read_dict[sample]["assembly"].append(assembly_file)
 
     ## Write to file
     if len(read_dict) > 0:
@@ -98,16 +92,16 @@ def fasta_dir_to_samplesheet(
             header = ["sample", "fasta"]
             fout.write(",".join(header) + "\n")
             for sample, reads in sorted(read_dict.items()):
-                for idx, read_1 in enumerate(reads["R1"]):
-                    sample_info = ",".join([sample, read_1])
+                for idx, assembly in enumerate(reads["assembly"]):
+                    sample_info = ",".join([sample, assembly])
                     fout.write(f"{sample_info}\n")
     else:
         error_str = (
             "\nWARNING: No FastA files found so samplesheet has not been created!\n\n"
         )
         error_str += "Please check the values provided for the:\n"
-        error_str += "  - Path to the directory containing the FastQ files\n"
-        error_str += "  - '--read1_extension' parameter\n"
+        error_str += "  - Path to the directory containing the FastA files\n"
+        error_str += "  - '--assembly_extension' parameter\n"
         print(error_str)
         sys.exit(1)
 
@@ -118,7 +112,7 @@ def main(args=None):
     fasta_dir_to_samplesheet(
         fasta_dir=args.FASTA_DIR,
         samplesheet_file=args.SAMPLESHEET_FILE,
-        read1_extension=args.READ1_EXTENSION,
+        assembly_extension=args.ASSEMBLY_EXTENSION,
         sanitise_name=args.SANITISE_NAME,
         sanitise_name_delimiter=args.SANITISE_NAME_DELIMITER,
         sanitise_name_index=args.SANITISE_NAME_INDEX,
