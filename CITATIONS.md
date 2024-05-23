@@ -20,7 +20,7 @@
 > D.T. Hoang, O. Chernomor, A. von Haeseler, B.Q. Minh, and L.S. Vinh (2018) UFBoot2: Improving the ultrafast bootstrap approximation. Mol. Biol. Evol., 35:518–522. https://doi.org/10.1093/molbev/msx281
 
 ## [snp-dists](https://github.com/tseemann/snp-dists)
-> T. Seemann, F. Klotzl, A. Page:
+> T. Seemann, F. Klotzl, A. Page (2014). Snp-Dists (Version 0.8.2) [https://github.com/tseemann/snp-dists].
 
 ## [Mashtree](https://doi.org/10.21105/joss.01762)
 > Katz, L. S., Griswold, T., Morrison, S., Caravas, J., Zhang, S., den Bakker, H.C., Deng, X., and Carleton, H. A., (2019). Mashtree: a rapid comparison of whole genome sequence files. Journal of Open Source Software, 4(44), 1762, https://doi.org/10.21105/joss.01762

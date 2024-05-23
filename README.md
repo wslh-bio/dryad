@@ -79,16 +79,16 @@ Dryad's main parameters and their defaults are shown in the table below:
 
 ### 1. Universal Steps
    - Enter assembled FASTA genomes into a samplesheet. 
-   - If Phoenix was not run, Quast is used to determine assembly quality control.
-   - The [Quast v?????](http://bioinf.spbau.ru/quast) results are summarized with a custom python script to increase readability.
+   - [Quast v5.2.0](http://bioinf.spbau.ru/quast) is used to determine assembly quality if Phoenix is not indicated.
+   - Quast results are summarized with a custom python script to increase readability.
 ### 2. Alignment
    - Historical Comparison
-      - [Mashtree v?????](https://github.com/lskatz/mashtree) generates a phylogenetic tree using Mash distances. 
+      - [Mashtree v1.4.6](https://github.com/lskatz/mashtree) generates a phylogenetic tree using Mash distances. 
    - Fine scale Comparison
       - Requires at least 3 genomes
-      - [Parsnp v?????](https://github.com/marbl/parsnp) is used to perform a core genome alignment.
-      - [IQ-TREE v?????](https://github.com/Cibiv/IQ-TREE) is used for inferring a phylogenetic tree.
-      - [Snp-dists v?????](https://github.com/tseemann/snp-dists) is used to calculate the SNP distance matrix.
+      - [Parsnp v2.0.5](https://github.com/marbl/parsnp) is used to perform a core genome alignment.
+      - [IQ-TREE v2.3.0](https://github.com/Cibiv/IQ-TREE) is used for inferring a phylogenetic tree.
+      - [Snp-dists v0.8.2](https://github.com/tseemann/snp-dists) is used to calculate the SNP distance matrix.
 
 ## Output
 An example of Dryad's output directory structure for both alignment based and alignment free output files can be seen below. These directories will not include quast if the parameter pheonix is utilized:
