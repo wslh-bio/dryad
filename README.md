@@ -1,7 +1,7 @@
 ## Dryad
 ![dryad_logo](assets/dryad_logo_500.png)
-![GPL-3.0](LICENSE)
-![Github_Release]()
+![GPL-3.0](https://img.shields.io/github/license/wslh-bio/dryad)
+![Github_Release](https://img.shields.io/github/release/wslh-bio/dryad)
 
 **Dryad** is a [Nextflow](https://www.nextflow.io/) pipeline to construct reference free core-genome historical or SNP phylogenetic trees for examining prokaryote relatedness in outbreaks. Dryad performs both a reference free core-genome analysis based off of the approach outlined by Oakeson et. al and/or a SNP analysis using Parsnp and Mashtree.
 
