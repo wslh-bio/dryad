@@ -52,6 +52,11 @@ workflow DRYAD {
         exit(1)
     }
 
+    if (!params.alignment_based && !params.alignment_free) {
+        error("ERROR: No alignment indicated. Please indicate which alignment to perform.")
+        exit(1)
+    }
+
     // Creating an empty channel to put version information into
     ch_versions = Channel.empty()
 
