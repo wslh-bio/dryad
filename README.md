@@ -143,7 +143,7 @@ Notable output files:
 | File | Output |
 | ------------- | ------------- |
 | quast_results.tsv | Assembly quality results |
-| mashtree.bootstrap.dnd | Neignbor joining tree based on mash distances |
+| mashtree.bootstrap.dnd | Neighbor joining tree based on mash distances |
 
 
 > [!WARNING]
