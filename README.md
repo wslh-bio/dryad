@@ -31,7 +31,8 @@ To run an alignment free comparison, use:
 nextflow run wslh-bio/dryad \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
-   --outdir <OUTDIR>
+   --outdir <OUTDIR> \
+   --alignment_free
 ```
 By default, Dryad runs an alignment free comparison if nothing is specified. 
 
@@ -133,8 +134,8 @@ Notable output files:
 | File | Output |
 | ------------- | ------------- |
 | quast_results.tsv | Assembly quality results |
-| snp_dists_matrix.tsv | Shows alignment of SNPs between each isolate |
-| parsnp.snps.mblocks.treefile | Creates a maximum likelihood phylogenetic tree|
+| snp_dists_matrix.tsv | Number of SNP distances between each pair of isolates |
+| parsnp.snps.mblocks.treefile | Maximum likelihood phylogenetic tree|
 
 
 
@@ -142,7 +143,7 @@ Notable output files:
 | File | Output |
 | ------------- | ------------- |
 | quast_results.tsv | Assembly quality results |
-| mashtree.bootstrap.dnd | Creates a phylogenetic tree based on mash distances |
+| mashtree.bootstrap.dnd | Neignbor joining tree based on mash distances |
 
 
 > [!WARNING]
@@ -163,7 +164,7 @@ If you would like to contribute to this pipeline, please see the [contributing g
 
 If you use Dryad for your analysis, please cite it using the following:
 
-K. Florek, A. Shockey, & E. Gunawan (2014). Dryad (Version 4.0.0) [https://github.com/wslh-bio/dryad].
+K. Florek, AC. Shockey, & E. Gunawan (2014). Dryad (Version 4.0.0) [https://github.com/wslh-bio/dryad].
 
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 
