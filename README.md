@@ -71,7 +71,7 @@ Dryad's main parameters and their defaults are shown in the table below:
 | alignment_based | Performs a fine scale analysis within a singular outbreak | --alignment_based |
 | alignment_free | Performs a historical analysis across multiple years and outbreaks | --alignment_free |
 | task.cpus | Denotes how many cpus to use for Mashtree. Default task.cpus is 2. |--task.cpus 4 |
-| cg_tree_model | Tells IQ-TREE what to [model](http://www.iqtree.org/doc/Substitution-Models) to use. Default cg_tree_model is GTR+G | --cg_tree_model GTR+G |
+| cg_tree_model | Tells IQ-TREE what [model](http://www.iqtree.org/doc/Substitution-Models) to use. Default cg_tree_model is GTR+G | --cg_tree_model GTR+G |
 | phoenix | If the data was run run through pheonix, skips Quast and it's summary options. | --phoenix |
 
 ## Workflow
