@@ -152,7 +152,7 @@ Notable output files:
 
 ## Credits
 
-Dryad was written by Dr. [Kelsey Florek](https://github.com/k-florek), Dr. [Abigail Shockey](https://github.com/AbigailShockey), and [Eva Gunawan](https://github.com/evagunawan).
+Dryad was written by Dr. [Kelsey Florek](https://github.com/k-florek), Dr. [Abigail C. Shockey](https://github.com/AbigailShockey), and [Eva Gunawan](https://github.com/evagunawan).
 
 We thank the bioinformatics group at the Wisconsin State Laboratory of Hygiene for all of their contributions. 
 
