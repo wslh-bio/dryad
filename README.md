@@ -66,13 +66,13 @@ Dryad's main parameters and their defaults are shown in the table below:
 | ------------- | ------------- | ------------- |
 | input | Path to comma-separated file containing information about the samples in the experiment | --input <PATH_TO_SAMPLESHEET> |
 | outdir | Output directory where the results will be saved. Abolsute path must be used for storage on cloud infrastructure | --outdir <DESIRED_OUTPUT_PATH> |
-| profile | Denotes how to access containerized software | -profile aws |
-| fasta | Reference fasta used for alignment based comparisons | --fasta <PATH_TO_REF_FASTA> |
+| profile | Denotes how to access containerized software. | -profile aws |
+| fasta | Reference fasta used for alignment based comparisons. Default is no reference fasta. | --fasta <PATH_TO_REF_FASTA> |
 | alignment_based | Performs a fine scale analysis within a singular outbreak | --alignment_based |
 | alignment_free | Performs a historical analysis across multiple years and outbreaks | --alignment_free |
 | task.cpus | Denotes how many cpus to use for Mashtree. Default task.cpus is 2. |--task.cpus 4 |
 | cg_tree_model | Tells IQ-TREE what [model](http://www.iqtree.org/doc/Substitution-Models) to use. Default cg_tree_model is GTR+G | --cg_tree_model GTR+G |
-| phoenix | If the data was run run through pheonix, skips Quast and it's summary options. | --phoenix |
+| phoenix | If the data was run run through pheonix, skips Quast and it's summary options. Default is to run Quast as if Phoenix was not run. | --phoenix |
 
 ## Workflow
 
