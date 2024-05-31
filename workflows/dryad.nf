@@ -1,76 +1,115 @@
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
+    VALIDATE INPUTS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+// Figures out what params are nf-core and nextflow and parses them
+def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
+
+// Checks to ensure input parameters exist
+def checkPathParamList = [ params.input ]
+for (param in checkPathParamList) {if (param) { file(param, checkIfExists: true) } }
+
+// Checks for mandatory parameters and puts it into a channel
+if (params.input) {ch_input = file(params.input) } else { exit 1, 'Input samplesheet is not specified!'}
+
+//Starting the workflow
+WorkflowDryad.initialise(params, log)
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT LOCAL MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { FASTQC                 } from '../modules/nf-core/fastqc/main'
-include { MULTIQC                } from '../modules/nf-core/multiqc/main'
-include { paramsSummaryMap       } from 'plugin/nf-validation'
-include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_dryad_pipeline'
+//
+// SUBWORKFLOW: Designed for dryad 
+//
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    RUN MAIN WORKFLOW
+    IMPORT NF-CORE MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+include { INPUT_CHECK       } from '../subworkflows/local/input_check'
+include { QUAST             } from '../modules/local/quast'
+include { QUAST_SUMMARY     } from '../modules/local/quast_summary'
+include { ALIGNMENT_BASED   } from '../subworkflows/local/alignment_based'
+include { ALIGNMENT_FREE    } from '../subworkflows/local/alignment_free'
 
 workflow DRYAD {
 
-    take:
-    ch_samplesheet // channel: samplesheet read in from --input
+    //
+    // Error Handling
+    //
+    if (params.alignment_free && params.fasta) {
+        error("ERROR: An alignment free comparison does not use a reference fasta. Do you want to run an alignment based comparison instead?\nDryad terminating...")
+        exit(1)
+    }
 
-    main:
+    if (params.alignment_based && !params.fasta) {
+        error("ERROR: An alignment based comparison needs a reference fasta. Do you want to run an alignment free comparison instead?\nDryad terminating...")
+        exit(1)
+    }
 
+    if (!params.alignment_based && !params.alignment_free) {
+        error("ERROR: No alignment indicated. Please indicate which alignment to perform.")
+        exit(1)
+    }
+
+    // Creating an empty channel to put version information into
     ch_versions = Channel.empty()
-    ch_multiqc_files = Channel.empty()
 
     //
-    // MODULE: Run FastQC
+    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
-    FASTQC (
-        ch_samplesheet
+    INPUT_CHECK (
+        ch_input
     )
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+    .reads
+    .set { ch_input_reads }
+
+    // Adding version information
+    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
     //
-    // Collate and save software versions
+    // QC check for Not Phoenix runs
     //
-    softwareVersionsToYAML(ch_versions)
-        .collectFile(storeDir: "${params.outdir}/pipeline_info", name: 'nf_core_pipeline_software_mqc_versions.yml', sort: true, newLine: true)
-        .set { ch_collated_versions }
+    if (!params.phoenix) {
+        QUAST ( ch_input_reads )
+        QUAST_SUMMARY ( 
+            QUAST.out.transposed_report.collect()
+            )
+        ch_versions = ch_versions.mix(QUAST.out.versions)
+    }
 
     //
-    // MODULE: MultiQC
+    // Re-mapping channel to intake paths
     //
-    ch_multiqc_config                     = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-    ch_multiqc_custom_config              = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()
-    ch_multiqc_logo                       = params.multiqc_logo ? Channel.fromPath(params.multiqc_logo, checkIfExists: true) : Channel.empty()
-    summary_params                        = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
-    ch_workflow_summary                   = Channel.value(paramsSummaryMultiqc(summary_params))
-    ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-    ch_methods_description                = Channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
-    ch_multiqc_files                      = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-    ch_multiqc_files                      = ch_multiqc_files.mix(ch_collated_versions)
-    ch_multiqc_files                      = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: false))
+    ch_input_reads
+    .map { sample, fasta ->
+    fasta
+    } // Produces queue channel of just fasta file paths in a list
+    .collect()
+    .set { ch_for_alignments }
 
-    MULTIQC (
-        ch_multiqc_files.collect(),
-        ch_multiqc_config.toList(),
-        ch_multiqc_custom_config.toList(),
-        ch_multiqc_logo.toList()
-    )
+    //
+    // SUBWORKFLOW: Alignment Free
+    //
+    if (params.alignment_free && !params.fasta) {
+        ALIGNMENT_FREE (
+            ch_for_alignments
+             )
+    }
 
-    emit:
-    multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
-    versions       = ch_versions                 // channel: [ path(versions.yml) ]
+    //
+    // SUBWORKFLOW: Alignment Based
+    //
+    if (params.alignment_based && params.fasta) {
+        ALIGNMENT_BASED (
+            ch_for_alignments,
+            params.fasta,
+            params.outdir
+            )
+    }
 }
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    THE END
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
