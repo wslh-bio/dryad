@@ -13,8 +13,6 @@ for (param in checkPathParamList) {if (param) { file(param, checkIfExists: true)
 // Checks for mandatory parameters and puts it into a channel
 if (params.input) {ch_input = file(params.input) } else { exit 1, 'Input samplesheet is not specified!'}
 
-//Starting the workflow
-WorkflowDryad.initialise(params, log)
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT LOCAL MODULES/SUBWORKFLOWS
@@ -22,7 +20,7 @@ WorkflowDryad.initialise(params, log)
 */
 
 //
-// SUBWORKFLOW: Designed for dryad 
+// SUBWORKFLOW: Designed for dryad
 //
 
 
@@ -77,7 +75,7 @@ workflow DRYAD {
     //
     if (!params.phoenix) {
         QUAST ( ch_input_reads )
-        QUAST_SUMMARY ( 
+        QUAST_SUMMARY (
             QUAST.out.transposed_report.collect()
             )
         ch_versions = ch_versions.mix(QUAST.out.versions)
