@@ -139,18 +139,19 @@ Notable output files:
 **Alignment based**  
 | File | Output |
 | ------------- | ------------- |
-| quast_results.tsv | Assembly quality results |
+| quast_results.tsv* | Assembly quality results |
 | snp_dists_matrix.tsv | Number of SNP distances between each pair of isolates |
 | parsnp.snps.mblocks.treefile | Maximum likelihood phylogenetic tree|
 
-
+*Quast results will not be present if `--phoenix` was utilized.
 
 **Alignment free**
 | File | Output |
 | ------------- | ------------- |
-| quast_results.tsv | Assembly quality results |
+| quast_results.tsv* | Assembly quality results |
 | mashtree.bootstrap.dnd | Neighbor joining tree based on mash distances |
 
+*Quast results will not be present if `--phoenix` was utilized.
 
 > [!WARNING]
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
