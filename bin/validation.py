@@ -1,11 +1,12 @@
 import argparse
 import pandas as pd
 import os
+import logging
 
-#this gets us the root dir of the project
-base_path =  os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+### Setting up loggin structure
+logging.basicConfig(level = logging.INFO, format = '%(levelname)s : %(message)s')
 
-### Load in result data
+### Setting up argparse arguments
 parser = argparse.ArgumentParser(description='Validate pipeline results.')
 parser.add_argument('dryad_matrix_1',
     help='Path to validated snp_dists_matrix'
@@ -15,11 +16,17 @@ parser.add_argument('dryad_matrix_2',
     )
 args = parser.parse_args()
 
+### Getting df from matrix input
 validated_df = pd.read_csv(os.path.abspath(args.dryad_matrix_1),sep=',')
 to_test_df = pd.read_csv(os.path.abspath(args.dryad_matrix_2),sep=',')
 
+### Determiniing if matrices are the same, if not, why?
 if validated_df.equals(to_test_df):
-    print("These dataframes match and pass validation.")
+    logging.info("These dataframes match and pass validation.")
 else:
-    
-    print("WARNING: Failed validation. These snp matrices do not match.")
+    logging.info("Failed validation. These snp matrices do not match!")
+    try:
+        diff = validated_df.compare(to_test_df)
+        logging.info(f'The discrepancies are noted below: \n{diff}')
+    except ValueError:
+        logging.info("The snp matrices have different sizes! \nOnly compare matrices that have the same amount of row and column vectors.")
