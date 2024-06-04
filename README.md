@@ -12,12 +12,19 @@ Dryad analyzes fasta files that have been processed either by [Spriggan](https:/
 
 ## Table of Contents:
 [Usage](#usage)
+
 [Input](#input)
+
 [Parameters](#parameters)
+
 [Workflow](#workflow)
+
 [Output](#output)
+
 [Credits](#credits)
+
 [Contributions-and-Support](#contributions-and-support)
+
 [Citations](#citations)
 
 ## Usage
@@ -34,7 +41,6 @@ nextflow run wslh-bio/dryad \
    --outdir <OUTDIR> \
    --alignment_free
 ```
-By default, Dryad runs an alignment free comparison if nothing is specified. 
 
 If you would like to run an alignment based comparison, use:
 
@@ -72,7 +78,7 @@ Dryad's main parameters and their defaults are shown in the table below:
 | alignment_free | Performs a historical analysis across multiple years and outbreaks | --alignment_free |
 | task.cpus | Denotes how many cpus to use for Mashtree. Default task.cpus is 2. |--task.cpus 4 |
 | cg_tree_model | Tells IQ-TREE what [model](http://www.iqtree.org/doc/Substitution-Models) to use. Default cg_tree_model is GTR+G | --cg_tree_model GTR+G |
-| phoenix | If the data was run run through pheonix, skips Quast and it's summary options. Default is to run Quast as if Phoenix was not run. | --phoenix |
+| phoenix | If the data was run run through pheonix, skips Quast and the summary options. Default is to run Quast as if Phoenix was not run. | --phoenix |
 
 ## Workflow
 
@@ -86,7 +92,7 @@ Dryad's main parameters and their defaults are shown in the table below:
    - Historical Comparison
       - [Mashtree v1.4.6](https://github.com/lskatz/mashtree) generates a phylogenetic tree using Mash distances. 
    - Fine scale Comparison
-      - Requires at least 3 genomes
+      - **Requires at least 3 genomes**
       - [Parsnp v2.0.5](https://github.com/marbl/parsnp) is used to perform a core genome alignment.
       - [IQ-TREE v2.3.0](https://github.com/Cibiv/IQ-TREE) is used for inferring a phylogenetic tree.
       - [Snp-dists v0.8.2](https://github.com/tseemann/snp-dists) is used to calculate the SNP distance matrix.
@@ -133,18 +139,19 @@ Notable output files:
 **Alignment based**  
 | File | Output |
 | ------------- | ------------- |
-| quast_results.tsv | Assembly quality results |
+| quast_results.tsv* | Assembly quality results |
 | snp_dists_matrix.tsv | Number of SNP distances between each pair of isolates |
 | parsnp.snps.mblocks.treefile | Maximum likelihood phylogenetic tree|
 
-
+*Quast results will not be present if `--phoenix` was utilized.
 
 **Alignment free**
 | File | Output |
 | ------------- | ------------- |
-| quast_results.tsv | Assembly quality results |
+| quast_results.tsv* | Assembly quality results |
 | mashtree.bootstrap.dnd | Neighbor joining tree based on mash distances |
 
+*Quast results will not be present if `--phoenix` was utilized.
 
 > [!WARNING]
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
@@ -166,7 +173,7 @@ If you use Dryad for your analysis, please cite it using the following:
 
 K. Florek, AC. Shockey, & E. Gunawan (2014). Dryad (Version 4.0.0) [https://github.com/wslh-bio/dryad].
 
-An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
+An extensive list of references for the tools used by Dryad can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 
 This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
 
