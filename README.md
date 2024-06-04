@@ -41,7 +41,6 @@ nextflow run wslh-bio/dryad \
    --outdir <OUTDIR> \
    --alignment_free
 ```
-By default, Dryad runs an alignment free comparison if nothing is specified. 
 
 If you would like to run an alignment based comparison, use:
 
@@ -79,7 +78,7 @@ Dryad's main parameters and their defaults are shown in the table below:
 | alignment_free | Performs a historical analysis across multiple years and outbreaks | --alignment_free |
 | task.cpus | Denotes how many cpus to use for Mashtree. Default task.cpus is 2. |--task.cpus 4 |
 | cg_tree_model | Tells IQ-TREE what [model](http://www.iqtree.org/doc/Substitution-Models) to use. Default cg_tree_model is GTR+G | --cg_tree_model GTR+G |
-| phoenix | If the data was run run through pheonix, skips Quast and it's summary options. Default is to run Quast as if Phoenix was not run. | --phoenix |
+| phoenix | If the data was run run through pheonix, skips Quast and the summary options. Default is to run Quast as if Phoenix was not run. | --phoenix |
 
 ## Workflow
 
