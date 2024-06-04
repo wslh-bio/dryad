@@ -92,7 +92,7 @@ Dryad's main parameters and their defaults are shown in the table below:
    - Historical Comparison
       - [Mashtree v1.4.6](https://github.com/lskatz/mashtree) generates a phylogenetic tree using Mash distances. 
    - Fine scale Comparison
-      - Requires at least 3 genomes
+      - **Requires at least 3 genomes**
       - [Parsnp v2.0.5](https://github.com/marbl/parsnp) is used to perform a core genome alignment.
       - [IQ-TREE v2.3.0](https://github.com/Cibiv/IQ-TREE) is used for inferring a phylogenetic tree.
       - [Snp-dists v0.8.2](https://github.com/tseemann/snp-dists) is used to calculate the SNP distance matrix.
