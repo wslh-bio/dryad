@@ -12,12 +12,19 @@ Dryad analyzes fasta files that have been processed either by [Spriggan](https:/
 
 ## Table of Contents:
 [Usage](#usage)
+
 [Input](#input)
+
 [Parameters](#parameters)
+
 [Workflow](#workflow)
+
 [Output](#output)
+
 [Credits](#credits)
+
 [Contributions-and-Support](#contributions-and-support)
+
 [Citations](#citations)
 
 ## Usage
