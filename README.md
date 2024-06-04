@@ -173,7 +173,7 @@ If you use Dryad for your analysis, please cite it using the following:
 
 K. Florek, AC. Shockey, & E. Gunawan (2014). Dryad (Version 4.0.0) [https://github.com/wslh-bio/dryad].
 
-An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
+An extensive list of references for the tools used by Dryad can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 
 This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
 
