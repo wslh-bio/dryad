@@ -2,7 +2,7 @@ process QUAST {
     tag "$meta.id"
     label 'process_medium'
 
-    container "staphb/quast:5.0.2"
+    container "staphb/quast:5.2.0"
 
     input:
     tuple val(meta), path(contigs)
