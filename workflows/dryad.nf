@@ -96,7 +96,8 @@ workflow DRYAD {
     //
     if (params.alignment_free && !params.fasta) {
         ALIGNMENT_FREE (
-            ch_for_alignments
+            ch_for_alignments,
+            params.task.cpus
              )
     }
 

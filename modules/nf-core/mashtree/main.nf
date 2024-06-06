@@ -9,6 +9,7 @@ process MASHTREE {
 
     input:
     path(seqs)
+    val task_cpus
 
     output:
     path("*.dnd")           , emit: tree
@@ -20,7 +21,7 @@ process MASHTREE {
     script:
     def args = task.ext.args ?: ''
     """
-    mashtree_bootstrap.pl --reps 100 --numcpus ${task.cpus} $seqs -- --min-depth 0 > mashtree.bootstrap.dnd
+    mashtree_bootstrap.pl --reps 100 --numcpus $task_cpus $seqs -- --min-depth 0 > mashtree.bootstrap.dnd
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

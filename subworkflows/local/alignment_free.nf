@@ -15,6 +15,7 @@ workflow ALIGNMENT_FREE {
 
     take:
     reads       // channel: [ val(meta), [ reads ] ]
+    cpus
 
     main:
     ch_versions = Channel.empty()       // Creating empty version channel to get versions.yml
@@ -23,7 +24,8 @@ workflow ALIGNMENT_FREE {
     // MASHTREE input: tuple val(meta), path(seqs)
     //
     MASHTREE (
-        reads
+        reads,
+        cpus
     )
 
     emit:
