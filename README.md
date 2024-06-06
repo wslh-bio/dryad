@@ -57,7 +57,7 @@ Prepare a samplesheet with your input data with each row representing one fasta 
 ## Parameters
 Dryad's main parameters and their defaults are shown in the table below:
 
-| Parameter | Parameter description and defaults | Example useage |
+| Parameter | Parameter description and defaults | Example usage |
 | ------------- | ------------- | ------------- |
 | input | Path to comma-separated file containing information about the samples in the experiment | --input <PATH_TO_SAMPLESHEET> |
 | outdir | Output directory where the results will be saved. Absolute path must be used for storage on cloud infrastructure | --outdir <DESIRED_OUTPUT_PATH> |
@@ -67,6 +67,7 @@ Dryad's main parameters and their defaults are shown in the table below:
 | alignment_free | Performs a historical analysis across multiple years and outbreaks | --alignment_free |
 | task.cpus | Denotes how many cpus to use for Mashtree. Default task.cpus is 2. |--task.cpus 4 |
 | cg_tree_model | Tells IQ-TREE what [model](http://www.iqtree.org/doc/Substitution-Models) to use. Default cg_tree_model is GTR+G | --cg_tree_model GTR+G |
+| parsnp_partition | Tells parsnp the minimum partition amount or to not partition. Default is --no-partition | --parsnp_partition "min-partition-size 50" |
 | phoenix | If the data was run run through pheonix, skips Quast and the summary options. Default is to run Quast as if Phoenix was not run. | --phoenix |
 
 ## Workflow

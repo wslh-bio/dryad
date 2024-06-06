@@ -10,6 +10,7 @@ process PARSNP {
     input:
     path(reads)
     path fasta
+    val partition
 
     output:
     path( "parsnp_output/parsnp.xmfa"           )   , emit: core_genome_alignment
@@ -23,10 +24,10 @@ process PARSNP {
 
     script:
     """
-    parsnp \\
-        -r $fasta \\
-        -d $reads \\
-        -o ./parsnp_output
+    parsnp -r $fasta \\
+           -d $reads \\
+           -o ./parsnp_output \\
+           --$partition
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

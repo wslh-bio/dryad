@@ -107,7 +107,8 @@ workflow DRYAD {
         ALIGNMENT_BASED (
             ch_for_alignments,
             params.fasta,
-            params.outdir
+            params.outdir,
+            params.parsnp_partition
             )
     }
 }
