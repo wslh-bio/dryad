@@ -5,6 +5,7 @@ import sys
 import errno
 import argparse
 
+valid_formats = ('.fasta', '.fas', '.fa', '.fna', '.ffn', '.fasta.gz', '.fas.gz', '.fa.gz', '.fna.gz', '.ffn.gz')
 
 def parse_args(args=None):
     Description = "Reformat input samplesheet file and check its contents."
@@ -35,6 +36,14 @@ def print_error(error, context="Line", context_str=""):
     print(error_str)
     sys.exit(1)
 
+def validate_fasta_format(filename):
+    """Assert that a given filename has one of the expected FASTA extensions."""
+    if not any(filename.endswith(extension) for extension in valid_formats):
+        raise AssertionError(
+            f"The FASTA file has an unrecognized extension: {filename}\n"
+            f"It should be one of: {', '.join(valid_formats)}"
+            )
+        
 # Checking the samplesheet to ensure it is formatted properly
 def check_samplesheet(file_in, file_out):
     """
@@ -88,12 +97,7 @@ def check_samplesheet(file_in, file_out):
                 if fasta:
                     if fasta.find(" ") != -1:
                         print_error("FastA file contains spaces!", "Line", line)
-                    if not fasta.endswith(".fasta.gz") and not fasta.endswith(".fa.gz") and not fasta.endswith(".fa"):
-                        print_error(
-                            "FastA file does not have extension '.fasta.gz', '.fa.gz', or '.fa'!",
-                            "Line",
-                            line,
-                        )
+                    validate_fasta_format(fasta)
 
             ## Auto-detect paired-end/single-end
             sample_info = []  ## [single_end, fasta_1]
