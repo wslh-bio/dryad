@@ -20,7 +20,7 @@ process SNPDISTS {
     script:
     """
     snp-dists \\
-            -b -c $mblocks > snp_dists_matrix.tsv
+            -b $mblocks > snp_dists_matrix.tsv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
