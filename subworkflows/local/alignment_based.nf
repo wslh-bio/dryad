@@ -1,8 +1,8 @@
 // Alignment_based subworkflow
-// Parsnp>IQ-TREE&snp-dists>python
-include { PARSNP   }      from '../../modules/local/parsnp'
-include { IQTREE   }      from '../../modules/nf-core/iqtree'
-include { SNPDISTS }      from '../../modules/nf-core/snpdists'
+
+include { PARSNP           } from '../../modules/local/parsnp'
+include { IQTREE           } from '../../modules/nf-core/iqtree'
+include { SNPDISTS         } from '../../modules/nf-core/snpdists'
 
 workflow ALIGNMENT_BASED {
 
