@@ -109,7 +109,8 @@ workflow DRYAD {
             ch_for_alignments,
             params.fasta,
             params.outdir,
-            params.parsnp_partition
+            params.parsnp_partition,
+            params.remove_reference
             )
     }
 }
