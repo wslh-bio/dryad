@@ -1,34 +1,45 @@
 #!/usr/bin/env python3
 
 import argparse
-import logging
 import os
+import sys
 
 from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
 
-logging.basicConfig(level = logging.INFO, format = '%(levelname)s : %(message)s')
+def parse_args(args=None):
+  Description='Remove fasta from reference.'
 
-parser =  argparse.ArgumentParser(description='Remove fasta from reference.')
+  parser = argparse.ArgumentParser(description=Description)
+  parser.add_argument('compiled_fasta_file',
+                      help='Complete fasta file that needs reference to be removed from.')
+  parser.add_argument('reference_name',
+                      help='Original reference fasta name.')
+  return parser.parse_args(args)
 
-parser.add_argument('compiled_fasta_file',
-                    help='Complete fasta file that needs reference to be removed from.')
-parser.add_argument('reference_name',
-                    help='Original reference fasta name.')
-args = parser.parse_args()
+def rename(reference_name, compiled_fasta_file):
+  reference_name = os.path.basename(reference_name)
+  ref_fasta = "<" + reference_name + ".ref"
 
-reference_name = os.path.basename(args.reference_name)
-ref_fasta = "<" + reference_name + ".ref"
+  fasta_file = os.path.basename(compiled_fasta_file)
+  outFasta = "cleaned_" + fasta_file
 
-fasta_file = os.path.basename(args.compiled_fasta_file)
-outFasta = "cleaned_" + fasta_file
+  return ref_fasta, outFasta
 
-with open(args.compiled_fasta_file, "r") as inFasta:
-    print(args.compiled_fasta_file)
-    for record in SeqIO.parse(inFasta, "fasta"):
-      if record.id == ref_fasta:
-         pass
-      else: 
-        SeqIO.write(record, outFasta, "fasta")
+def process_file(compiled_fasta_file, ref_fasta, outFasta):
+  with open(compiled_fasta_file, "r") as inFasta:
+      print(compiled_fasta_file)
+      for record in SeqIO.parse(inFasta, "fasta"):
+        if record.id == ref_fasta:
+           pass
+        else: 
+          SeqIO.write(record, outFasta, "fasta")
 
-#remove fastafile.ref, any seq in fasta file seq record and then remove the record that has .ref in it
+def main(args=None):
+    args = parse_args(args)
+
+    ref_fasta, outFasta = rename(args.reference_name, args.compiled_fasta_file)
+    process_file(args.compiled_fasta_file, ref_fasta, outFasta)
+
+if __name__ == "__main__":
+    sys.exit(main())
