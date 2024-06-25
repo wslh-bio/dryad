@@ -10,7 +10,7 @@ process REMOVE_REFERENCE {
 
 
     output:
-    path( "parsnp_output/cleaned_parsnp.snps.mblocks"   )   , emit: mblocks
+    path "*.mblocks"   , emit: mblocks
 
     script: // This script is bundled with the pipeline, in wslh-bio/dryad/bin/
     """

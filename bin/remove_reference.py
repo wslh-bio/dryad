@@ -27,13 +27,12 @@ def rename(reference_name, compiled_fasta_file):
   return ref_fasta, outFasta
 
 def process_file(compiled_fasta_file, ref_fasta, outFasta):
-  with open(compiled_fasta_file, "r") as inFasta:
-      print(compiled_fasta_file)
+  with open(compiled_fasta_file, "r") as inFasta, open(outFasta, "a") as output:
       for record in SeqIO.parse(inFasta, "fasta"):
         if record.id == ref_fasta:
            pass
         else: 
-          SeqIO.write(record, outFasta, "fasta")
+          SeqIO.write(record, output, "fasta")
 
 def main(args=None):
     args = parse_args(args)
