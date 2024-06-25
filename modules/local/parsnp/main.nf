@@ -27,7 +27,7 @@ process PARSNP {
     parsnp -r $fasta \\
            -d $reads \\
            -o ./parsnp_output \\
-           --$partition
+           $partition
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

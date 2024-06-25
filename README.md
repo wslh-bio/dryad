@@ -67,7 +67,7 @@ Dryad's main parameters and their defaults are shown in the table below:
 | alignment_free | Performs a historical analysis across multiple years and outbreaks | --alignment_free |
 | task.cpus | Denotes how many cpus to use for Mashtree. Default task.cpus is 2. |--task.cpus 4 |
 | cg_tree_model | Tells IQ-TREE what [model](http://www.iqtree.org/doc/Substitution-Models) to use. Default cg_tree_model is GTR+G | --cg_tree_model "GTR+G" |
-| parsnp_partition | Tells parsnp the minimum partition amount or to not partition. Default is --no-partition.* | --parsnp_partition "min-partition-size 50" |
+| parsnp_partition | Tells parsnp the minimum partition amount or to not partition. Default is --no-partition.* | --parsnp_partition "--min-partition-size 50" |
 | phoenix | If the data was run through pheonix, skips QUAST and the summary options. Default is to run QUAST as if Phoenix was not run. | --phoenix |
 | remove_reference | Used to remove the reference from tree building for IQ-TREE. Default is to include reference in tree building. | --remove_reference |
 
