@@ -36,12 +36,13 @@ workflow ALIGNMENT_BASED {
             PARSNP.out.mblocks,
             fasta
         )
+        .set{ ch_for_mblocks }
 
         //
         // IQTREE
         //
         IQTREE (
-            REMOVE_REFERENCE.out.mblocks
+            ch_for_mblocks
         )
         ch_versions = ch_versions.mix(IQTREE.out.versions)
 
@@ -49,7 +50,7 @@ workflow ALIGNMENT_BASED {
         // SNPDISTS
         //
         SNPDISTS (
-            REMOVE_REFERENCE.out.mblocks
+            ch_for_mblocks
         )
         ch_versions = ch_versions.mix(SNPDISTS.out.versions)
 }
