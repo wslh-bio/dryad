@@ -8,7 +8,7 @@ process PARSNP {
         'biocontainers/parsnp:2.0.5--hdcf5f25_0' }"
 
     input:
-    path(reads)
+    path reads
     path fasta
     val partition
 
