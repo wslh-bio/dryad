@@ -3,9 +3,7 @@ process MASHTREE {
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/mashtree:1.4.6--pl5321h031d066_0' :
-        'biocontainers/mashtree:1.4.6--pl5321h031d066_0' }"
+    container "staphb/mashtree:1.4.6"
 
     input:
     path(seqs)

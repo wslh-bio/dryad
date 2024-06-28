@@ -3,9 +3,7 @@ process IQTREE {
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/iqtree:2.3.4--hdcf5f25_1' :
-        'biocontainers/iqtree:2.3.4--hdcf5f25_1' }"
+    container "staphb/iqtree2:2.3.4"
 
     input:
     path(mblocks)
@@ -20,7 +18,7 @@ process IQTREE {
 
     script:
     """
-    iqtree \\
+    iqtree2 \\
             -s $mblocks \\
             -nt AUTO \\
             -m ${params.cg_tree_model} \\

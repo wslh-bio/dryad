@@ -28,7 +28,7 @@ process PARSNP {
            $partition
 
     cat <<-END_VERSIONS > versions.yml
-    "${task.process}":`
+    "${task.process}":
         parsnp: \$(parsnp --version | cut -d ' ' -f 2 | sed 's/v//')
     END_VERSIONS
     """
