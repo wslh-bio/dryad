@@ -3,9 +3,7 @@ process PARSNP {
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/parsnp:2.0.5--hdcf5f25_0' :
-        'biocontainers/parsnp:2.0.5--hdcf5f25_0' }"
+    container "staphb/parsnp:2.0.5"
 
     input:
     path reads
@@ -30,7 +28,7 @@ process PARSNP {
            $partition
 
     cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
+    "${task.process}":`
         parsnp: \$(parsnp --version | cut -d ' ' -f 2 | sed 's/v//')
     END_VERSIONS
     """
