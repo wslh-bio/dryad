@@ -71,9 +71,9 @@ workflow DRYAD {
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
     //
-    // QC check for Not Phoenix runs
+    // QC check for runs if skip quast
     //
-    if (!params.phoenix) {
+    if (!params.skip_quast) {
         QUAST ( ch_input_reads )
         QUAST_SUMMARY (
             QUAST.out.transposed_report.collect()

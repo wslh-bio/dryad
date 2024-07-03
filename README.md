@@ -9,7 +9,7 @@
 TODO
 ### Add diff bt alignment free and alignment based
 ### When would you use which part?
-### Change to skip quast from phoenix
+### Change to skip quast from phoenix x
 ### Flip logic for remove reference, instead to add reference instead
 ### Run linting through nf-core 
 Think of what is the most common way that someone is going to use the pipeline, then add flag based on that
@@ -18,7 +18,7 @@ Dryad analyzes fasta files that have been processed either by [Spriggan](https:/
 1. A workflow dedicated to fine scale outbreak investigations that are within a singular outbreak.
 2. A workflow dedicated to identifying historical relatedness across multiple years and multiple outbreaks.  
 
-## Table of Contents:
+## Table of Contents:ls
 [Usage](#usage)  
 [Input](#input)  
 [Parameters](#parameters)  
@@ -76,7 +76,7 @@ Dryad's main parameters and their defaults are shown in the table below:
 | task.cpus | Denotes how many cpus to use for Mashtree. Default task.cpus is 2. |--task.cpus 4 |
 | cg_tree_model | Tells IQ-TREE what [model](http://www.iqtree.org/doc/Substitution-Models) to use. Default cg_tree_model is GTR+G | --cg_tree_model "GTR+G" |
 | parsnp_partition | Tells parsnp the minimum partition amount or to not partition. Default is --no-partition.* | --parsnp_partition "--min-partition-size 50" |
-| phoenix | If the data was run through pheonix, skips QUAST and the summary options. Default is to run QUAST as if Phoenix was not run. | --phoenix |
+| skip_quast | If the data was run through pheonix or another pipeline with a quality check, skips QUAST and the summary options. Default is to run QUAST as if quality summaries were not previously run. | --skip_quast |
 | remove_reference | Used to remove the reference from tree building for IQ-TREE. Default is to include reference in tree building. | --remove_reference |
 
 *If you are running an alignment based workflow on >100 samples, it may be beneficial to take into account a higher partitioning value than the default of 100. More information can be found in parsnp 2.0's [paper](https://pubmed.ncbi.nlm.nih.gov/38352342/#:~:text=Parsnp%20v2%20provides%20users%20with,combined%20into%20a%20final%20alignment.).
@@ -86,7 +86,7 @@ Dryad's main parameters and their defaults are shown in the table below:
 
 ### 1. Universal Steps
    - Enter assembled FASTA genomes into a samplesheet. 
-   - [QUAST v5.2.0](http://bioinf.spbau.ru/quast) is used to determine assembly quality if Phoenix is not indicated.
+   - [QUAST v5.2.0](http://bioinf.spbau.ru/quast) is used to determine assembly quality if skip_quast is not indicated.
    - QUAST results are summarized with a custom python script to increase readability.
    
 ### 2. Comparison Steps
@@ -144,7 +144,7 @@ Notable output files:
 | snp_dists_matrix.tsv | Number of SNP distances between each pair of isolates |
 | parsnp.snps.mblocks.treefile | Maximum likelihood phylogenetic tree|
 
-*QUAST results will not be present if `--phoenix` was used.
+*QUAST results will not be present if `--skip_quast` was used.
 
 **Alignment free**
 | File | Output |
@@ -152,7 +152,7 @@ Notable output files:
 | quast_results.tsv* | Assembly quality results |
 | mashtree.bootstrap.dnd | Neighbor joining tree based on mash distances |
 
-*QUAST results will not be present if `--phoenix` was utilized.
+*QUAST results will not be present if `--skip_quast` was utilized.
 
 > [!WARNING]
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
