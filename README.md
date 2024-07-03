@@ -9,7 +9,6 @@
 TODO
 ### Add diff bt alignment free and alignment based
 ### When would you use which part?
-### Change to skip quast from phoenix x
 ### Flip logic for remove reference, instead to add reference instead
 ### Run linting through nf-core 
 Think of what is the most common way that someone is going to use the pipeline, then add flag based on that
@@ -77,7 +76,7 @@ Dryad's main parameters and their defaults are shown in the table below:
 | cg_tree_model | Tells IQ-TREE what [model](http://www.iqtree.org/doc/Substitution-Models) to use. Default cg_tree_model is GTR+G | --cg_tree_model "GTR+G" |
 | parsnp_partition | Tells parsnp the minimum partition amount or to not partition. Default is --no-partition.* | --parsnp_partition "--min-partition-size 50" |
 | skip_quast | If the data was run through pheonix or another pipeline with a quality check, skips QUAST and the summary options. Default is to run QUAST as if quality summaries were not previously run. | --skip_quast |
-| remove_reference | Used to remove the reference from tree building for IQ-TREE. Default is to include reference in tree building. | --remove_reference |
+| add_reference | Used to add the reference into tree building for IQ-TREE. Default is to remove the reference in tree building. | --add_reference |
 
 *If you are running an alignment based workflow on >100 samples, it may be beneficial to take into account a higher partitioning value than the default of 100. More information can be found in parsnp 2.0's [paper](https://pubmed.ncbi.nlm.nih.gov/38352342/#:~:text=Parsnp%20v2%20provides%20users%20with,combined%20into%20a%20final%20alignment.).
 

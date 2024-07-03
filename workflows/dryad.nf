@@ -110,7 +110,7 @@ workflow DRYAD {
             params.fasta,
             params.outdir,
             params.parsnp_partition,
-            params.remove_reference
+            params.add_reference
             )
     }
 }

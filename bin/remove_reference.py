@@ -19,7 +19,7 @@ def parse_args(args=None):
 
 def rename(reference_name, compiled_fasta_file):
   reference_name = os.path.basename(reference_name)
-  ref_fasta = "<" + reference_name + ".ref"
+  ref_fasta = reference_name + ".ref"
 
   fasta_file = os.path.basename(compiled_fasta_file)
   outFasta = "cleaned_" + fasta_file

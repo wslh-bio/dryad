@@ -12,7 +12,7 @@ workflow ALIGNMENT_BASED {
     fasta               // channel: /path/to/genome.fasta
     outdir              // output directory
     partition           // tells parsnp if it's important to partition
-    remove_reference    // tells parsnp if it needs to remove the reference
+    add_reference       // tells parsnp if it needs to remove the reference
 
     main:
     ch_versions = Channel.empty()       // Creating empty version channel to get versions.yml
@@ -31,7 +31,7 @@ workflow ALIGNMENT_BASED {
 //
 // Remove reference
 //
-    if (remove_reference) {
+    if (!add_reference) {
         REMOVE_REFERENCE (
             PARSNP.out.mblocks,
             fasta
@@ -59,7 +59,7 @@ workflow ALIGNMENT_BASED {
 // Keep reference
 //
 
-    if (!remove_reference) {
+    if (add_reference) {
     //
     // IQTREE
     //
