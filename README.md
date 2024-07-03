@@ -6,6 +6,14 @@
 
 **Dryad** is a [Nextflow](https://www.nextflow.io/) pipeline for examining prokaryote relatedness. Dryad can perform a reference free analysis and/or SNP analysis.
 
+TODO
+### Add diff bt alignment free and alignment based
+### When would you use which part?
+### Change to skip quast from phoenix
+### Flip logic for remove reference, instead to add reference instead
+### Run linting through nf-core 
+Think of what is the most common way that someone is going to use the pipeline, then add flag based on that
+
 Dryad analyzes fasta files that have been processed either by [Spriggan](https://github.com/wslh-bio/spriggan) or by [PHoeNIx](https://github.com/CDCgov/phoenix). Dryad is split into two major workflows:
 1. A workflow dedicated to fine scale outbreak investigations that are within a singular outbreak.
 2. A workflow dedicated to identifying historical relatedness across multiple years and multiple outbreaks.  
