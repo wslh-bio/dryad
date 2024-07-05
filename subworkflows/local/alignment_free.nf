@@ -5,7 +5,7 @@
 //
 // Loading alignment free modules
 //
-include { MASHTREE } from '../../modules/nf-core/mashtree'
+include { MASHTREE } from '../../modules/local/mashtree'
 
 //
 // Creating alignment free workflow

@@ -1,25 +1,33 @@
 process MASHTREE {
-
+    tag "$meta.id"
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
-    container "staphb/mashtree:1.4.6"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/mashtree:1.2.0--pl526h516909a_0' :
+        'biocontainers/mashtree:1.2.0--pl526h516909a_0' }"
 
     input:
-    path(seqs)
-    val task_cpus
+    tuple val(meta), path(seqs)
 
     output:
-    path("*.dnd")           , emit: tree
-    path "versions.yml"     , emit: versions
+    tuple val(meta), path("*.dnd"), emit: tree
+    tuple val(meta), path("*.tsv"), emit: matrix
+    path "versions.yml"           , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    mashtree_bootstrap.pl --reps 100 --numcpus $task_cpus $seqs -- --min-depth 0 > mashtree.bootstrap.dnd
+    mashtree \\
+        $args \\
+        --numcpus $task.cpus \\
+        --outmatrix ${prefix}.tsv \\
+        --outtree ${prefix}.dnd \\
+        $seqs
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

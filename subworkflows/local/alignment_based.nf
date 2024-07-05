@@ -2,8 +2,8 @@
 
 include { REMOVE_REFERENCE } from '../../modules/local/remove_reference'
 include { PARSNP           } from '../../modules/local/parsnp'
-include { IQTREE           } from '../../modules/nf-core/iqtree'
-include { SNPDISTS         } from '../../modules/nf-core/snpdists'
+include { IQTREE           } from '../../modules/local/iqtree'
+include { SNPDISTS         } from '../../modules/local/snpdists'
 
 workflow ALIGNMENT_BASED {
 
