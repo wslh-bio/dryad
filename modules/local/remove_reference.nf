@@ -12,6 +12,9 @@ process REMOVE_REFERENCE {
     output:
     path "*.mblocks"   , emit: mblocks
 
+    when:
+    task.ext.when == null || task.ext.when
+
     script: // This script is bundled with the pipeline, in wslh-bio/dryad/bin/
     """
     remove_reference.py \\
