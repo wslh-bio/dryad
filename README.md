@@ -9,8 +9,8 @@
 Think of what is the most common way that someone is going to use the pipeline, then add flag based on that
 
 Dryad analyzes fasta files that have been processed either by [Spriggan](https://github.com/wslh-bio/spriggan) or by [PHoeNIx](https://github.com/CDCgov/phoenix). Dryad is split into two major workflows:
-1. A workflow dedicated to fine scale outbreak investigations that are within a singular outbreak. This process uses a reference to determine relatedness and snp distances. The reference can be removed from the final phylogenetic tree to give you a high resolution look at a singular outbreak.
-2. A workflow dedicated to identifying historical relatedness across multiple years and multiple outbreaks. This process does not use a reference and looks for relatedness between the organisms themselves by giving a low resolution look at historical relatedness.
+1. A workflow dedicated to fine scale outbreak investigations that are within a singular outbreak. This process uses a reference to determine relatedness and snp distances. The reference can be removed from the alignment based workflow to create a phylogenetic tree that gives a high resolution look at a singular outbreak.
+2. A workflow dedicated to identifying historical relatedness across multiple years and multiple outbreaks without the use of a reference. This alignment free workflow gives a low resolution look at historical relatedness.
 
 ## Table of Contents:ls
 [Usage](#usage)  
