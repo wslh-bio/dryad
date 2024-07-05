@@ -6,13 +6,11 @@
 
 **Dryad** is a [Nextflow](https://www.nextflow.io/) pipeline for examining prokaryote relatedness. Dryad can perform a reference free analysis and/or SNP analysis.
 
-Think of what is the most common way that someone is going to use the pipeline, then add flag based on that
-
 Dryad analyzes fasta files that have been processed either by [Spriggan](https://github.com/wslh-bio/spriggan) or by [PHoeNIx](https://github.com/CDCgov/phoenix). Dryad is split into two major workflows:
 1. A workflow dedicated to fine scale outbreak investigations that are within a singular outbreak. This process uses a reference to determine relatedness and snp distances. The reference can be removed from the alignment based workflow to create a phylogenetic tree that gives a high resolution look at a singular outbreak.
 2. A workflow dedicated to identifying historical relatedness across multiple years and multiple outbreaks without the use of a reference. This alignment free workflow gives a low resolution look at historical relatedness.
 
-## Table of Contents:ls
+## Table of Contents:
 [Usage](#usage)  
 [Input](#input)  
 [Parameters](#parameters)  
@@ -24,7 +22,7 @@ Dryad analyzes fasta files that have been processed either by [Spriggan](https:/
 
 ## Usage
 > [!NOTE]
-> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
+> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data. To use Dryad, a Nextflow minimum version of 24.04.2.5914 is needed.
 
 To run an alignment free comparison, use:
 
