@@ -1,6 +1,7 @@
 // Alignment_based subworkflow
 
 include { REMOVE_REFERENCE } from '../../modules/local/remove_reference'
+include { SAMPLE_COUNT     } from '../../modules/local/sample_count'
 include { PARSNP           } from '../../modules/local/parsnp'
 include { IQTREE           } from '../../modules/local/iqtree'
 include { SNPDISTS         } from '../../modules/local/snpdists'
@@ -39,10 +40,18 @@ workflow ALIGNMENT_BASED {
         .set{ ch_for_mblocks }
 
         //
+        // SAMPLE COUNT
+        //
+        SAMPLE_COUNT (
+            ch_for_mblocks
+        )
+
+        //
         // IQTREE
         //
         IQTREE (
-            ch_for_mblocks
+            ch_for_mblocks,
+            SAMPLE_COUNT.out.count
         )
         ch_versions = ch_versions.mix(IQTREE.out.versions)
 
@@ -58,13 +67,21 @@ workflow ALIGNMENT_BASED {
 //
 // Keep reference
 //
-
     if (add_reference) {
+
+    //
+    // SAMPLE COUNT
+    //
+        SAMPLE_COUNT (
+            PARSNP.out.mblocks
+        )
+
     //
     // IQTREE
     //
         IQTREE (
-            PARSNP.out.mblocks
+            PARSNP.out.mblocks,
+            SAMPLE_COUNT.out.count
         )
         ch_versions = ch_versions.mix(IQTREE.out.versions)
 
