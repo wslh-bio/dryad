@@ -28,6 +28,7 @@ To run an alignment free comparison, use:
 
 ```bash
 nextflow run wslh-bio/dryad \
+   -latest \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
    --outdir <OUTDIR> \
@@ -38,6 +39,7 @@ Alternatively, to run an alignment based comparison, use:
 
 ```bash
 nextflow run wslh-bio/dryad \
+   -latest \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
    --outdir <OUTDIR> \
