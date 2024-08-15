@@ -46,6 +46,7 @@ nextflow run wslh-bio/dryad \
    --fasta <REFERENCE_FASTA> \
    --alignment_based 
 ```
+* Nextflow caches previously run pipelines. This can result in an older version of a pipeline being utilized. To get the most up-to-date version of a pipeline like Dryad, use the `-latest` tag.
 
 ## Input
 Prepare a samplesheet with your input data with each row representing one fasta file. The samplesheet will look as follows:
