@@ -40,7 +40,7 @@ workflow DRYAD {
     //
     // Error Handling
     //
-    if (params.alignment_free && params.fasta) {
+    if (params.alignment_free && params.fasta && !params.alignment_based) {
         error("ERROR: An alignment free comparison does not use a reference fasta. Do you want to run an alignment based comparison instead?\nDryad terminating...")
         exit(1)
     }
@@ -94,7 +94,7 @@ workflow DRYAD {
     //
     // SUBWORKFLOW: Alignment Free
     //
-    if (params.alignment_free && !params.fasta) {
+    if (params.alignment_free) {
         ALIGNMENT_FREE (
             ch_for_alignments,
             params.task.cpus
