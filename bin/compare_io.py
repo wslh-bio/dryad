@@ -25,30 +25,36 @@ def create_list_of_input(samplesheet):
 
 def check_parsnp_file(parsnp_file, input_list):
 
-	with open(parsnp_file, "r") as infile:
-		tree_content = infile.read()
+	not_present_list = []
 
-	samples_from_tree = re.findall(r'[^:()]+', tree_content)
+	with open(parsnp_file, "r") as infile:
+		parsnp_content = infile.read()
+
+	samples_from_parsnp = re.findall(r'[^:()]+', parsnp_content)
 
 	# Clean up sample names, if necessary
-	samples_from_tree = [sample.strip() for sample in samples_from_tree]
+	samples_from_parsnp = [each_sample.strip(".fna") for each_sample in samples_from_parsnp]
 
 	# Step 3: Compare the lists
-	missing_samples = set(input_list) - set(samples_from_tree)
+	for sample in input_list:
+		if sample not in samples_from_parsnp:
+			not_present_list.append(sample)
 
-	# Output results
-	if missing_samples:
-		print("Missing samples in parsnp.tree:")
-		for sample in missing_samples:
-			print(sample)
-	else:
-	    print("All samples are present in parsnp.tree.")
+	return not_present_list
 
 def main(args=None):
 	args = parse_args(args)
 
 	total_list = create_list_of_input(args.input_file)
-	check_parsnp_file(args.output_file, total_list)
+	not_present_list = check_parsnp_file(args.output_file, total_list)
+
+	with open("excluded_samples_from_parsnp.txt", 'w') as infile:
+		if len(not_present_list) == 0:
+			infile.write("No samples were excluded from parsnp's analysis.")
+		else:
+			infile.write("Samples were excluded from parsnp's analysis.\n")
+			for sample in not_present_list:
+				infile.write(f"{sample}\n")
 
 if __name__ == "__main__":
 	sys.exit(main())
