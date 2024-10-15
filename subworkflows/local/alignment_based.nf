@@ -5,6 +5,7 @@ include { SAMPLE_COUNT     } from '../../modules/local/sample_count'
 include { PARSNP           } from '../../modules/local/parsnp'
 include { IQTREE           } from '../../modules/local/iqtree'
 include { SNPDISTS         } from '../../modules/local/snpdists'
+include { COMPARE_IO       } from '../../modules/local/compare_io'
 
 workflow ALIGNMENT_BASED {
 
@@ -14,6 +15,7 @@ workflow ALIGNMENT_BASED {
     outdir              // output directory
     partition           // tells parsnp if it's important to partition
     add_reference       // tells parsnp if it needs to remove the reference
+    samplesheet         // valid samplesheet to compare output to
 
     main:
     ch_versions = Channel.empty()       // Creating empty version channel to get versions.yml
@@ -28,11 +30,11 @@ workflow ALIGNMENT_BASED {
         )
     ch_versions = ch_versions.mix(PARSNP.out.versions) 
 
-
 //
 // Remove reference
 //
     if (!add_reference) {
+
         REMOVE_REFERENCE (
             PARSNP.out.mblocks,
             fasta
@@ -94,8 +96,14 @@ workflow ALIGNMENT_BASED {
         ch_versions = ch_versions.mix(SNPDISTS.out.versions)
     }
 
+    COMPARE_IO (
+        samplesheet,
+        PARSNP.out.mblocks
+    )
+
     emit:
     phylogeny    =      IQTREE.out.phylogeny
     tsv          =      SNPDISTS.out.tsv
+    excluded     =      COMPARE_IO.out.excluded
     versions     =      ch_versions
 }
