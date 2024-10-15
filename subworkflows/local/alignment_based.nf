@@ -31,6 +31,15 @@ workflow ALIGNMENT_BASED {
     ch_versions = ch_versions.mix(PARSNP.out.versions) 
 
 //
+// COMPARE_IO
+//
+
+    COMPARE_IO (
+        samplesheet,
+        PARSNP.out.tree
+    )
+
+//
 // Remove reference
 //
     if (!add_reference) {
@@ -95,11 +104,6 @@ workflow ALIGNMENT_BASED {
         )
         ch_versions = ch_versions.mix(SNPDISTS.out.versions)
     }
-
-    COMPARE_IO (
-        samplesheet,
-        PARSNP.out.mblocks
-    )
 
     emit:
     phylogeny    =      IQTREE.out.phylogeny
