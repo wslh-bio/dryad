@@ -1,4 +1,4 @@
-#! usr/bin/env python3
+#!/usr/bin/env python3
 
 import pandas as pd
 import argparse
@@ -7,8 +7,9 @@ import sys
 
 def parse_args(args=None):
 	Description='Compares the samples input in the pipeline to the samples that exit parsnp'
+	Epilog='Usage: python3 compare_io.py <SAMPLESHEET> <PARSNP.TREE>'
 
-	parser = argparse.ArgumentParser(description=Description)
+	parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
 	parser.add_argument('input_file',
 		help='Samplesheet.valid.csv with all the samples denoted.')
 	parser.add_argument('output_file',
