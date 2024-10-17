@@ -5,6 +5,8 @@ import argparse
 import re
 import sys
 
+from pathlib import Path
+
 def parse_args(args=None):
 	Description='Compares the samples input in the pipeline to the samples that exit parsnp'
 	Epilog='Usage: python3 compare_io.py <SAMPLESHEET> <PARSNP.TREE>'
@@ -34,11 +36,15 @@ def check_parsnp_file(parsnp_file, input_list):
 	samples_from_parsnp = re.findall(r'[^:()]+', parsnp_content)
 
 	# Clean up sample names, if necessary
-	samples_from_parsnp = [each_sample.strip(".fna") for each_sample in samples_from_parsnp]
+	cleaned_samples = []
+
+	for sample in samples_from_parsnp:
+		sample = Path(sample).stem 
+		cleaned_samples.append(sample)
 
 	# Step 3: Compare the lists
 	for sample in input_list:
-		if sample not in samples_from_parsnp:
+		if sample not in cleaned_samples:
 			not_present_list.append(sample)
 
 	return not_present_list
