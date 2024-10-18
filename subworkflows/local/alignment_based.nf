@@ -5,7 +5,7 @@ include { SAMPLE_COUNT     } from '../../modules/local/sample_count'
 include { PARSNP           } from '../../modules/local/parsnp'
 include { IQTREE           } from '../../modules/local/iqtree'
 include { SNPDISTS         } from '../../modules/local/snpdists'
-include { COMPARE_IO       } from '../../modules/local/compare_io'
+// include { COMPARE_IO       } from '../../modules/local/compare_io'
 
 workflow ALIGNMENT_BASED {
 
@@ -34,10 +34,10 @@ workflow ALIGNMENT_BASED {
 // COMPARE_IO
 //
 
-    COMPARE_IO (
-        samplesheet,
-        PARSNP.out.tree
-    )
+    // COMPARE_IO (
+    //     samplesheet,
+    //     PARSNP.out.tree
+    // )
 
 //
 // Remove reference
@@ -108,6 +108,6 @@ workflow ALIGNMENT_BASED {
     emit:
     phylogeny    =      IQTREE.out.phylogeny
     tsv          =      SNPDISTS.out.tsv
-    excluded     =      COMPARE_IO.out.excluded
+    // excluded     =      COMPARE_IO.out.excluded
     versions     =      ch_versions
 }
