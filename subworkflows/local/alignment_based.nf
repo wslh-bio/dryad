@@ -45,8 +45,7 @@ workflow ALIGNMENT_BASED {
     if (!add_reference) {
 
         REMOVE_REFERENCE (
-            PARSNP.out.mblocks,
-            fasta
+            PARSNP.out.mblocks
         )
         .set{ ch_for_mblocks }
 
