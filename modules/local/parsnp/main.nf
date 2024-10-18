@@ -15,12 +15,17 @@ process PARSNP {
     path( "parsnp_output/parsnp.ggr"            )   , emit: gingr_file
     path( "parsnp_output/parsnp.snps.mblocks"   )   , emit: mblocks
     path( "parsnp_output/parsnp.tree"           )   , emit: tree
+    path( "*"               )   , emit: log
     path( "versions.yml"                        )   , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
+    // TODO Figure out how to add -r ! as a string as the default
+    // remove the referece as default so keeping add ref is fine
+    // new module needs to be written for aligner.log 
+    //
     """
     parsnp -r $fasta \\
            -d $reads \\
