@@ -6,8 +6,6 @@ process REMOVE_REFERENCE {
 
     input:
     path fastas
-    path reference_fasta
-
 
     output:
     path "*.mblocks"   , emit: mblocks
@@ -18,7 +16,6 @@ process REMOVE_REFERENCE {
     script: // This script is bundled with the pipeline, in wslh-bio/dryad/bin/
     """
     remove_reference.py \\
-    $fastas \\
-    $reference_fasta
+    $fastas
     """
 }
