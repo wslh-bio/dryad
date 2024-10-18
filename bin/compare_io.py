@@ -31,6 +31,7 @@ def check_parsnp_file(parsnp_file, input_list):
 	not_present_list = []
 
 	with open(parsnp_file, "r") as infile:
+
 		parsnp_content = infile.read()
 
 	samples_from_parsnp = re.findall(r'[^:()]+', parsnp_content)
