@@ -45,7 +45,7 @@ workflow DRYAD {
         exit(1)
     }
 
-    if (params.alignment_based && !params.fasta) {
+    if (params.alignment_based && !params.fasta && !params.fasta=="!") {
         error("ERROR: An alignment based comparison needs a reference fasta. Do you want to run an alignment free comparison instead?\nDryad terminating...")
         exit(1)
     }
