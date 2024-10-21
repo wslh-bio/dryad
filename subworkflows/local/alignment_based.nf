@@ -1,10 +1,11 @@
 // Alignment_based subworkflow
 
-include { REMOVE_REFERENCE } from '../../modules/local/remove_reference'
-include { SAMPLE_COUNT     } from '../../modules/local/sample_count'
-include { PARSNP           } from '../../modules/local/parsnp'
-include { IQTREE           } from '../../modules/local/iqtree'
-include { SNPDISTS         } from '../../modules/local/snpdists'
+include { REMOVE_REFERENCE         } from '../../modules/local/remove_reference'
+include { SAMPLE_COUNT             } from '../../modules/local/sample_count'
+include { PARSNP                   } from '../../modules/local/parsnp'
+include { IQTREE                   } from '../../modules/local/iqtree'
+include { SNPDISTS                 } from '../../modules/local/snpdists'
+include { PARSE_PARSNP_ALIGNER_LOG } from '../../modules/local/parse_parsnpAlignerLog'
 // include { COMPARE_IO       } from '../../modules/local/compare_io'
 
 workflow ALIGNMENT_BASED {
@@ -57,6 +58,14 @@ workflow ALIGNMENT_BASED {
         )
 
         //
+        // PARSER
+        //
+        PARSE_PARSNP_ALIGNER_LOG (
+            PARSNP.out.log,
+            params.add_reference
+        )
+
+        //
         // IQTREE
         //
         IQTREE (
@@ -79,25 +88,33 @@ workflow ALIGNMENT_BASED {
 //
     if (add_reference) {
 
-    //
-    // SAMPLE COUNT
-    //
+        //
+        // SAMPLE COUNT
+        //
         SAMPLE_COUNT (
             PARSNP.out.mblocks
         )
 
-    //
-    // IQTREE
-    //
+        //
+        // PARSER
+        //
+        PARSE_PARSNP_ALIGNER_LOG (
+            PARSNP.out.log,
+            params.add_reference
+        )
+
+        //
+        // IQTREE
+        //
         IQTREE (
             PARSNP.out.mblocks,
             SAMPLE_COUNT.out.count
         )
         ch_versions = ch_versions.mix(IQTREE.out.versions)
 
-    //
-    // SNPDISTS
-    //
+        //
+        // SNPDISTS
+        //
         SNPDISTS (
             PARSNP.out.mblocks
         )
@@ -107,6 +124,7 @@ workflow ALIGNMENT_BASED {
     emit:
     phylogeny    =      IQTREE.out.phylogeny
     tsv          =      SNPDISTS.out.tsv
+    
     // excluded     =      COMPARE_IO.out.excluded
     versions     =      ch_versions
 }
