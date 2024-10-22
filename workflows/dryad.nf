@@ -45,8 +45,8 @@ workflow DRYAD {
         exit(1)
     }
 
-    if (params.alignment_based && !params.fasta && !params.fasta=="!") {
-        error("ERROR: An alignment based comparison needs a reference fasta. Do you want to run an alignment free comparison instead?\nDryad terminating...")
+    if (params.alignment_based && !params.fasta && !params.random_reference) {
+        error("ERROR: An alignment based comparison needs a reference fasta. If you want to run Dryad with a random reference picked by parsnp, use --random_reference.\nDryad terminating...")
         exit(1)
     }
 
@@ -111,7 +111,8 @@ workflow DRYAD {
             params.outdir,
             params.parsnp_partition,
             params.add_reference,
-            INPUT_CHECK.out.csv
+            INPUT_CHECK.out.csv,
+            params.random_reference
             )
     }
 }
