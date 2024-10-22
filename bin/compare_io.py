@@ -31,7 +31,7 @@ def check_parsnp_file(parsnp_file, input_list):
 	not_present_list = []
 	cleaned_samples = []
 
-	parsnp_df = pd.read_csv(parsnp_file,sep='\t')
+	parsnp_df = pd.read_table(parsnp_file)
 	samples_present = parsnp_df.loc[:'Sample']
 
 	# Clean up sample names, if necessary
