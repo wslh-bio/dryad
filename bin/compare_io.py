@@ -1,8 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3.7
 
 import pandas as pd
 import argparse
-import re
 import sys
 
 from pathlib import Path
@@ -15,7 +14,7 @@ def parse_args(args=None):
 	parser.add_argument('input_file',
 		help='Samplesheet.valid.csv with all the samples denoted.')
 	parser.add_argument('output_file',
-		help='Parsnp tree output file to compare input samples to.')
+		help='Aligner log output file to compare input samples to.')
 
 	return parser.parse_args(args)
 
@@ -28,22 +27,19 @@ def create_list_of_input(samplesheet):
 
 def check_parsnp_file(parsnp_file, input_list):
 
+	# Setting up empty lists
 	not_present_list = []
-
-	with open(parsnp_file, "r") as infile:
-
-		parsnp_content = infile.read()
-
-	samples_from_parsnp = re.findall(r'[^:()]+', parsnp_content)
-
-	# Clean up sample names, if necessary
 	cleaned_samples = []
 
-	for sample in samples_from_parsnp:
+	parsnp_df = pd.read_csv(parsnp_file,sep='\t')
+	samples_present = parsnp_df.loc[:'Sample']
+
+	# Clean up sample names, if necessary
+	for sample in samples_present:
 		sample = Path(sample).stem 
 		cleaned_samples.append(sample)
 
-	# Step 3: Compare the lists
+	# Compare the lists
 	for sample in input_list:
 		if sample not in cleaned_samples:
 			not_present_list.append(sample)
@@ -57,8 +53,10 @@ def main(args=None):
 	not_present_list = check_parsnp_file(args.output_file, total_list)
 
 	with open("excluded_samples_from_parsnp.txt", 'w') as infile:
+
 		if len(not_present_list) == 0:
 			infile.write("No samples were excluded from parsnp's analysis.")
+
 		else:
 			infile.write("Samples were excluded from parsnp's analysis.\n")
 			for sample in not_present_list:
