@@ -1,12 +1,11 @@
 // Alignment_based subworkflow
 
-include { REMOVE_REFERENCE         } from '../../modules/local/remove_reference'
-include { SAMPLE_COUNT             } from '../../modules/local/sample_count'
-include { PARSNP                   } from '../../modules/local/parsnp'
-include { IQTREE                   } from '../../modules/local/iqtree'
-include { SNPDISTS                 } from '../../modules/local/snpdists'
-include { PARSE_PARSNP_ALIGNER_LOG } from '../../modules/local/parse_parsnpAlignerLog'
-// include { COMPARE_IO       } from '../../modules/local/compare_io'
+include { SAMPLE_COUNT               } from '../../modules/local/sample_count'
+include { PARSNP                     } from '../../modules/local/parsnp'
+include { IQTREE                     } from '../../modules/local/iqtree'
+include { SNPDISTS                   } from '../../modules/local/snpdists'
+include { PARSE_PARSNP_ALIGNER_LOG   } from '../../modules/local/parse_parsnp_aligner_log'
+include { COMPARE_IO       } from '../../modules/local/compare_io'
 
 workflow ALIGNMENT_BASED {
 
@@ -32,23 +31,12 @@ workflow ALIGNMENT_BASED {
     ch_versions = ch_versions.mix(PARSNP.out.versions) 
 
 //
-// COMPARE_IO
-//
-
-    // COMPARE_IO (
-    //     samplesheet,
-    //     PARSNP.out.tree
-    // )
-
-//
 // Remove reference
 //
     if (!add_reference) {
 
-        REMOVE_REFERENCE (
-            PARSNP.out.mblocks
-        )
-        .set{ ch_for_mblocks }
+        PARSNP.out.mblocks
+            .set{ ch_for_mblocks }
 
         //
         // SAMPLE COUNT
@@ -63,6 +51,15 @@ workflow ALIGNMENT_BASED {
         PARSE_PARSNP_ALIGNER_LOG (
             PARSNP.out.log,
             params.add_reference
+        )
+
+        //
+        // COMPARE_IO
+        //
+
+        COMPARE_IO (
+            samplesheet,
+            PARSE_PARSNP_ALIGNER_LOG.out.aligner_log
         )
 
         //
@@ -103,6 +100,11 @@ workflow ALIGNMENT_BASED {
             params.add_reference
         )
 
+        COMPARE_IO (
+            samplesheet,
+            PARSE_PARSNP_ALIGNER_LOG.out.aligner_log
+        )
+
         //
         // IQTREE
         //
@@ -124,7 +126,7 @@ workflow ALIGNMENT_BASED {
     emit:
     phylogeny    =      IQTREE.out.phylogeny
     tsv          =      SNPDISTS.out.tsv
-    
-    // excluded     =      COMPARE_IO.out.excluded
+    aligner_log  =      PARSE_PARSNP_ALIGNER_LOG.out.aligner_log
+    excluded     =      COMPARE_IO.out.excluded
     versions     =      ch_versions
 }
