@@ -27,7 +27,7 @@ process PARSNP {
     // remove the referece as default so keeping add ref is fine
     // new module needs to be written for aligner.log 
     //
-    if (fasta == 'false') {
+    if (fasta.toLowerCase() == 'false') {
         """
         parsnp -r $fasta \\
                -d $reads \\
