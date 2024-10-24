@@ -43,7 +43,7 @@ nextflow run wslh-bio/dryad \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
    --outdir <OUTDIR> \
-   --fasta <REFERENCE_FASTA> \
+   --fasta <REFERENCE_FASTA | random> \
    --alignment_based 
 ```
 
@@ -54,7 +54,7 @@ nextflow run wslh-bio/dryad \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
    --outdir <OUTDIR> \
-   --fasta <REFERENCE_FASTA> \
+   --fasta <REFERENCE_FASTA | random> \
    --alignment_based \
    --alignment_free
 ```
@@ -79,6 +79,7 @@ Dryad's main parameters and their defaults are shown in the table below:
 | outdir | Output directory where the results will be saved. Absolute path must be used for storage on cloud infrastructure | --outdir <DESIRED_OUTPUT_PATH> |
 | profile | Denotes how to access containerized software. | -profile aws |
 | fasta | Reference fasta used for alignment based comparisons. Default is no reference fasta. | --fasta <PATH_TO_REF_FASTA> |
+| fasta random | Reference fasta used for alignment based comparisons is chosen by Parsnp's algorithm. Default is not to use a random fasta file as a reference. | --fasta random |
 | alignment_based | Performs a fine scale analysis within a singular outbreak | --alignment_based |
 | alignment_free | Performs a historical analysis across multiple years and outbreaks | --alignment_free |
 | task.cpus | Denotes how many cpus to use for Mashtree. Default task.cpus is 2. |--task.cpus 4 |
@@ -110,22 +111,46 @@ Dryad's main parameters and their defaults are shown in the table below:
 An example of Dryad's output directory structure for both alignment based and alignment free steps can be seen below. These directories will not include QUAST if `--phoenix` is used:
 ```
 alignment_based_output/
+├── compare
+│   └── excluded_samples_from_parsnp.txt
 ├── iqtree
 │   └── parsnp.snps.mblocks.treefile
+├── parse
+│   └── aligner_log.tsv
 ├── parsnp
 │   └── parsnp_output
+│       ├── config
+│       │   ├── all.mumi
+│       │   └── all_mumi.ini
+│       ├── log
+│       │   ├── harvest-mblocks.err
+│       │   ├── harvest-mblocks.out
+│       │   ├── parsnp-aligner.err
+│       │   ├── parsnpAligner.log
+│       │   ├── parsnp-aligner.out
+│       │   ├── parsnp-mumi.err
+│       │   ├── parsnp-mumi.out
+│       │   ├── raxml.err
+│       │   └── raxml.out
+│       ├── parsnpAligner.ini
 │       ├── parsnp.ggr
+│       ├── parsnp.maf
 │       ├── parsnp.snps.mblocks
 │       ├── parsnp.tree
-│       └── parsnp.xmfa
+│       ├── parsnp.xmfa
+│       └── Riyadh_4_2013.fna.ref
 ├── pipeline_info
-│   ├── *.html
-│   ├── *.txt
+│   ├── execution_report_2024-10-24_13-17-54.html
+│   ├── execution_timeline_2024-10-24_13-17-54.html
+│   ├── execution_trace_2024-10-24_13-17-54.txt
+│   ├── pipeline_dag_2024-10-24_13-17-54.html
 │   └── samplesheet.valid.csv
-├── quast
+└── quast
 │   ├── *.quast.report.tsv
 │   ├── *.transposed.quast.report.tsv
 │   └── quast_results.tsv
+├── sample
+│   └── count.txt
 └── snpdists
     └── snp_dists_matrix.tsv
 ```
@@ -151,6 +176,7 @@ Notable output files:
 | quast_results.tsv* | Assembly quality results |
 | snp_dists_matrix.tsv | Number of SNP distances between each pair of isolates |
 | parsnp.snps.mblocks.treefile | Maximum likelihood phylogenetic tree|
+| aligner_log.tsv
 
 *QUAST results will not be present if `--skip_quast` was used.
 
