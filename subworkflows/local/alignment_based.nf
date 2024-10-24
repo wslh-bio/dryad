@@ -28,7 +28,6 @@ workflow ALIGNMENT_BASED {
         random_reference
         )
     ch_versions = ch_versions.mix(PARSNP.out.versions) 
-    }
 
 //
 // Remove reference
