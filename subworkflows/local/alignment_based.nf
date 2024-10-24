@@ -16,7 +16,7 @@ workflow ALIGNMENT_BASED {
     partition           // tells parsnp if it's important to partition
     add_reference       // tells parsnp if it needs to remove the reference
     samplesheet         // valid samplesheet to compare output to
-    random_reference    // tells parsnp if it needs to use a random reference
+    // random_reference    // tells parsnp if it needs to use a random reference
 
     main:
     ch_versions = Channel.empty()       // Creating empty version channel to get versions.yml
@@ -24,8 +24,7 @@ workflow ALIGNMENT_BASED {
     PARSNP (
         reads,
         fasta,
-        partition,
-        random_reference
+        partition
         )
     ch_versions = ch_versions.mix(PARSNP.out.versions) 
 
