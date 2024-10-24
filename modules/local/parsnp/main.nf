@@ -7,9 +7,9 @@ process PARSNP {
 
     input:
     path reads
-    path fasta
+    val fasta
     val partition
-    val random
+    val random_reference
 
     output:
     path( "parsnp_output/parsnp.xmfa"           )   , emit: core_genome_alignment
@@ -28,20 +28,7 @@ process PARSNP {
     // remove the referece as default so keeping add ref is fine
     // new module needs to be written for aligner.log 
     //
-    if (random == "true") {
-        def args = task.ext.args ?: ''
-        """
-        parsnp $args \\
-            -d $reads \\
-            -o ./parsnp_output \\
-            $partition
-
-        cat <<-END_VERSIONS > versions.yml
-        "${task.process}":
-            parsnp: \$(parsnp --version | cut -d ' ' -f 2 | sed 's/v//')
-        END_VERSIONS
-        """
-    } else {
+    if (random_reference == 'false') {        // def args = task.ext.args ?: ''
         """
         parsnp -r $fasta \\
                -d $reads \\
@@ -53,4 +40,18 @@ process PARSNP {
             parsnp: \$(parsnp --version | cut -d ' ' -f 2 | sed 's/v//')
         END_VERSIONS
         """
+    // else
+    } else {
+        """
+        parsnp -r ! \\
+               -d $reads \\
+               -o ./parsnp_output \\
+               $partition
+
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            parsnp: \$(parsnp --version | cut -d ' ' -f 2 | sed 's/v//')
+        END_VERSIONS
+        """
+    }
 }
