@@ -111,8 +111,7 @@ workflow DRYAD {
             params.outdir,
             params.parsnp_partition,
             params.add_reference,
-            INPUT_CHECK.out.csv,
-            params.random_reference
+            INPUT_CHECK.out.csv
             )
     }
 }
