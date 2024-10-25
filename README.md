@@ -175,8 +175,10 @@ Notable output files:
 | ------------- | ------------- |
 | quast_results.tsv* | Assembly quality results |
 | snp_dists_matrix.tsv | Number of SNP distances between each pair of isolates |
-| parsnp.snps.mblocks.treefile | Maximum likelihood phylogenetic tree|
-| aligner_log.tsv
+| parsnp.snps.mblocks.treefile | Maximum likelihood phylogenetic tree |
+| aligner_log.tsv | Coverage statistics calculated from parsnp |
+| excluded_samples_from_parsnp.txt | Lists samples that were excluded from parsnp's analysis due to a MUMi distance > 0.01 |
+
 
 *QUAST results will not be present if `--skip_quast` was used.
 
