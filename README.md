@@ -138,7 +138,7 @@ alignment_based_output/
 │       ├── parsnp.snps.mblocks
 │       ├── parsnp.tree
 │       ├── parsnp.xmfa
-│       └── Riyadh_4_2013.fna.ref
+│       └── *.ref
 ├── pipeline_info
 │   ├── execution_report_2024-10-24_13-17-54.html
 │   ├── execution_timeline_2024-10-24_13-17-54.html
