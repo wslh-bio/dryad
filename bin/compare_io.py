@@ -31,8 +31,9 @@ def check_parsnp_file(parsnp_file, input_list):
 	not_present_list = []
 	cleaned_samples = []
 
-	parsnp_df = pd.read_table(parsnp_file)
-	samples_present = parsnp_df.loc[:'Sample']
+	parsnp_df = pd.read_csv(parsnp_file, sep='\t')
+
+	samples_present = parsnp_df['Sample'].tolist()
 
 	# Clean up sample names, if necessary
 	for sample in samples_present:
@@ -40,8 +41,8 @@ def check_parsnp_file(parsnp_file, input_list):
 		cleaned_samples.append(sample)
 
 	# Compare the lists
-	for sample in input_list:
-		if sample not in cleaned_samples:
+	for sample in cleaned_samples:
+		if sample not in input_list:
 			not_present_list.append(sample)
 
 	return not_present_list
