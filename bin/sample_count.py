@@ -16,8 +16,8 @@ def parse_args(args=None):
 
 def count_samples(compiled_fasta_file):
     with open(compiled_fasta_file, "r") as inFasta, open("count.txt", "w") as count_file:
-
-        count = 0
+        # Starts at -1 to account for reference fasta 
+        count = -1
         for each_record in SeqIO.parse(inFasta, "fasta"):
             count += 1
         count_file.write(str(count))
