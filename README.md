@@ -2,7 +2,7 @@
 ![dryad_logo](assets/dryad_logo_500.png)
 
 ![GPL-3.0](https://img.shields.io/github/license/wslh-bio/dryad)
-![Github_Release](https://img.shields.io/badge/release%20-%20v%204.0.0%20-%20blue)
+![Github_Release](https://img.shields.io/badge/release-4.1.0-blue)
 
 **Dryad** is a [Nextflow](https://www.nextflow.io/) pipeline for examining prokaryote relatedness. Dryad can perform a reference free analysis and/or SNP analysis.
 
