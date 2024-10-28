@@ -46,7 +46,7 @@ workflow DRYAD {
     }
 
     if (params.alignment_based && !params.fasta && !params.random_reference) {
-        error("ERROR: An alignment based comparison needs a reference fasta. If you want to run Dryad with a random reference picked by parsnp, use --random_reference.\nDryad terminating...")
+        error("ERROR: An alignment based comparison needs a reference fasta. If you want to run Dryad with a random reference picked by parsnp, use --fasta random.\nDryad terminating...")
         exit(1)
     }
 
