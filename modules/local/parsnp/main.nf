@@ -23,10 +23,7 @@ process PARSNP {
     task.ext.when == null || task.ext.when
 
     script:
-    // TODO Figure out how to add -r ! as a string as the default
-    // remove the referece as default so keeping add ref is fine
-    // new module needs to be written for aligner.log 
-    //
+
     if (fasta.toLowerCase() != 'random') {
         """
         parsnp -r $fasta \\
