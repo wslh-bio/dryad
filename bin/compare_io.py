@@ -4,10 +4,6 @@ import pandas as pd
 import argparse
 import sys
 
-from pathlib import Path
-	
-#Make into table with sample name and if excluded
-
 def parse_args(args=None):
 	Description='Compares the samples input in the pipeline to the samples that exit parsnp'
 	Epilog='Usage: python3 compare_io.py <SAMPLESHEET> <LOG>'
