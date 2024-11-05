@@ -33,23 +33,47 @@ def process_dfs(log, excluded, quast):
 
     return df_log, df_excluded, df_quast
 
-def join_dfs(df_log, df_excluded, df_quast):
+def join_dfs_no_quast(df_log, df_excluded):
 
+    # Ensure sample is just name
+    df_log['Sample'] = df_log['Sample'].apply(lambda x: Path(x).stem)
+    df_excluded['Sample'] = df_excluded['Sample'].apply(lambda x: Path(x).stem)
+
+    # Begin joining 
+    df_log_excluded = pd.merge(df_log, df_excluded, on='Sample', how='outer')
+
+    # Rename and Drop columns
+    df_log_excluded = df_log_excluded.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
+    df_log_excluded = df_log_excluded.drop('Assembly Length (bp)', axis=1)
+
+    df_log_excluded.to_csv('dryad_summary.csv', index=False)
+
+def join_dfs_with_quast(df_log, df_excluded, df_quast):
+
+    # Ensure sample is just name
     df_log['Sample'] = df_log['Sample'].apply(lambda x: Path(x).stem)
     df_excluded['Sample'] = df_excluded['Sample'].apply(lambda x: Path(x).stem)
     df_quast['Sample'] = df_quast['Sample'].apply(lambda x: Path(x).stem)
-    
+
+    # Begin joining 
     df_log_excluded = pd.merge(df_log, df_excluded, on='Sample', how='outer')
     df_log_excluded_quast = pd.merge(df_log_excluded, df_quast, on='Sample', how='outer')
-    df_log_excluded_quast.rename(columns={"excluded_from_analysis":"Excluded from Parsnp's analysis"})
 
-    df_log_excluded_quast.to_csv('output.csv', index=False)
+    # Rename and Drop columns
+    df_log_excluded_quast = df_log_excluded_quast.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
+    df_log_excluded_quast = df_log_excluded_quast.drop('Assembly Length (bp)', axis=1)
+
+    df_log_excluded_quast.to_csv('dryad_summary.csv', index=False)
 
 def main(args=None):
     args = parse_args(args)
 
     l,e,q =process_dfs(args.aligner_log, args.excluded_samples, args.quast)
-    join_dfs(l,e,q)
+
+    if args.quast == 'false':
+        join_dfs_no_quast(l,e)
+    else:
+        join_dfs_with_quast(l,e,q)
 
 if __name__ == "__main__":
 	sys.exit(main())
