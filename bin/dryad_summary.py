@@ -5,6 +5,8 @@ import sys
 
 import pandas as pd
 
+from pathlib import Path
+
 def parse_args(args=None):
 	Description='Summarized both alignment free and alignment based output from Dryad.'
 	Epilog='Usage: python3 dryad_summary.py '
@@ -32,13 +34,22 @@ def process_dfs(log, excluded, quast):
     return df_log, df_excluded, df_quast
 
 def join_dfs(df_log, df_excluded, df_quast):
+
+    df_log['Sample'] = df_log['Sample'].apply(lambda x: Path(x).stem)
+    df_excluded['Sample'] = df_excluded['Sample'].apply(lambda x: Path(x).stem)
+    df_quast['Sample'] = df_quast['Sample'].apply(lambda x: Path(x).stem)
+    
     df_log_excluded = pd.merge(df_log, df_excluded, on='Sample', how='outer')
-    print(df_log_excluded)
+    df_log_excluded_quast = pd.merge(df_log_excluded, df_quast, on='Sample', how='outer')
+    df_log_excluded_quast.rename(columns={"excluded_from_analysis":"Excluded from Parsnp's analysis"})
+
+    df_log_excluded_quast.to_csv('output.csv', index=False)
 
 def main(args=None):
     args = parse_args(args)
 
-    process_dfs(args.aligner_log, args.excluded_samples, args.quast)
+    l,e,q =process_dfs(args.aligner_log, args.excluded_samples, args.quast)
+    join_dfs(l,e,q)
 
 if __name__ == "__main__":
 	sys.exit(main())
