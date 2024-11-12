@@ -7,7 +7,7 @@ process PARSNP {
 
     input:
     path reads
-    val fasta
+    path fasta
     val partition
 
     output:
@@ -24,7 +24,7 @@ process PARSNP {
 
     script:
 
-    if (fasta.toLowerCase() != 'random') {
+    if (fasta != 'random') {
         """
         parsnp -r $fasta \\
                -d $reads \\
