@@ -68,7 +68,7 @@ def join_dfs_with_quast(df_log, df_excluded, df_quast):
 def main(args=None):
     args = parse_args(args)
 
-    l,e,q =process_dfs(args.aligner_log, args.excluded_samples, args.quast)
+    l,e,q = process_dfs(args.aligner_log, args.excluded_samples, args.quast)
 
     if args.quast == 'false':
         join_dfs_no_quast(l,e)
