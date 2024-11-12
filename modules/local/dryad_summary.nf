@@ -4,7 +4,7 @@ process DRYAD_SUMMARY {
 
     input:
         val quast
-        path log
+        path aligner_log
         path excluded_samples
 
     output:
@@ -15,7 +15,7 @@ process DRYAD_SUMMARY {
 
     script: // This script is bundled with the pipeline, in wslh-bio/dryad/bin
     """
-    dryad_summary.py $log $quast $excluded_samples
+    dryad_summary.py $aligner_log $quast $excluded_samples
     """
 
 }

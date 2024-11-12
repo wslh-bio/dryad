@@ -7,7 +7,7 @@ process COMPARE_IO {
     path aligner_log
 
     output:
-    path "excluded_samples_from_parsnp.txt" , emit: excluded
+    path("sample_exclusion_status.csv") , emit: excluded
 
     when:
     task.ext.when == null || task.ext.when
