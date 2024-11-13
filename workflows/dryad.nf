@@ -8,10 +8,19 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
 // Checks to ensure input parameters exist
 def checkPathParamList = [ params.input ]
-for (param in checkPathParamList) {if (param) { file(param, checkIfExists: true) } }
+for (param in checkPathParamList) {
+    if (param) {
+        file(param, checkIfExists: true)
+        }
+    }
 
 // Checks for mandatory parameters and puts it into a channel
-if (params.input) {ch_input = file(params.input) } else { exit 1, 'Input samplesheet is not specified!'}
+if (params.input) {
+    ch_input = file(params.input) 
+} 
+else { 
+    exit 1, 'Input samplesheet is not specified!'
+}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -101,6 +110,13 @@ workflow DRYAD {
              )
     }
 
+    if (params.fasta == "random") {
+        ch_fasta = file(params.random_file, checkIfExists:true)
+    }
+    else {
+        ch_fasta = file(params.fasta, checkIfExists:true)
+    }
+
     //
     // SUBWORKFLOW: Alignment Based
     //
@@ -108,7 +124,7 @@ workflow DRYAD {
         if (!params.skip_quast) {
             ALIGNMENT_BASED (
                 ch_for_alignments,
-                params.fasta,
+                ch_fasta,
                 params.outdir,
                 params.parsnp_partition,
                 params.add_reference,
@@ -119,7 +135,7 @@ workflow DRYAD {
         if (params.skip_quast) {
             ALIGNMENT_BASED (
                 ch_for_alignments,
-                params.fasta,
+                ch_fasta,
                 params.outdir,
                 params.parsnp_partition,
                 params.add_reference,
