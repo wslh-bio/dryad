@@ -22,11 +22,11 @@ process PARSNP {
     when:
     task.ext.when == null || task.ext.when
 
+
     script:
-
-    if (fasta != 'random') {
+    def fasta_input = fasta.name != 'NO_FILE' ? "$fasta" : '!'
         """
-        parsnp -r $fasta \\
+        parsnp -r $fasta_input \\
                -d $reads \\
                -o ./parsnp_output \\
                $partition
@@ -36,18 +36,4 @@ process PARSNP {
             parsnp: \$(parsnp --version | cut -d ' ' -f 2 | sed 's/v//')
         END_VERSIONS
         """
-
-    } else {
-        """
-        parsnp -r ! \\
-               -d $reads \\
-               -o ./parsnp_output \\
-               $partition
-
-        cat <<-END_VERSIONS > versions.yml
-        "${task.process}":
-            parsnp: \$(parsnp --version | cut -d ' ' -f 2 | sed 's/v//')
-        END_VERSIONS
-        """
-    }
 }
