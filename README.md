@@ -108,11 +108,13 @@ Dryad's main parameters and their defaults are shown in the table below:
       - [Snp-dists v0.8.2](https://github.com/tseemann/snp-dists) is used to calculate the SNP distance matrix.
 
 ## Output
-An example of Dryad's output directory structure for both alignment based and alignment free steps can be seen below. These directories will not include QUAST if `--phoenix` is used:
+An example of Dryad's output directory structure for both alignment based and alignment free steps can be seen below. These directories will not include QUAST if `--skip_quast` is used:
 ```
 alignment_based_output/
 ├── compare
-│   └── excluded_samples_from_parsnp.txt
+│   └── sample_exclusion_status.csv
+├── dryad
+│   └── dryad_summary.csv
 ├── iqtree
 │   └── parsnp.snps.mblocks.treefile
 ├── parse
@@ -138,17 +140,17 @@ alignment_based_output/
 │       ├── parsnp.snps.mblocks
 │       ├── parsnp.tree
 │       ├── parsnp.xmfa
-│       └── *.ref
+│       └── *.fna.ref
 ├── pipeline_info
-│   ├── execution_report_2024-10-24_13-17-54.html
-│   ├── execution_timeline_2024-10-24_13-17-54.html
-│   ├── execution_trace_2024-10-24_13-17-54.txt
-│   ├── pipeline_dag_2024-10-24_13-17-54.html
+│   ├── execution_report_*.html
+│   ├── execution_timeline_*.html
+│   ├── execution_trace_*.txt
+│   ├── pipeline_dag_*.html
 │   └── samplesheet.valid.csv
-└── quast
+├── quast
 │   ├── *.quast.report.tsv
-│   ├── *.transposed.quast.report.tsv
-│   └── quast_results.tsv
+│   ├── *.transposed.quast.tsv
+│   ├── quast_results.tsv
 ├── sample
 │   └── count.txt
 └── snpdists
