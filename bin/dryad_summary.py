@@ -44,7 +44,6 @@ def join_dfs_no_quast(df_log, df_excluded):
 
     # Rename and Drop columns
     df_log_excluded = df_log_excluded.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
-    df_log_excluded = df_log_excluded.drop('Assembly Length (bp)', axis=1)
 
     df_log_excluded.to_csv('dryad_summary.csv', index=False)
 
