@@ -180,7 +180,7 @@ Notable output files:
 | parsnp.snps.mblocks.treefile | Maximum likelihood phylogenetic tree |
 | aligner_log.tsv | Coverage statistics calculated by parsnp |
 | excluded_samples_from_parsnp.txt | Lists samples that were excluded from parsnp's analysis due to a MUMi distance > 0.01 |
-
+| dryad_summary.csv | Summarizes quast report, if run, and core genome percentages |
 
 *QUAST results will not be present if `--skip_quast` was used.
 
