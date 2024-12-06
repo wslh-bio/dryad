@@ -91,7 +91,7 @@ Dryad's main parameters and their defaults are shown in the table below:
 *If you are running an alignment based workflow on >100 samples, it may be beneficial to take into account a higher partitioning value than the default of 100. More information can be found in parsnp 2.0's [paper](https://pubmed.ncbi.nlm.nih.gov/38352342/#:~:text=Parsnp%20v2%20provides%20users%20with,combined%20into%20a%20final%20alignment.).
 
 ## Workflow
-![dryad_workflow](assets/Dryadv4Light.drawio.png)
+![dryad_workflow](assets/Dryadv4.10.drawio.png)
 
 ### 1. Universal Steps
    - Enter assembled FASTA genomes into a samplesheet. 
