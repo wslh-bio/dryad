@@ -42,8 +42,8 @@ def join_dfs_no_quast(df_log, df_excluded):
     # Begin joining 
     df_log_excluded = pd.merge(df_log, df_excluded, on='Sample', how='outer')
 
-    # Change float to int
-    df_log_excluded[['Sequence Length','Cluster Coverage (bps)']] = df_log_excluded[['Sequence Length','Cluster Coverage (bps)']].astype(int)
+    # Change float to string
+    df_log_excluded[['Sequence Length','Cluster Coverage (bps)']] = df_log_excluded[['Sequence Length','Cluster Coverage (bps)']].astype('string').str.split('.').str[0]
 
     # Rename and Drop columns
     df_log_excluded = df_log_excluded.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
