@@ -43,7 +43,7 @@ def join_dfs_no_quast(df_log, df_excluded):
     df_log_excluded = pd.merge(df_log, df_excluded, on='Sample', how='outer')
 
     # Change float to int
-    df[['Sequence Length','Cluster Coverage (bps)']] = df[['Sequence Length','Cluster Coverage (bps)']].astype(int)
+    df_log_excluded[['Sequence Length','Cluster Coverage (bps)']] = df_log_excluded[['Sequence Length','Cluster Coverage (bps)']].astype(int)
 
     # Rename and Drop columns
     df_log_excluded = df_log_excluded.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
@@ -62,7 +62,7 @@ def join_dfs_with_quast(df_log, df_excluded, df_quast):
     df_log_excluded_quast = pd.merge(df_log_excluded, df_quast, on='Sample', how='outer')
 
     # Change float to int
-    df[['Sequence Length','Cluster Coverage (bps)','Contigs','N50']] = df[['Sequence Length','Cluster Coverage (bps)','Contigs','N50']].astype(int)
+    df_log_excluded_quast[['Sequence Length','Cluster Coverage (bps)','Contigs','N50']] = df_log_excluded_quast[['Sequence Length','Cluster Coverage (bps)','Contigs','N50']].astype(int)
 
     # Rename and Drop columns
     df_log_excluded_quast = df_log_excluded_quast.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
