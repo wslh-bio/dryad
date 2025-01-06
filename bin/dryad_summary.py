@@ -42,6 +42,12 @@ def join_dfs_no_quast(df_log, df_excluded):
     # Begin joining 
     df_log_excluded = pd.merge(df_log, df_excluded, on='Sample', how='outer')
 
+    # Change float to string
+    df_log_excluded[['Sequence Length','Cluster Coverage (bps)']] = df_log_excluded[['Sequence Length','Cluster Coverage (bps)']].fillna(-1).astype(int)
+
+    # Change float to int and replace NA with -1
+    df_log_excluded = df_log_excluded.replace(-1,'')
+
     # Rename and Drop columns
     df_log_excluded = df_log_excluded.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
 
@@ -57,6 +63,12 @@ def join_dfs_with_quast(df_log, df_excluded, df_quast):
     # Begin joining 
     df_log_excluded = pd.merge(df_log, df_excluded, on='Sample', how='outer')
     df_log_excluded_quast = pd.merge(df_log_excluded, df_quast, on='Sample', how='outer')
+
+    # Change float to int and replace NA with -1
+    df_log_excluded_quast[['Sequence Length','Cluster Coverage (bps)','Contigs','N50']] = df_log_excluded_quast[['Sequence Length','Cluster Coverage (bps)','Contigs','N50']].fillna(-1).astype(int)
+
+    # Replace -1 with empty space
+    df_log_excluded_quast = df_log_excluded_quast.replace(-1,'')
 
     # Rename and Drop columns
     df_log_excluded_quast = df_log_excluded_quast.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
