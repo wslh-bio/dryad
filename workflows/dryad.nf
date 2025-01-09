@@ -88,17 +88,19 @@ workflow DRYAD {
             QUAST.out.transposed_report.collect()
             )
         ch_versions = ch_versions.mix(QUAST.out.versions)
+    } else {
+        quast_file = file("$baseDir/assets/empty.txt",checkIfExists:true)
     }
 
     //
     // Re-mapping channel to intake paths
     //
     ch_input_reads
-    .map { sample, fasta ->
-    fasta
-    } // Produces queue channel of just fasta file paths in a list
-    .collect()
-    .set { ch_for_alignments }
+        .map { sample, fasta ->
+            fasta
+        } // Produces queue channel of just fasta file paths in a list
+        .collect()
+        .set { ch_for_alignments }
 
     //
     // SUBWORKFLOW: Alignment Free
@@ -140,7 +142,7 @@ workflow DRYAD {
                 params.parsnp_partition,
                 params.add_reference,
                 INPUT_CHECK.out.csv,
-                false
+                quast_file
                 )
         }
     }
