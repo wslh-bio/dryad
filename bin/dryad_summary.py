@@ -26,7 +26,7 @@ def process_dfs(log, excluded, quast):
     df_log = pd.read_csv(log, sep='\t')
     df_excluded = pd.read_csv(excluded)
 
-    if quast != 'false':
+    if quast != 'empty.txt':
         df_quast = pd.read_csv(quast, sep='\t')
     else:
         df_quast = 'false'
@@ -81,7 +81,7 @@ def main(args=None):
 
     l,e,q = process_dfs(args.aligner_log, args.excluded_samples, args.quast)
 
-    if args.quast == 'false':
+    if args.quast == 'empty.txt':
         join_dfs_no_quast(l,e)
     else:
         join_dfs_with_quast(l,e,q)
