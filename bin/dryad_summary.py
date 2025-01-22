@@ -43,12 +43,14 @@ def join_dfs_no_quast(df_log, df_excluded):
     df_log_excluded = pd.merge(df_log, df_excluded, on='Sample', how='outer')
 
     # Change float to string
-    df_log_excluded[['Sequence Length','Cluster Coverage (bps)']] = df_log_excluded[['Sequence Length','Cluster Coverage (bps)']].fillna(-1).astype(int)
+    # Cluster Coverage (bps) excluded until this issue is resolved https://github.com/marbl/parsnp/issues/173
+    df_log_excluded[['Sequence Length']] = df_log_excluded[['Sequence Length']].fillna(-1).astype(int)
+   #  df_log_excluded[['Sequence Length','Cluster Coverage (bps)']] = df_log_excluded[['Sequence Length','Cluster Coverage (bps)']].fillna(-1).astype(int)
 
     # Change float to int and replace NA with -1
     df_log_excluded = df_log_excluded.replace(-1,'')
 
-    # Rename and Drop columns
+    # Rename columns
     df_log_excluded = df_log_excluded.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
 
     df_log_excluded.to_csv('dryad_summary.csv', index=False)
@@ -65,14 +67,15 @@ def join_dfs_with_quast(df_log, df_excluded, df_quast):
     df_log_excluded_quast = pd.merge(df_log_excluded, df_quast, on='Sample', how='outer')
 
     # Change float to int and replace NA with -1
-    df_log_excluded_quast[['Sequence Length','Cluster Coverage (bps)','Contigs','N50']] = df_log_excluded_quast[['Sequence Length','Cluster Coverage (bps)','Contigs','N50']].fillna(-1).astype(int)
+    # Cluster Coverage (bps) excluded until this issue is resolved https://github.com/marbl/parsnp/issues/173
+    df_log_excluded_quast[['Sequence Length','Contigs','N50']] = df_log_excluded_quast[['Sequence Length','Contigs','N50']].fillna(-1).astype(int)
+    #df_log_excluded_quast[['Sequence Length','Cluster Coverage (bps)','Contigs','N50']] = df_log_excluded_quast[['Sequence Length','Cluster Coverage (bps)','Contigs','N50']].fillna(-1).astype(int)
 
     # Replace -1 with empty space
     df_log_excluded_quast = df_log_excluded_quast.replace(-1,'')
 
-    # Rename and Drop columns
+    # Rename and columns
     df_log_excluded_quast = df_log_excluded_quast.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
-    df_log_excluded_quast = df_log_excluded_quast.drop('Assembly Length (bp)', axis=1)
 
     df_log_excluded_quast.to_csv('dryad_summary.csv', index=False)
 

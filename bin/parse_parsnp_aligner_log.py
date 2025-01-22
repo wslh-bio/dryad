@@ -93,6 +93,9 @@ def createDF(lengthDict, covDict, totalCoverage, addRef):
         # drop reference row
         merged_df.drop(merged_df[merged_df['Sample'].str.endswith('.ref')].index, inplace = True)
 
+    # drop Cluster Coverage (bps) column until this issue is resolved https://github.com/marbl/parsnp/issues/173
+    merged_df = merged_df.drop(['Cluster Coverage (bps)'], axis=1)
+
     # write to file
     merged_df.to_csv(f'aligner_log.tsv', sep='\t', index=False, header=True, na_rep='NaN')
 
