@@ -1,5 +1,6 @@
 // Alignment_based subworkflow
 
+include { REMOVE_REFERENCE } from '../../modules/local/remove_reference'
 include { SAMPLE_COUNT               } from '../../modules/local/sample_count'
 include { PARSNP                     } from '../../modules/local/parsnp'
 include { IQTREE                     } from '../../modules/local/iqtree'
@@ -22,10 +23,9 @@ workflow ALIGNMENT_BASED {
     main:
     ch_versions = Channel.empty()       // Creating empty version channel to get versions.yml
 
-    //
-    // PARSNP
-    //
-
+//
+// PARSNP
+//
     PARSNP (
         reads,
         fasta,
@@ -33,12 +33,76 @@ workflow ALIGNMENT_BASED {
         )
     ch_versions = ch_versions.mix(PARSNP.out.versions) 
 
+//
+// Remove reference
+//
+    if (!add_reference) {
+        REMOVE_REFERENCE (
+            PARSNP.out.mblocks
+        )
+        .set{ ch_for_mblocks }
+
+        //
+        // SAMPLE COUNT
+        //
+        SAMPLE_COUNT (
+            ch_for_mblocks
+        )
+
+        //
+        // PARSER
+        //
+        PARSE_PARSNP_ALIGNER_LOG (
+            PARSNP.out.log,
+            add_reference
+        )
+
+        //
+        // COMPARE_IO
+        //
+        COMPARE_IO (
+            samplesheet,
+            PARSE_PARSNP_ALIGNER_LOG.out.aligner_log
+        )
+
+        //
+        // IQTREE
+        //
+        IQTREE (
+            ch_for_mblocks,
+            SAMPLE_COUNT.out.count
+        )
+        ch_versions = ch_versions.mix(IQTREE.out.versions)
+
+        //
+        // SNPDISTS
+        //
+        SNPDISTS (
+            ch_for_mblocks
+        )
+        ch_versions = ch_versions.mix(SNPDISTS.out.versions)
+        
+    //
+    // Final Summary
+    //
+    DRYAD_SUMMARY (
+        quast_tsv,
+        PARSE_PARSNP_ALIGNER_LOG.out.aligner_log,
+        COMPARE_IO.out.excluded
+        )
+}
+
+//
+// Keep reference
+//
+    if (add_reference) {
+
     //
     // SAMPLE COUNT
     //
-    SAMPLE_COUNT (
-        PARSNP.out.mblocks
-    )
+        SAMPLE_COUNT (
+            PARSNP.out.mblocks
+        )
 
     //
     // PARSER
@@ -59,20 +123,20 @@ workflow ALIGNMENT_BASED {
     //
     // IQTREE
     //
-    IQTREE (
-        PARSNP.out.mblocks,
-        SAMPLE_COUNT.out.count
-    )
-    ch_versions = ch_versions.mix(IQTREE.out.versions)
+        IQTREE (
+            PARSNP.out.mblocks,
+            SAMPLE_COUNT.out.count
+        )
+        ch_versions = ch_versions.mix(IQTREE.out.versions)
 
     //
     // SNPDISTS
     //
-    SNPDISTS (
-        PARSNP.out.mblocks
-    )
-    ch_versions = ch_versions.mix(SNPDISTS.out.versions)
-
+        SNPDISTS (
+            PARSNP.out.mblocks
+        )
+        ch_versions = ch_versions.mix(SNPDISTS.out.versions)
+    
     //
     // Final Summary
     //
@@ -81,6 +145,7 @@ workflow ALIGNMENT_BASED {
         PARSE_PARSNP_ALIGNER_LOG.out.aligner_log,
         COMPARE_IO.out.excluded
         )
+    }
 
     emit:
     phylogeny    =      IQTREE.out.phylogeny
