@@ -18,6 +18,8 @@ def parse_args(args=None):
 		help='Supplies quast file, if run')
 	parser.add_argument('excluded_samples',
 		help='Output of compare_io.py')
+	parser.add_argument('version',
+		help='Version of Dryad')
 
 	return parser.parse_args(args)
 
@@ -33,7 +35,7 @@ def process_dfs(log, excluded, quast):
 
     return df_log, df_excluded, df_quast
 
-def join_dfs_no_quast(df_log, df_excluded):
+def join_dfs_no_quast(df_log, df_excluded, version):
 
     # Ensure sample is just name
     df_log['Sample'] = df_log['Sample'].apply(lambda x: Path(x).stem)
@@ -53,9 +55,12 @@ def join_dfs_no_quast(df_log, df_excluded):
     # Rename columns
     df_log_excluded = df_log_excluded.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
 
+    # add Dryad version number
+    df_log_excluded = df_log_excluded.assign(Version=version)
+
     df_log_excluded.to_csv('dryad_summary.csv', index=False)
 
-def join_dfs_with_quast(df_log, df_excluded, df_quast):
+def join_dfs_with_quast(df_log, df_excluded, df_quast, version):
 
     # Ensure sample is just name
     df_log['Sample'] = df_log['Sample'].apply(lambda x: Path(x).stem)
@@ -77,6 +82,9 @@ def join_dfs_with_quast(df_log, df_excluded, df_quast):
     # Rename and columns
     df_log_excluded_quast = df_log_excluded_quast.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
 
+    # add Dryad version number
+    df_log_excluded_quast = df_log_excluded_quast.assign(Version=version)
+
     df_log_excluded_quast.to_csv('dryad_summary.csv', index=False)
 
 def main(args=None):
@@ -85,9 +93,9 @@ def main(args=None):
     l,e,q = process_dfs(args.aligner_log, args.excluded_samples, args.quast)
 
     if args.quast == 'empty.txt':
-        join_dfs_no_quast(l,e)
+        join_dfs_no_quast(l,e,args.version)
     else:
-        join_dfs_with_quast(l,e,q)
+        join_dfs_with_quast(l,e,q,args.version)
 
 if __name__ == "__main__":
 	sys.exit(main())
