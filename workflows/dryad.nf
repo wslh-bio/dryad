@@ -74,7 +74,36 @@ workflow DRYAD {
         ch_input
     )
     .reads
-    .set { ch_input_reads }
+    .set { ch_input }
+
+    ch_input
+        .map{ meta, file ->
+            [meta, file, file[0].countFasta()]}
+        .branch{ meta, file, count ->
+            pass: count > 0
+            fail: count == 0
+        }
+        .set{ ch_count }
+
+    ch_count.pass
+        .map { meta, file, count ->
+            [meta, file]
+        }
+        .set{ ch_input_reads }
+
+    ch_count.fail
+        .map { meta, file, count1 ->
+            [meta.id]
+            }
+        .flatten()
+        .set{ ch_failed }
+
+    ch_failed
+        .collectFile(
+            storeDir: "${params.outdir}/rejected_samples",
+            name: 'Empty_samples.csv',
+            newLine: true
+        )
 
     // Adding version information
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
