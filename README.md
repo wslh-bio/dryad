@@ -166,9 +166,11 @@ alignment_free_output/
 │   ├── *.txt
 │   └── samplesheet.valid.csv
 └── quast
-    ├── *.quast.report.tsv
-    ├── *.transposed.quast.report.tsv
-    └── quast_results.tsv
+│   ├── *.quast.report.tsv
+│   ├── *.transposed.quast.report.tsv
+│   └── quast_results.tsv
+├── rejected_samples
+│   └── Empty_samples.csv
 ```
 Notable output files:
 
@@ -181,6 +183,7 @@ Notable output files:
 | aligner_log.tsv | Coverage statistics calculated by parsnp |
 | excluded_samples_from_parsnp.txt | Lists samples that were excluded from parsnp's analysis due to a MUMi distance > 0.01 |
 | dryad_summary.csv | Summarizes quast report, if run, and core genome percentages |
+| Empty_samples.csv| Lists any samples that are empty and were removed from the pipeline |
 
 *QUAST results will not be present if `--skip_quast` was used.
 
@@ -189,6 +192,7 @@ Notable output files:
 | ------------- | ------------- |
 | quast_results.tsv* | Assembly quality results |
 | mashtree.bootstrap.dnd | Neighbor joining tree based on mash distances |
+| Empty_samples.csv| Lists any samples that are empty and were removed from the pipeline |
 
 *QUAST results will not be present if `--skip_quast` was utilized.
 
