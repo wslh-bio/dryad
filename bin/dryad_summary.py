@@ -60,32 +60,32 @@ def join_dfs_no_quast(df_log, df_excluded, version):
 
     df_log_excluded.to_csv('dryad_summary.csv', index=False)
 
-def join_dfs_with_quast(df_log, df_excluded, df_quast, version):
+def join_dfs_with_quast(df_log, df_included, df_quast, version):
 
     # Ensure sample is just name
     df_log['Sample'] = df_log['Sample'].apply(lambda x: Path(x).stem)
-    df_excluded['Sample'] = df_excluded['Sample'].apply(lambda x: Path(x).stem)
+    df_included['Sample'] = df_included['Sample'].apply(lambda x: Path(x).stem)
     df_quast['Sample'] = df_quast['Sample'].apply(lambda x: Path(x).stem)
 
     # Begin joining 
-    df_log_excluded = pd.merge(df_log, df_excluded, on='Sample', how='outer')
-    df_log_excluded_quast = pd.merge(df_log_excluded, df_quast, on='Sample', how='outer')
+    df_log_included = pd.merge(df_log, df_included, on='Sample', how='outer')
+    df_log_included_quast = pd.merge(df_log_included, df_quast, on='Sample', how='outer')
 
     # Change float to int and replace NA with -1
     # Cluster Coverage (bps) excluded until this issue is resolved https://github.com/marbl/parsnp/issues/173
-    df_log_excluded_quast[['Sequence Length','Contigs','N50']] = df_log_excluded_quast[['Sequence Length','Contigs','N50']].fillna(-1).astype(int)
+    df_log_included_quast[['Sequence Length','Contigs','N50']] = df_log_included_quast[['Sequence Length','Contigs','N50']].fillna(-1).astype(int)
     #df_log_excluded_quast[['Sequence Length','Cluster Coverage (bps)','Contigs','N50']] = df_log_excluded_quast[['Sequence Length','Cluster Coverage (bps)','Contigs','N50']].fillna(-1).astype(int)
 
     # Replace -1 with empty space
-    df_log_excluded_quast = df_log_excluded_quast.replace(-1,'')
+    df_log_included_quast = df_log_included_quast.replace(-1,'')
 
     # Rename and columns
-    df_log_excluded_quast = df_log_excluded_quast.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
+    df_log_included_quast = df_log_included_quast.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
 
     # add Dryad version number
-    df_log_excluded_quast = df_log_excluded_quast.assign(Version=version)
+    df_log_included_quast = df_log_included_quast.assign(Version=version)
 
-    df_log_excluded_quast.to_csv('dryad_summary.csv', index=False)
+    df_log_included_quast.to_csv('dryad_summary.csv', index=False)
 
 def main(args=None):
     args = parse_args(args)
