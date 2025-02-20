@@ -1,7 +1,6 @@
 // Alignment_based subworkflow
 
 include { REMOVE_REFERENCE } from '../../modules/local/remove_reference'
-include { SAMPLE_COUNT               } from '../../modules/local/sample_count'
 include { PARSNP                     } from '../../modules/local/parsnp'
 include { IQTREE                     } from '../../modules/local/iqtree'
 include { SNPDISTS                   } from '../../modules/local/snpdists'
@@ -42,12 +41,12 @@ workflow ALIGNMENT_BASED {
         )
         .set{ ch_for_mblocks }
 
-        //
-        // SAMPLE COUNT
-        //
-        SAMPLE_COUNT (
-            ch_for_mblocks
-        )
+        PARSNP.out.mblocks
+            .map( fasta -> 
+                [fasta.countFasta()]
+            )
+            .flatten()
+            .set{ ch_for_count }
 
         //
         // PARSER
@@ -70,6 +69,61 @@ workflow ALIGNMENT_BASED {
         //
         IQTREE (
             ch_for_mblocks,
+            ch_for_count
+        )
+        ch_versions = ch_versions.mix(IQTREE.out.versions)
+    
+        //
+        // SNPDISTS
+        //
+        SNPDISTS (
+            ch_for_mblocks
+        )
+        ch_versions = ch_versions.mix(SNPDISTS.out.versions)
+
+        //
+        // Final Summary
+        //
+        DRYAD_SUMMARY (
+            quast_tsv,
+            PARSE_PARSNP_ALIGNER_LOG.out.aligner_log,
+            COMPARE_IO.out.excluded
+            )
+    }
+
+//
+// Keep reference
+//
+    if (add_reference) {
+
+        PARSNP.out.mblocks
+            .map( fasta -> 
+                [fasta.countFasta()]
+            )
+            .flatten()
+            .set{ ch_for_count }
+
+        //
+        // PARSER
+        //
+        PARSE_PARSNP_ALIGNER_LOG (
+            PARSNP.out.log,
+            add_reference
+        )
+
+        //
+        // COMPARE_IO
+        //
+        COMPARE_IO (
+            samplesheet,
+            PARSE_PARSNP_ALIGNER_LOG.out.aligner_log
+        )
+
+        //
+        // IQTREE
+        //
+        IQTREE (
+            PARSNP.out.mblocks,
             SAMPLE_COUNT.out.count
         )
         ch_versions = ch_versions.mix(IQTREE.out.versions)
@@ -78,73 +132,18 @@ workflow ALIGNMENT_BASED {
         // SNPDISTS
         //
         SNPDISTS (
-            ch_for_mblocks
-        )
-        ch_versions = ch_versions.mix(SNPDISTS.out.versions)
-        
-    //
-    // Final Summary
-    //
-    DRYAD_SUMMARY (
-        quast_tsv,
-        PARSE_PARSNP_ALIGNER_LOG.out.aligner_log,
-        COMPARE_IO.out.excluded
-        )
-}
-
-//
-// Keep reference
-//
-    if (add_reference) {
-
-    //
-    // SAMPLE COUNT
-    //
-        SAMPLE_COUNT (
-            PARSNP.out.mblocks
-        )
-
-    //
-    // PARSER
-    //
-    PARSE_PARSNP_ALIGNER_LOG (
-        PARSNP.out.log,
-        add_reference
-    )
-
-    //
-    // COMPARE_IO
-    //
-    COMPARE_IO (
-        samplesheet,
-        PARSE_PARSNP_ALIGNER_LOG.out.aligner_log
-    )
-
-    //
-    // IQTREE
-    //
-        IQTREE (
-            PARSNP.out.mblocks,
-            SAMPLE_COUNT.out.count
-        )
-        ch_versions = ch_versions.mix(IQTREE.out.versions)
-
-    //
-    // SNPDISTS
-    //
-        SNPDISTS (
             PARSNP.out.mblocks
         )
         ch_versions = ch_versions.mix(SNPDISTS.out.versions)
-    
-    //
-    // Final Summary
-    //
-    DRYAD_SUMMARY (
-        quast_tsv,
-        PARSE_PARSNP_ALIGNER_LOG.out.aligner_log,
-        COMPARE_IO.out.excluded
-        )
+
+        //
+        // Final Summary
+        //
+        DRYAD_SUMMARY (
+            quast_tsv,
+            PARSE_PARSNP_ALIGNER_LOG.out.aligner_log,
+            COMPARE_IO.out.excluded
+            )
     }
 
     emit:
