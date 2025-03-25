@@ -3,6 +3,7 @@
 import pandas as pd
 import argparse
 import sys
+import re
 
 def parse_args(args=None):
 	Description='Compares the samples input in the pipeline to the samples that exit parsnp'
@@ -27,13 +28,13 @@ def check_parsnp_file(parsnp_log_file, input_list):
 
 	not_present_list = []
 
-	parsnp_df = pd.read_csv(parsnp_log_file, sep='\t')
-	samples_present = parsnp_df['Sample'].tolist()
-
-	# Compare the lists
-	for sample in samples_present:
-		if sample not in input_list:
-			not_present_list.append(sample)
+	with open (parsnp_log_file, "r") as input:
+		results = input.read()
+		for word in input_list:
+			if word in results:
+				pass
+			else:
+				not_present_list.append(word)
 
 	return not_present_list
 
