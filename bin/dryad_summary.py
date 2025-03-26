@@ -63,7 +63,7 @@ def join_dfs_no_quast(df_log, df_excluded, version):
     logging.debug("Rename columns")
     df_log_excluded = df_log_excluded.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
 
-    logging.deug("Add Dryad version number")
+    logging.debug("Add Dryad version number")
     df_log_excluded = df_log_excluded.assign(Version=version)
 
     logging.debug("Reordering columns based on column order")
