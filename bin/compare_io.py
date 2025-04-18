@@ -1,10 +1,11 @@
 #!/usr/bin/python3.7
 
-import pandas as pd
 import argparse
 import sys
 import re
 import logging
+
+import pandas as pd
 
 logging.basicConfig(level = logging.INFO, format = '%(levelname)s : %(message)s')
 
