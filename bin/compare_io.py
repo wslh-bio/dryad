@@ -2,7 +2,7 @@
 
 import argparse
 import sys
-import re
+
 import logging
 
 import pandas as pd
