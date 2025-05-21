@@ -1,6 +1,7 @@
 process SNPDISTS {
 
     label 'process_low'
+    label 'error_ignore'
 
     conda "${moduleDir}/environment.yml"
     container "staphb/snp-dists:0.8.2"

@@ -1,6 +1,7 @@
 process MASHTREE {
 
     label 'process_medium'
+    label 'error_ignore'
 
     conda "${moduleDir}/environment.yml"
     container "staphb/mashtree:1.4.6"

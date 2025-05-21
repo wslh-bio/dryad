@@ -1,6 +1,7 @@
 process QUAST {
     tag "$meta.id"
     label 'process_medium'
+    label 'error_ignore'
 
     container "staphb/quast:5.2.0"
 
