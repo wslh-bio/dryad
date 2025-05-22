@@ -1,7 +1,6 @@
 process PARSNP {
 
     label 'process_medium'
-    label 'error_ignore'
 
     conda "${moduleDir}/environment.yml"
     container "staphb/parsnp:2.0.5"

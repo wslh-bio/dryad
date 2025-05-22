@@ -1,7 +1,6 @@
 process IQTREE {
 
     label 'process_medium'
-    label 'error_ignore'
 
     conda "${moduleDir}/environment.yml"
     container "staphb/iqtree2:2.3.4"
