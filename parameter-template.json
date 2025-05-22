@@ -1,0 +1,24 @@
+{
+    "input":{
+        "description" : "Path to comma-separated file containing information about the samples in the experiment"
+    },
+    "skip_quast":{
+        "description" :"Optional parameter"},
+    "alignment_based":{
+        "description" : "At least one alignment is required to run Dryad."},
+    "alignment_free":{
+        "description" : "At least one alignment is required to run Dryad."},
+    "fasta":{
+         "If an alignment_based run is desired, a reference fasta can be supplied. If a random reference from the sample set is preferred instead, please use --fasta random"},
+    "task.cpus":{
+         "By default,"},
+    "cg_tree_model":{
+         ""},
+    "parsnp_partition":{
+         ""},
+    "add_reference":{
+         ""},
+    "random_file":{
+         ""},
+
+}

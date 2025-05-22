@@ -1,0 +1,9 @@
+{
+    "manifest" : [
+        "staphb/iqtree2:2.3.4",
+        "staphb/mashtree:1.4.6",
+        "staphb/parsnp:2.0.5",
+        "staphb/quast:5.2.0",
+        "staphb/snp-dists:0.8.2"
+    ]
+}
