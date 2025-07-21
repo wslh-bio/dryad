@@ -43,8 +43,13 @@ def process_dfs(log, excluded, quast):
 def join_dfs_no_quast(df_log, df_excluded, version):
 
     logging.debug("Setting the column order for no quast output")
-    column_order = ["Sample","Excluded from Parsnp's analysis","Version"]
-
+    column_order = ['Sample',
+                    'Excluded from Parsnp\'s analysis',
+                    'Sequence Length (bps)',
+                    'Cluster Coverage (bps)',
+                    'Total Coverage (%)',
+                    'Version']
+    
     logging.debug("Ensuring the sample is just the name")
     df_log['Sample'] = df_log['Sample'].apply(lambda x: Path(x).stem)
     df_excluded['Sample'] = df_excluded['Sample'].apply(lambda x: Path(x).stem)
@@ -53,9 +58,9 @@ def join_dfs_no_quast(df_log, df_excluded, version):
     df_log_excluded = pd.merge(df_log, df_excluded, on='Sample', how='outer')
 
     logging.debug("Change float to string")
-    logging.debug("Cluster Coverage (bps) excluded until this issue is resolved https://github.com/marbl/parsnp/issues/173")
-    df_log_excluded[['Sequence Length']] = df_log_excluded[['Sequence Length']].fillna(-1).astype(int)
-   #  df_log_excluded[['Sequence Length','Cluster Coverage (bps)']] = df_log_excluded[['Sequence Length','Cluster Coverage (bps)']].fillna(-1).astype(int)
+    df_log_excluded[['Sequence Length (bps)',
+                     'Cluster Coverage (bps)']] = df_log_excluded[['Sequence Length (bps)',
+                                                                   'Cluster Coverage (bps)']].fillna(-1).astype(int)
 
     logging.debug("Change float to int and replace NA with -1")
     df_log_excluded = df_log_excluded.replace(-1,'')
@@ -66,7 +71,7 @@ def join_dfs_no_quast(df_log, df_excluded, version):
     logging.debug("Add Dryad version number")
     df_log_excluded = df_log_excluded.assign(Version=version)
 
-    logging.debug("Reordering columns based on column order")
+    logging.debug("Reorder columns based on column order")
     df_log_excluded = df_log_excluded.reindex(columns = column_order)
 
     logging.debug("Writing to csv")
@@ -75,7 +80,15 @@ def join_dfs_no_quast(df_log, df_excluded, version):
 def join_dfs_with_quast(df_log, df_included, df_quast, version):
 
     logging.debug("Setting the column order for including quast output")
-    column_order = ["Sample","Excluded from Parsnp's analysis","Contigs","N50","Assembly Length (bp)","Version"]
+    column_order = ['Sample',
+                    'Excluded from Parsnp\'s analysis',
+                    'Contigs',
+                    'N50',
+                    'Assembly Length (bp)',
+                    'Sequence Length (bps)',
+                    'Cluster Coverage (bps)',
+                    'Total Coverage (%)',
+                    'Version']
 
     logging.debug("Ensuring sample is just name")
     df_log['Sample'] = df_log['Sample'].apply(lambda x: Path(x).stem)
@@ -87,9 +100,14 @@ def join_dfs_with_quast(df_log, df_included, df_quast, version):
     df_log_included_quast = pd.merge(df_log_included, df_quast, on='Sample', how='outer')
 
     logging.debug("Change float to int and replace NA with -1")
-    logging.debug("Cluster Coverage (bps) excluded until this issue is resolved https://github.com/marbl/parsnp/issues/173")
-    df_log_included_quast[['Sequence Length','Contigs','N50']] = df_log_included_quast[['Sequence Length','Contigs','N50']].fillna(-1).astype(int)
-    #df_log_excluded_quast[['Sequence Length','Cluster Coverage (bps)','Contigs','N50']] = df_log_excluded_quast[['Sequence Length','Cluster Coverage (bps)','Contigs','N50']].fillna(-1).astype(int)
+    df_log_excluded_quast[['Sequence Length (bps)',
+                           'Cluster Coverage (bps)',
+                           'Total Coverage (%)',
+                           'Contigs',
+                           'N50']] = df_log_excluded_quast[['Sequence Length (bps)',
+                                                            'Cluster Coverage (bps)',
+                                                            'Contigs',
+                                                            'N50']].fillna(-1).astype(int)
 
     logging.debug("Replace -1 with empty space")
     df_log_included_quast = df_log_included_quast.replace(-1,'')
@@ -97,10 +115,10 @@ def join_dfs_with_quast(df_log, df_included, df_quast, version):
     logging.debug("Rename and columns")
     df_log_included_quast = df_log_included_quast.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
 
-    logging.debug("add Dryad version number")
+    logging.debug("Add Dryad version number")
     df_log_included_quast = df_log_included_quast.assign(Version=version)
 
-    logging.debug("Reindexing based on column order")
+    logging.debug("Reorder columns based on column order")
     df_log_included_quast = df_log_included_quast.reindex(columns = column_order)
 
     logging.debug("Writing to csv")

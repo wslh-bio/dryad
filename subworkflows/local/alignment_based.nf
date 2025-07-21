@@ -6,7 +6,7 @@ include { IQTREE                     } from '../../modules/local/iqtree'
 include { SNPDISTS                   } from '../../modules/local/snpdists'
 include { PARSE_PARSNP_ALIGNER_LOG   } from '../../modules/local/parse_parsnp_aligner_log'
 include { COMPARE_IO                 } from '../../modules/local/compare_io'
-include { DRYAD_SUMMARY              } from '../../modules/local/dryad_summary'
+include { RESULTS                    } from '../../modules/local/results'
 
 workflow ALIGNMENT_BASED {
 
@@ -84,7 +84,7 @@ workflow ALIGNMENT_BASED {
         //
         // Final Summary
         //
-        DRYAD_SUMMARY (
+        RESULTS (
             quast_tsv,
             PARSE_PARSNP_ALIGNER_LOG.out.aligner_log,
             COMPARE_IO.out.excluded
@@ -139,7 +139,7 @@ workflow ALIGNMENT_BASED {
         //
         // Final Summary
         //
-        DRYAD_SUMMARY (
+        RESULTS (
             quast_tsv,
             PARSE_PARSNP_ALIGNER_LOG.out.aligner_log,
             COMPARE_IO.out.excluded
@@ -151,6 +151,6 @@ workflow ALIGNMENT_BASED {
     tsv          =      SNPDISTS.out.tsv
     aligner_log  =      PARSE_PARSNP_ALIGNER_LOG.out.aligner_log
     excluded     =      COMPARE_IO.out.excluded
-    summary      =      DRYAD_SUMMARY.out.summary
+    summary      =      RESULTS.out.summary
     versions     =      ch_versions
 }

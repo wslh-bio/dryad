@@ -3,7 +3,7 @@ process PARSNP {
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
-    container "staphb/parsnp:2.0.5"
+    container "staphb/parsnp:2.1.4"
 
     input:
     path reads
