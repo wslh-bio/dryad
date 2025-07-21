@@ -3,6 +3,7 @@ import re
 import pandas as pd
 import sys
 import argparse
+import logging
 
 from pandas import DataFrame
 from functools import reduce
@@ -10,6 +11,8 @@ from linecache import getline
 
 # Reference for extracting lines after a match using enumerate and linecache:
 # https://stackoverflow.com/questions/30286603/python-extract-text-4-lines-after-match
+
+logging.basicConfig(level = logging.INFO, format = '%(levelname)s : %(message)s')
 
 def parse_args(args=None):
     Description='Covert parsnpAligner.log to tsv'
@@ -22,81 +25,69 @@ def parse_args(args=None):
     return parser.parse_args(args)
 
 def parse_log(log):
-    # create empty dictionaries
-    lengthDict = {'Sample':[],'Sequence':[],'Sequence Length':[]}
+    logging.debug("Create empty dictionaries")
+    lengthDict = {'Sample':[],'Sequence':[],'Sequence Length (bps)':[]}
     covDict = {'Sequence':[],'Cluster Coverage (%)':[]}
 
     with open(log,'r') as logFile:
         for ind, line in enumerate(logFile,1):
-            # search for sequence lines
+            logging.debug("Search for sequence lines")
             if re.search('Sequence \d+ : ',line):
-                # get sequence # line and split at : (sequence on the left and sample on the right)
-                # Sequence # : Sample.fasta
+                logging.debug("Get sequence # line and split at: 'Sequence # : Sample.fasta'")
                 sampleLine = getline(logFile.name, ind).strip().split(":")
-                # get length line (two lines after sequence line) and split at : (sequence length on the right)
-                # Length:   # bps
+                logging.debug("Get length line (two lines after sequence line) and split at: 'Length: # bps'")
                 lengthLine = getline(logFile.name, ind + 2).strip().split(":")
-                # remove trailing white space from sequence #
+                logging.debug("Remove trailing white space from sequence #")
                 sequence = sampleLine[0].rstrip()
-                # remove leading white space from sample name
+                logging.debug("Remove leading white space from sample name")
                 sample = sampleLine[1].lstrip()
-                # remove leading white space and get rid of bps from length
+                logging.debug("Remove leading white space and get rid of bps from length")
                 length = lengthLine[1].lstrip().replace(" bps","")
-                # append values to dictionary
+                logging.debug("Append values to dictionary")
                 lengthDict['Sample'].append(sample)
                 lengthDict['Sequence'].append(sequence)
-                lengthDict['Sequence Length'].append(length)
-            # search for cluster coverage lines
+                lengthDict['Sequence Length (bps)'].append(length)
+            logging.debug("Search for cluster coverage lines")
             if re.search('Cluster coverage in sequence \d+:',line):
-                # split line at :
-                # Cluster coverage in sequence #:   #%
+                logging.debug("Split line at : 'Cluster coverage in sequence #:   #%'")
                 sline = line.strip().split(":")
-                # reformat line to Sequence # only
+                logging.debug("Reformat line to Sequence # only")
                 sequence = sline[0].replace('Cluster coverage in s','S')
-                # remove % from cluster coverage percentage
+                logging.debug("Remove % from cluster coverage percentage")
                 clusterCov = sline[1].strip().replace('%','')
-                # append values to dictionary
+                logging.debug("Append values to dictionary")
                 covDict['Sequence'].append(sequence)
                 covDict['Cluster Coverage (%)'].append(clusterCov)
-            # search for total coverage
+            logging.debug("Search for total coverage")
             if re.search('Total coverage among all sequences',line):
                 totalCoverage = float(line.strip().split(":")[1].lstrip().replace('%',''))
     return lengthDict, covDict, totalCoverage
 
 def createDF(lengthDict, covDict, totalCoverage, addRef):
-    # convert length dictionary to data frame
+    logging.debug("Convert length dictionary to data frame")
     lengthDF = pd.DataFrame.from_dict(lengthDict, orient='columns')
-    # change sequence length from str to int
-    lengthDF['Sequence Length'] = lengthDF['Sequence Length'].astype(int)
-
-    # convert coverage dictionary to data frame
+    logging.debug("Change sequence length from str to int")
+    lengthDF['Sequence Length (bps)'] = lengthDF['Sequence Length (bps)'].astype(int)
+    logging.debug("Convert coverage dictionary to data frame")
     covDF = pd.DataFrame.from_dict(covDict, orient='columns')
-    # change cluster coverage from str to float
+    logging.debug("Change cluster coverage from str to float")
     covDF['Cluster Coverage (%)'] = covDF['Cluster Coverage (%)'].astype(float)
-
-    # add dfs to list
+    logging.debug("Add dfs to list")
     dfs = [lengthDF,covDF]
-
-    # merge dfs in list
+    logging.debug("Merge dfs in list")
     merged_df = reduce(lambda left,right: pd.merge(left,right,on=['Sequence'],how='left'), dfs)
-
-    # calculate cluster coverage in bps
-    merged_df['Cluster Coverage (bps)'] = merged_df['Sequence Length'] * (merged_df['Cluster Coverage (%)']/100)
+    logging.debug("Calculate cluster coverage in bps")
+    merged_df['Cluster Coverage (bps)'] = merged_df['Sequence Length (bps)'] * (merged_df['Cluster Coverage (%)']/100)
     merged_df['Cluster Coverage (bps)'] = merged_df['Cluster Coverage (bps)'].round().astype(int)
-
-    # add total coverage column
+    logging.debug("Add total coverage column")
     merged_df = merged_df.assign(TotalCoverage=totalCoverage)
     merged_df.rename(columns={'TotalCoverage':'Total Coverage (%)'}, inplace = True)
-
-    # if reference is removed (default) drop reference from df 
+    logging.debug("If reference is removed (default) drop reference from df ")
     if addRef == "false":
-        # drop reference row
+        logging.debug("Drop reference row")
         merged_df.drop(merged_df[merged_df['Sample'].str.endswith('.ref')].index, inplace = True)
 
-    # drop Cluster Coverage (bps) column until this issue is resolved https://github.com/marbl/parsnp/issues/173
-    merged_df = merged_df.drop(['Cluster Coverage (bps)'], axis=1)
-
-    # write to file
+    logging.debug("Write to file")
     merged_df.to_csv(f'aligner_log.tsv', sep='\t', index=False, header=True, na_rep='NaN')
 
 def main(args=None):
