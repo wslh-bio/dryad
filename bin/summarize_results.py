@@ -100,11 +100,10 @@ def join_dfs_with_quast(df_log, df_included, df_quast, version):
     df_log_included_quast = pd.merge(df_log_included, df_quast, on='Sample', how='outer')
 
     logging.debug("Change float to int and replace NA with -1")
-    df_log_excluded_quast[['Sequence Length (bps)',
+    df_log_included_quast[['Sequence Length (bps)',
                            'Cluster Coverage (bps)',
-                           'Total Coverage (%)',
                            'Contigs',
-                           'N50']] = df_log_excluded_quast[['Sequence Length (bps)',
+                           'N50']] = df_log_included_quast[['Sequence Length (bps)',
                                                             'Cluster Coverage (bps)',
                                                             'Contigs',
                                                             'N50']].fillna(-1).astype(int)
