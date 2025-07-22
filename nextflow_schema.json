@@ -30,7 +30,7 @@
                 },
                 "alignment_based": {
                     "type": "boolean",
-                    "description": "Add if running quast is not needed.",
+                    "description": "Add if an alignment based, high resolution analysis is desired.",
                     "fa_icon": "fas fa-align-center"
                 },
                 "alignment_free": {
