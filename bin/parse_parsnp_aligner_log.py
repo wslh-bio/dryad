@@ -82,10 +82,13 @@ def createDF(lengthDict, covDict, totalCoverage, addRef):
     logging.debug("Add total coverage column")
     merged_df = merged_df.assign(TotalCoverage=totalCoverage)
     merged_df.rename(columns={'TotalCoverage':'Total Coverage (%)'}, inplace = True)
-    logging.debug("If reference is removed (default) drop reference from df ")
+    logging.debug("If reference is removed (default) drop reference from df")
     if addRef == "false":
         logging.debug("Drop reference row")
         merged_df.drop(merged_df[merged_df['Sample'].str.endswith('.ref')].index, inplace = True)
+    logging.debug("Remove .contigs and .ref from sample names")
+    merged_df['Sample'] = merged_df['Sample'].str.replace('.contigs', '')
+    merged_df['Sample'] = merged_df['Sample'].str.replace('.ref', '')
 
     logging.debug("Write to file")
     merged_df.to_csv(f'aligner_log.tsv', sep='\t', index=False, header=True, na_rep='NaN')
