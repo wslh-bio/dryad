@@ -17,8 +17,8 @@ parser.add_argument('dryad_matrix_2',
 args = parser.parse_args()
 
 ### Getting df from matrix input
-validated_df = pd.read_csv(os.path.abspath(args.dryad_matrix_1),sep=',')
-to_test_df = pd.read_csv(os.path.abspath(args.dryad_matrix_2),sep=',')
+validated_df = pd.read_csv(os.path.abspath(args.dryad_matrix_1),sep='\t')
+to_test_df = pd.read_csv(os.path.abspath(args.dryad_matrix_2),sep='\t')
 
 ### Determiniing if matrices are the same, if not, why?
 if validated_df.equals(to_test_df):
