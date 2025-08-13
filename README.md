@@ -2,7 +2,7 @@
 ![dryad_logo](assets/dryad_logo_500.png)
 
 ![GPL-3.0](https://img.shields.io/github/license/wslh-bio/dryad)
-![Github_Release](https://img.shields.io/badge/release%20-%20v%204.0.0%20-%20blue)
+![Github_Release](https://img.shields.io/badge/release-4.1.0-blue)
 
 **Dryad** is a [Nextflow](https://www.nextflow.io/) pipeline for examining prokaryote relatedness. Dryad can perform a reference free analysis and/or SNP analysis.
 
@@ -43,7 +43,7 @@ nextflow run wslh-bio/dryad \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
    --outdir <OUTDIR> \
-   --fasta <REFERENCE_FASTA> \
+   --fasta <REFERENCE_FASTA | random> \
    --alignment_based 
 ```
 
@@ -54,7 +54,7 @@ nextflow run wslh-bio/dryad \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
    --outdir <OUTDIR> \
-   --fasta <REFERENCE_FASTA> \
+   --fasta <REFERENCE_FASTA | random> \
    --alignment_based \
    --alignment_free
 ```
@@ -79,18 +79,19 @@ Dryad's main parameters and their defaults are shown in the table below:
 | outdir | Output directory where the results will be saved. Absolute path must be used for storage on cloud infrastructure | --outdir <DESIRED_OUTPUT_PATH> |
 | profile | Denotes how to access containerized software. | -profile aws |
 | fasta | Reference fasta used for alignment based comparisons. Default is no reference fasta. | --fasta <PATH_TO_REF_FASTA> |
+| fasta random | Reference fasta used for alignment based comparisons is chosen by Parsnp's algorithm. Default is not to use a random fasta file as a reference. | --fasta random |
 | alignment_based | Performs a fine scale analysis within a singular outbreak | --alignment_based |
 | alignment_free | Performs a historical analysis across multiple years and outbreaks | --alignment_free |
 | task.cpus | Denotes how many cpus to use for Mashtree. Default task.cpus is 2. |--task.cpus 4 |
 | cg_tree_model | Tells IQ-TREE what [model](http://www.iqtree.org/doc/Substitution-Models) to use. Default cg_tree_model is GTR+G | --cg_tree_model "GTR+G" |
 | parsnp_partition | Tells parsnp the minimum partition amount or to not partition. Default is --no-partition.* | --parsnp_partition "--min-partition-size 50" |
 | skip_quast | If the data was run through pheonix or another pipeline with a quality check, skips QUAST and the summary options. Default is to run QUAST as if quality summaries were not previously run. | --skip_quast |
-| add_reference | Used to add the reference into tree building for IQ-TREE. Default is to remove the reference in tree building. | --add_reference |
+| add_reference | Used to include reference in outputs. This option should not be used if you are using --fasta random. Default is false | --add_reference |
 
 *If you are running an alignment based workflow on >100 samples, it may be beneficial to take into account a higher partitioning value than the default of 100. More information can be found in parsnp 2.0's [paper](https://pubmed.ncbi.nlm.nih.gov/38352342/#:~:text=Parsnp%20v2%20provides%20users%20with,combined%20into%20a%20final%20alignment.).
 
 ## Workflow
-![dryad_workflow](assets/Dryadv4Light.drawio.png)
+![dryad_workflow](assets/Dryadv4.10.drawio.png)
 
 ### 1. Universal Steps
    - Enter assembled FASTA genomes into a samplesheet. 
@@ -107,25 +108,51 @@ Dryad's main parameters and their defaults are shown in the table below:
       - [Snp-dists v0.8.2](https://github.com/tseemann/snp-dists) is used to calculate the SNP distance matrix.
 
 ## Output
-An example of Dryad's output directory structure for both alignment based and alignment free steps can be seen below. These directories will not include QUAST if `--phoenix` is used:
+An example of Dryad's output directory structure for both alignment based and alignment free steps can be seen below. These directories will not include QUAST if `--skip_quast` is used:
 ```
 alignment_based_output/
+├── compare
+│   └── sample_exclusion_status.csv
+├── dryad
+│   └── dryad_summary.csv
 ├── iqtree
 │   └── parsnp.snps.mblocks.treefile
+├── parse
+│   └── aligner_log.tsv
 ├── parsnp
 │   └── parsnp_output
+│       ├── config
+│       │   ├── all.mumi
+│       │   └── all_mumi.ini
+│       ├── log
+│       │   ├── harvest-mblocks.err
+│       │   ├── harvest-mblocks.out
+│       │   ├── parsnp-aligner.err
+│       │   ├── parsnpAligner.log
+│       │   ├── parsnp-aligner.out
+│       │   ├── parsnp-mumi.err
+│       │   ├── parsnp-mumi.out
+│       │   ├── raxml.err
+│       │   └── raxml.out
+│       ├── parsnpAligner.ini
 │       ├── parsnp.ggr
+│       ├── parsnp.maf
 │       ├── parsnp.snps.mblocks
 │       ├── parsnp.tree
-│       └── parsnp.xmfa
+│       ├── parsnp.xmfa
+│       └── *.fna.ref
 ├── pipeline_info
-│   ├── *.html
-│   ├── *.txt
+│   ├── execution_report_*.html
+│   ├── execution_timeline_*.html
+│   ├── execution_trace_*.txt
+│   ├── pipeline_dag_*.html
 │   └── samplesheet.valid.csv
 ├── quast
 │   ├── *.quast.report.tsv
-│   ├── *.transposed.quast.report.tsv
-│   └── quast_results.tsv
+│   ├── *.transposed.quast.tsv
+│   ├── quast_results.tsv
+├── sample
+│   └── count.txt
 └── snpdists
     └── snp_dists_matrix.tsv
 ```
@@ -139,9 +166,11 @@ alignment_free_output/
 │   ├── *.txt
 │   └── samplesheet.valid.csv
 └── quast
-    ├── *.quast.report.tsv
-    ├── *.transposed.quast.report.tsv
-    └── quast_results.tsv
+│   ├── *.quast.report.tsv
+│   ├── *.transposed.quast.report.tsv
+│   └── quast_results.tsv
+├── rejected_samples
+│   └── Empty_samples.csv
 ```
 Notable output files:
 
@@ -150,7 +179,11 @@ Notable output files:
 | ------------- | ------------- |
 | quast_results.tsv* | Assembly quality results |
 | snp_dists_matrix.tsv | Number of SNP distances between each pair of isolates |
-| parsnp.snps.mblocks.treefile | Maximum likelihood phylogenetic tree|
+| parsnp.snps.mblocks.treefile | Maximum likelihood phylogenetic tree |
+| aligner_log.tsv | Coverage statistics calculated by parsnp |
+| excluded_samples_from_parsnp.txt | Lists samples that were excluded from parsnp's analysis due to a MUMi distance > 0.01 |
+| dryad_summary.csv | Summarizes quast report, if run, and core genome percentages |
+| Empty_samples.csv| Lists any samples that are empty and were removed from the pipeline |
 
 *QUAST results will not be present if `--skip_quast` was used.
 
@@ -159,6 +192,7 @@ Notable output files:
 | ------------- | ------------- |
 | quast_results.tsv* | Assembly quality results |
 | mashtree.bootstrap.dnd | Neighbor joining tree based on mash distances |
+| Empty_samples.csv| Lists any samples that are empty and were removed from the pipeline |
 
 *QUAST results will not be present if `--skip_quast` was utilized.
 
@@ -177,7 +211,7 @@ If you would like to contribute to this pipeline, please see the [contributing g
 ## Citations
 If you use Dryad for your analysis, please cite it using the following:
 
-`K. Florek, A.C. Shockey, & E. Gunawan (2014). Dryad (Version 4.0.0) [https://github.com/wslh-bio/dryad].`
+`K. Florek, A.C. Shockey, & E. Gunawan (2014). Dryad (Version 4.1.1) [https://github.com/wslh-bio/dryad].`
 
 An extensive list of references for the tools used by Dryad can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 
@@ -188,3 +222,4 @@ This pipeline uses code and infrastructure developed and maintained by the [nf-c
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
 > _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
+

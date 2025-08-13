@@ -13,32 +13,26 @@ def parse_args(args=None):
   parser = argparse.ArgumentParser(description=Description)
   parser.add_argument('compiled_fasta_file',
                       help='Complete fasta file that needs reference to be removed from.')
-  parser.add_argument('reference_name',
-                      help='Original reference fasta name.')
   return parser.parse_args(args)
 
-def rename(reference_name, compiled_fasta_file):
-  reference_name = os.path.basename(reference_name)
-  ref_fasta = reference_name + ".ref"
-
+def rename(compiled_fasta_file):
   fasta_file = os.path.basename(compiled_fasta_file)
   outFasta = "cleaned_" + fasta_file
 
-  return ref_fasta, outFasta
+  return outFasta
 
-def process_file(compiled_fasta_file, ref_fasta, outFasta):
+def process_file(compiled_fasta_file, outFasta):
   with open(compiled_fasta_file, "r") as inFasta, open(outFasta, "a") as output:
       for record in SeqIO.parse(inFasta, "fasta"):
-        if record.id == ref_fasta:
+        if record.id.endswith(".ref"):
            pass
         else: 
           SeqIO.write(record, output, "fasta")
 
 def main(args=None):
     args = parse_args(args)
-
-    ref_fasta, outFasta = rename(args.reference_name, args.compiled_fasta_file)
-    process_file(args.compiled_fasta_file, ref_fasta, outFasta)
+    outFasta = rename(args.compiled_fasta_file)
+    process_file(args.compiled_fasta_file, outFasta)
 
 if __name__ == "__main__":
     sys.exit(main())
