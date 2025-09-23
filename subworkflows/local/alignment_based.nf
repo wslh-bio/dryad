@@ -124,7 +124,7 @@ workflow ALIGNMENT_BASED {
         //
         IQTREE (
             PARSNP.out.mblocks,
-            SAMPLE_COUNT.out.count
+            ch_for_count
         )
         ch_versions = ch_versions.mix(IQTREE.out.versions)
 
