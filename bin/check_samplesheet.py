@@ -5,7 +5,7 @@ import sys
 import errno
 import argparse
 
-valid_formats = ('.fasta', '.fas', '.fa', '.fna', '.ffn', '.fasta.gz', '.fas.gz', '.fa.gz', '.fna.gz', '.ffn.gz')
+valid_formats = ('.fasta', '.fas', '.fa', '.fna', '.ffn')
 
 def parse_args(args=None):
     Description = "Reformat input samplesheet file and check its contents."

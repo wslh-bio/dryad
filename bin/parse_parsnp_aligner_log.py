@@ -87,7 +87,7 @@ def createDF(lengthDict, covDict, totalCoverage, addRef):
         logging.debug("Drop reference row")
         merged_df.drop(merged_df[merged_df['Sample'].str.endswith('.ref')].index, inplace = True)
     logging.debug("Remove fasta file extensions and .ref from sample names")
-    fasta_extensions = '|'.join(['.fasta', '.fas', '.fa', '.fna', '.ffn', '.fasta.gz', '.fas.gz', '.fa.gz', '.fna.gz', '.ffn.gz'])
+    fasta_extensions = '|'.join(['.fasta', '.fas', '.fa', '.fna', '.ffn'])
     merged_df['Sample'] = merged_df['Sample'].str.replace(fasta_extensions, '', regex=True)
     merged_df['Sample'] = merged_df['Sample'].str.replace('.ref', '')
 
