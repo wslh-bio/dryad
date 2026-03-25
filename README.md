@@ -3,6 +3,7 @@
 
 ![GPL-3.0](https://img.shields.io/github/license/wslh-bio/dryad)
 ![Github_Release](https://img.shields.io/badge/release-4.1.0-blue)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17469136.svg)](https://doi.org/10.5281/zenodo.17469136)
 
 **Dryad** is a [Nextflow](https://www.nextflow.io/) pipeline for examining prokaryote relatedness. Dryad can perform a reference free analysis and/or SNP analysis.
 
@@ -16,8 +17,6 @@ Dryad analyzes fasta files that have been processed either by [Spriggan](https:/
 [Parameters](#parameters)  
 [Workflow](#workflow)  
 [Output](#output)  
-[Credits](#credits)  
-[Contributions-and-Support](#contributions-and-support)  
 [Citations](#citations)  
 
 ## Usage
@@ -200,21 +199,8 @@ Notable output files:
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
 > see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
 
-## Credits
-Dryad was written by Dr. [Kelsey Florek](https://github.com/k-florek), Dr. [Abigail C. Shockey](https://github.com/AbigailShockey), and [Eva Gunawan](https://github.com/evagunawan).
-
-We thank the bioinformatics group at the Wisconsin State Laboratory of Hygiene for all of their contributions. 
-
-## Contributions and Support
-If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
 ## Citations
-If you use Dryad for your analysis, please cite it using the following:
-
-`K. Florek, A.C. Shockey, & E. Gunawan (2014). Dryad (Version 4.1.2) [https://github.com/wslh-bio/dryad].`
-
-An extensive list of references for the tools used by Dryad can be found in the [`CITATIONS.md`](CITATIONS.md) file.
-
 This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
 
 > **The nf-core framework for community-curated bioinformatics pipelines.**
