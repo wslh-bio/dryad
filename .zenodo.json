@@ -3,15 +3,15 @@
   "description": "Dryad is a Nextflow pipeline for examining prokaryote relatedness through phylogenetic analysis. It analyzes assembled FASTA genomes (from Spriggan or PHoeNIx) to perform either reference-free historical comparisons across multiple years and outbreaks using Mashtree, or fine-scale outbreak investigations using alignment-based methods (Parsnp, IQ-TREE2, and snp-dists). The pipeline includes quality assessment via QUAST, generates phylogenetic trees, calculates SNP distance matrices, and produces comprehensive summary reports for public health bioinformatics workflows.",
   "creators": [
     {
-      "name": "Florek, Kelsey",
-      "affiliation": "Wisconsin State Laboratory of Hygiene"
-    },
-    {
       "name": "Shockey, Abigail C.",
       "affiliation": "Wisconsin State Laboratory of Hygiene"
     },
     {
       "name": "Gunawan, Eva",
+      "affiliation": "Wisconsin State Laboratory of Hygiene"
+    },
+    {
+      "name": "Florek, Kelsey",
       "affiliation": "Wisconsin State Laboratory of Hygiene"
     }
   ],
@@ -24,9 +24,6 @@
     "phylogenetics",
     "outbreak-investigation",
     "snp-analysis",
-    "mashtree",
-    "parsnp",
-    "iq-tree",
     "core-genome",
     "public-health"
   ],
