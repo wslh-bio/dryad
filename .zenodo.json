@@ -30,7 +30,8 @@
     "core-genome",
     "public-health"
   ],
-  "license": "GPL-3.0",
+  "license": "GPL-3.0-or-later",
+  "access_right": "open",
   "upload_type": "software",
   "related_identifiers": [
     {
