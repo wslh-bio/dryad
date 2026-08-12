@@ -144,6 +144,9 @@ workflow DRYAD {
     if (params.fasta == "random") {
         ch_fasta = file(params.random_file, checkIfExists:true)
     }
+    else if (!params.fasta ) {
+        ch_fasta = Channel.empty()
+    }
     else {
         ch_fasta = file(params.fasta, checkIfExists:true)
     }
