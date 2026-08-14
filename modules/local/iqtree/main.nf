@@ -19,7 +19,7 @@ process IQTREE {
 
     script:
     """
-    if [[ "$sample_count" -ge 4 ]]; then
+    if [[ $sample_count -ge 4 ]]; then
         iqtree2 \\
                 -s $mblocks \\
                 -nt AUTO \\

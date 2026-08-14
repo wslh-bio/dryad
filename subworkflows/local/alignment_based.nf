@@ -41,7 +41,7 @@ workflow ALIGNMENT_BASED {
         )
         .set{ ch_for_mblocks }
 
-        PARSNP.out.mblocks
+        ch_for_mblocks
             .map( fasta -> 
                 [fasta.countFasta()]
             )
