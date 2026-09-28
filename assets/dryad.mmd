@@ -1,0 +1,68 @@
+%%metro title: 
+%%metro style: dark
+%%metro file: input | FASTA
+%%metro file: reference | FASTA
+%%metro file: rejected_fastas | TXT
+%%metro file: snp | TSV
+%%metro file: snp_tree | TREE
+%%metro file: mash_tree | TREE
+%%metro file: multiqc_report | HTML
+%%metro file: final_report | CSV
+%%metro line: based | Alignment based | #00904d
+%%metro line: pre | Pre-processing | #df851d
+%%metro line: free | Alignment free | #7058ce
+
+graph LR
+    subgraph preprocessing [Pre-processing]
+        input[ ]
+        count[Count sequences]
+        rejected_fastas[ ]
+        reject[Remove empty FASTAs]
+        quast[QUAST (optional)]
+        quast_sum[Summarize QUAST (optional)]
+        input -->|pre| count
+        count -->|pre| reject
+        reject -->|pre| rejected_fastas
+        reject -->|pre| quast
+        quast -->|pre| quast_sum
+    end
+
+    subgraph alignment_based [Alignment-based]
+        reference[ ]
+        snp[ ]
+        snp_tree[ ]
+        parsnp[Parsnp]
+        parsnp_sum[Parsnp summary]
+        iqtree[IQ-TREE]
+        remove_ref[Remove reference (optional)]
+        snpdists[snp-dists]
+        reference -->|based| parsnp
+        parsnp -->|based| parsnp_sum
+        parsnp -->|based| remove_ref
+        remove_ref -->|based| iqtree
+        iqtree -->|based| snp_tree
+        remove_ref -->|based| snpdists
+        snpdists -->|based| snp
+    end
+
+    subgraph alignment_free [Alignment-free]
+        mash_tree[ ]
+        mashtree[Mashtree]
+        mashtree -->|free| mash_tree
+    end
+
+    subgraph report [Reporting]
+        final_report[ ]
+        multiqc_report[ ]
+        create[Create final report]
+        multiqc[MultiQC]
+        create -->|based,pre| final_report
+        multiqc -->|pre| multiqc_report
+    end
+
+quast_sum -->|based| parsnp
+quast_sum -->|free| mashtree
+parsnp_sum -->|based| create
+quast -->|pre| multiqc
+quast_sum -->|pre| create
+
