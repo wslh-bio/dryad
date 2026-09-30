@@ -39,6 +39,7 @@ else {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 include { INPUT_CHECK       } from '../subworkflows/local/input_check'
+include { COUNT_FASTA       } from '../modules/local/count_fasta'
 include { QUAST             } from '../modules/local/quast'
 include { QUAST_SUMMARY     } from '../modules/local/quast_summary'
 include { ALIGNMENT_BASED   } from '../subworkflows/local/alignment_based'
@@ -76,43 +77,60 @@ workflow DRYAD {
     .reads
     .set { ch_input }
 
-    ch_input
-        .map{ meta, file ->
-            [meta, file, file[0].countFasta()]}
-        .branch{ meta, file, count ->
-            pass: count > 0
-            fail: count == 0
-        }
-        .set{ ch_count }
-
-    ch_count.pass
-        .map { meta, file, count ->
-            [meta, file]
-        }
-        .set{ ch_input_reads }
-
-    ch_count.fail
-        .map { meta, file, count1 ->
-            [meta.id]
-            }
-        .flatten()
-        .set{ ch_failed }
-
-    ch_failed
-        .collectFile(
-            storeDir: "${params.outdir}/rejected_samples",
-            name: 'Empty_samples.csv',
-            newLine: true
-        )
-
     // Adding version information
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+
+    // Run Module: count_fasta
+    COUNT_FASTA(
+        ch_input
+    )
+
+    ch_csv = COUNT_FASTA.out.csv
+                .splitCsv(header: true)
+                .join(ch_input)
+                .map { meta, csv, file ->
+                def count = csv.count as Integer
+                tuple(meta, file, count)
+                }
+
+    ch_versions = ch_versions.mix(COUNT_FASTA.out.versions)
+
+    // Pass/fail based on read count of fastq files
+    ch_csv
+        .branch{ meta, file, count ->
+            pass: count > params.readcount_cutoff
+            fail: count <= params.readcount_cutoff
+        }
+        .set{ ch_fasta }
+
+    ch_fasta.pass
+        .map { meta, file, count -> 
+            [meta, file]
+            }
+        .set{ ch_filtered }
+
+    ch_fasta.fail
+        .map { meta, file, count ->
+            meta.id
+            }
+        .set{ ch_failed }
+
+    // Collect 
+    ch_failed
+        .ifEmpty('NO_EMPTY_SAMPLES')
+        .collectFile(
+                name: 'empty_samples.csv',
+                newLine: true
+            )
+        .set{ ch_rejected_file }
+
+
 
     //
     // QC check for runs if skip quast
     //
     if (!params.skip_quast) {
-        QUAST ( ch_input_reads )
+        QUAST ( ch_filtered )
         QUAST_SUMMARY (
             QUAST.out.transposed_report.collect()
             )
@@ -124,7 +142,7 @@ workflow DRYAD {
     //
     // Re-mapping channel to intake paths
     //
-    ch_input_reads
+    ch_filtered
         .map { sample, fasta ->
             fasta
         } // Produces queue channel of just fasta file paths in a list
