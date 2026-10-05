@@ -104,13 +104,13 @@ workflow DRYAD {
         .set{ ch_fasta }
 
     ch_fasta.pass
-        .map { meta, file, count -> 
+        .map { meta, file, _count -> 
             [meta, file]
             }
         .set{ ch_filtered }
 
     ch_fasta.fail
-        .map { meta, file, count ->
+        .map { meta, file, _count ->
             meta.id
             }
         .set{ ch_failed }
@@ -123,8 +123,6 @@ workflow DRYAD {
                 newLine: true
             )
         .set{ ch_rejected_file }
-
-
 
     //
     // QC check for runs if skip quast
@@ -147,16 +145,26 @@ workflow DRYAD {
             fasta
         } // Produces queue channel of just fasta file paths in a list
         .collect()
-        .set { ch_for_alignments }
+        .set { ch_fasta_paths }
 
     //
     // SUBWORKFLOW: Alignment Free
     //
     if (params.alignment_free) {
-        ALIGNMENT_FREE (
-            ch_for_alignments,
-            params.task.cpus
-             )
+        if (!params.skip_quast) {
+            ALIGNMENT_FREE (
+                ch_fasta_paths,
+                params.task.cpus,
+                QUAST_SUMMARY.out.quast_tsv
+                )
+        }
+        if (params.skip_quast) {
+            ALIGNMENT_FREE (
+                ch_fasta_paths,
+                params.task.cpus,
+                quast_file
+                )
+        }
     }
 
     if (params.fasta == "random") {
@@ -175,22 +183,24 @@ workflow DRYAD {
     if (params.alignment_based && params.fasta) {
         if (!params.skip_quast) {
             ALIGNMENT_BASED (
-                ch_for_alignments,
+                ch_fasta_paths,
                 ch_fasta,
                 params.outdir,
                 params.parsnp_partition,
                 params.add_reference,
+                params.remove_recombination,
                 INPUT_CHECK.out.csv,
                 QUAST_SUMMARY.out.quast_tsv
                 )
         }
         if (params.skip_quast) {
             ALIGNMENT_BASED (
-                ch_for_alignments,
+                ch_fasta_paths,
                 ch_fasta,
                 params.outdir,
                 params.parsnp_partition,
                 params.add_reference,
+                params.remove_recombination,
                 INPUT_CHECK.out.csv,
                 quast_file
                 )
