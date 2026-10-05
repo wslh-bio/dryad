@@ -6,6 +6,7 @@ process RESULTS {
         path quast
         path aligner_log
         path excluded_samples
+        val run_name
 
     output:
         path("*.csv"), emit: summary
@@ -14,8 +15,9 @@ process RESULTS {
     task.ext.when == null || task.ext.when
 
     script: // This script is bundled with the pipeline, in wslh-bio/dryad/bin
+    def cleaned_runname=run_name.toString().replaceAll(' ', '_')
     """
-    summarize_results.py $aligner_log $quast $excluded_samples ${workflow.manifest.version}
+    summarize_results.py $aligner_log $quast $excluded_samples ${cleaned_runname} ${workflow.manifest.version}
     """
 
 }

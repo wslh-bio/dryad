@@ -1,6 +1,6 @@
 // Alignment_based subworkflow
 
-include { REMOVE_REFERENCE } from '../../modules/local/remove_reference'
+include { REMOVE_REFERENCE           } from '../../modules/local/remove_reference'
 include { PARSNP                     } from '../../modules/local/parsnp'
 include { IQTREE                     } from '../../modules/local/iqtree'
 include { SNPDISTS                   } from '../../modules/local/snpdists'
@@ -16,6 +16,7 @@ workflow ALIGNMENT_BASED {
     outdir              // output directory
     partition           // tells parsnp if it's important to partition
     add_reference       // tells parsnp if it needs to remove the reference
+    recombination       // tells parsnp to remove_recombination
     samplesheet         // valid samplesheet to compare output to
     quast_tsv           // will use quast summary output in final summary
 
@@ -28,7 +29,8 @@ workflow ALIGNMENT_BASED {
     PARSNP (
         reads,
         fasta,
-        partition
+        partition,
+        recombination
         )
     ch_versions = ch_versions.mix(PARSNP.out.versions) 
 
@@ -87,7 +89,8 @@ workflow ALIGNMENT_BASED {
         RESULTS (
             quast_tsv,
             PARSE_PARSNP_ALIGNER_LOG.out.aligner_log,
-            COMPARE_IO.out.excluded
+            COMPARE_IO.out.excluded,
+            params.runname
             )
     }
 
@@ -142,7 +145,8 @@ workflow ALIGNMENT_BASED {
         RESULTS (
             quast_tsv,
             PARSE_PARSNP_ALIGNER_LOG.out.aligner_log,
-            COMPARE_IO.out.excluded
+            COMPARE_IO.out.excluded,
+            params.runname
             )
     }
 

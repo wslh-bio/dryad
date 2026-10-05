@@ -21,6 +21,9 @@ def parse_args(args=None):
 		help='Supplies quast file, if run')
 	parser.add_argument('excluded_samples',
 		help='Output of compare_io.py')
+	parser.add_argument('workflowRunName',
+        type=str,
+		help='This is supplied by the nextflow config and can be changed via the usual methods i.e. command line.'),
 	parser.add_argument('version',
 		help='Version of Dryad')
 
@@ -40,7 +43,7 @@ def process_dfs(log, excluded, quast):
 
     return df_log, df_excluded, df_quast
 
-def join_dfs_no_quast(df_log, df_excluded, version):
+def join_dfs_no_quast(df_log, df_excluded, version, WFRunName):
 
     logging.debug("Setting the column order for no quast output")
     column_order = ['Sample',
@@ -75,9 +78,9 @@ def join_dfs_no_quast(df_log, df_excluded, version):
     df_log_excluded = df_log_excluded.reindex(columns = column_order)
 
     logging.debug("Writing to csv")
-    df_log_excluded.to_csv('dryad_summary.csv', index=False)
+    df_log_excluded.to_csv(f'{WFRunName}_dryad_summary.csv', index=False)
 
-def join_dfs_with_quast(df_log, df_included, df_quast, version):
+def join_dfs_with_quast(df_log, df_included, df_quast, version, WFRunName):
 
     logging.debug("Setting the column order for including quast output")
     column_order = ['Sample',
@@ -121,7 +124,7 @@ def join_dfs_with_quast(df_log, df_included, df_quast, version):
     df_log_included_quast = df_log_included_quast.reindex(columns = column_order)
 
     logging.debug("Writing to csv")
-    df_log_included_quast.to_csv('dryad_summary.csv', index=False)
+    df_log_included_quast.to_csv(f'{WFRunName}_dryad_summary.csv', index=False)
 
 def main(args=None):
     args = parse_args(args)
@@ -129,9 +132,9 @@ def main(args=None):
     l,e,q = process_dfs(args.aligner_log, args.excluded_samples, args.quast)
 
     if args.quast == 'empty.txt':
-        join_dfs_no_quast(l,e,args.version)
+        join_dfs_no_quast(l,e,args.version,args.workflowRunName)
     else:
-        join_dfs_with_quast(l,e,q,args.version)
+        join_dfs_with_quast(l,e,q,args.version,args.workflowRunName)
 
 if __name__ == "__main__":
 	sys.exit(main())
