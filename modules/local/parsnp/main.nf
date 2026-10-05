@@ -3,12 +3,13 @@ process PARSNP {
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
-    container "staphb/parsnp:2.1.4"
+    container "staphb/parsnp:2.1.6"
 
     input:
     path reads
     path fasta
     val partition
+    val remove_recombination
 
     output:
     path( "parsnp_output/parsnp.xmfa"           )   , emit: core_genome_alignment
@@ -22,13 +23,14 @@ process PARSNP {
     when:
     task.ext.when == null || task.ext.when
 
-
     script:
     def fasta_input = fasta.name != 'NO_FILE' ? "$fasta" : '!'
+    def recombination = remove_recombination ? "-x" : ""
         """
         parsnp -r $fasta_input \\
                -d $reads \\
                -o ./parsnp_output \\
+               $recombination \\
                $partition
 
         cat <<-END_VERSIONS > versions.yml
