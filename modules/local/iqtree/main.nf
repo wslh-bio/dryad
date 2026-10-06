@@ -7,7 +7,6 @@ process IQTREE {
 
     input:
     path(mblocks)
-    val sample_count
 
     output:
     path("*.treefile")      , emit: phylogeny
@@ -19,7 +18,9 @@ process IQTREE {
 
     script:
     """
-    if [[ $sample_count -ge 4 ]]; then
+    sample_count=\$( grep -c '>' $mblocks)
+
+    if [[ \$sample_count -ge 4 ]]; then
         iqtree2 \\
                 -s $mblocks \\
                 -nt AUTO \\
