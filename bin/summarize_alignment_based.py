@@ -15,16 +15,16 @@ def parse_args(args=None):
 	Epilog='Usage: python3 dryad_summary.py '
 
 	parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
-	parser.add_argument('aligner_log',
+	parser.add_argument('--aligner_log',
 		help='Output of parse_parsnp_aligner_log.py')
-	parser.add_argument('quast',
+	parser.add_argument('--quast_results',
 		help='Supplies quast file, if run')
-	parser.add_argument('excluded_samples',
+	parser.add_argument('--excluded_samples',
 		help='Output of compare_io.py')
-	parser.add_argument('workflowRunName',
+	parser.add_argument('--run_name',
         type=str,
 		help='This is supplied by the nextflow config and can be changed via the usual methods i.e. command line.'),
-	parser.add_argument('version',
+	parser.add_argument('--dryad_version',
 		help='Version of Dryad')
 
 	return parser.parse_args(args)
@@ -129,12 +129,12 @@ def join_dfs_with_quast(df_log, df_included, df_quast, version, WFRunName):
 def main(args=None):
     args = parse_args(args)
 
-    l,e,q = process_dfs(args.aligner_log, args.excluded_samples, args.quast)
+    l,e,q = process_dfs(args.aligner_log, args.excluded_samples, args.quast_results)
 
-    if args.quast == 'empty.txt':
-        join_dfs_no_quast(l,e,args.version,args.workflowRunName)
+    if args.quast_results == 'empty.txt':
+        join_dfs_no_quast(l,e,args.dryad_version,args.run_name)
     else:
-        join_dfs_with_quast(l,e,q,args.version,args.workflowRunName)
+        join_dfs_with_quast(l,e,q,args.dryad_version,args.run_name)
 
 if __name__ == "__main__":
 	sys.exit(main())
