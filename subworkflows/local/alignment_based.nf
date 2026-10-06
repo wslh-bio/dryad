@@ -4,9 +4,9 @@ include { REMOVE_REFERENCE           } from '../../modules/local/remove_referenc
 include { PARSNP                     } from '../../modules/local/parsnp'
 include { IQTREE                     } from '../../modules/local/iqtree'
 include { SNPDISTS                   } from '../../modules/local/snpdists'
-include { PARSE_PARSNP_ALIGNER_LOG   } from '../../modules/local/parse_parsnp_aligner_log'
+include { PARSE_ALIGNER_LOG          } from '../../modules/local/parse_parsnp_aligner_log'
 include { COMPARE_IO                 } from '../../modules/local/compare_io'
-include { RESULTS                    } from '../../modules/local/results'
+include { ALIGNMENT_BASED_RESULTS    } from '../../modules/local/alignment_based_results'
 
 workflow ALIGNMENT_BASED {
 
@@ -32,6 +32,9 @@ workflow ALIGNMENT_BASED {
         partition,
         recombination
         )
+    
+    ch_mblocks = PARSNP.out.mblocks
+    ch_parsnp_log = PARSNP.out.log
     ch_versions = ch_versions.mix(PARSNP.out.versions) 
 
 //
@@ -39,59 +42,61 @@ workflow ALIGNMENT_BASED {
 //
     if (!add_reference) {
         REMOVE_REFERENCE (
-            PARSNP.out.mblocks
+            ch_mblocks
         )
-        .set{ ch_for_mblocks }
-
-        ch_for_mblocks
-            .map( fasta -> 
-                [fasta.countFasta()]
-            )
-            .flatten()
-            .set{ ch_for_count }
+        .set{ ch_rmref_mblocks }
 
         //
         // PARSER
         //
-        PARSE_PARSNP_ALIGNER_LOG (
-            PARSNP.out.log,
+        PARSE_ALIGNER_LOG (
+            ch_parsnp_log,
             add_reference
         )
+
+        ch_parsed = PARSE_ALIGNER_LOG.out.aligner_log
 
         //
         // COMPARE_IO
         //
         COMPARE_IO (
             samplesheet,
-            PARSE_PARSNP_ALIGNER_LOG.out.aligner_log
+            ch_parsed
         )
 
+        ch_excluded_samples = COMPARE_IO.out.excluded
+        
         //
         // IQTREE
         //
         IQTREE (
-            ch_for_mblocks,
-            ch_for_count
+            ch_rmref_mblocks
         )
+
+        ch_tree = IQTREE.out.phylogeny
         ch_versions = ch_versions.mix(IQTREE.out.versions)
-    
+
         //
         // SNPDISTS
         //
         SNPDISTS (
-            ch_for_mblocks
+            ch_rmref_mblocks
         )
+
+        ch_snp = SNPDISTS.out.tsv
         ch_versions = ch_versions.mix(SNPDISTS.out.versions)
 
         //
         // Final Summary
         //
-        RESULTS (
+        ALIGNMENT_BASED_RESULTS (
             quast_tsv,
-            PARSE_PARSNP_ALIGNER_LOG.out.aligner_log,
-            COMPARE_IO.out.excluded,
-            params.runname
+            ch_parsed,
+            ch_excluded_samples,
+            params.run_name
             )
+            
+        ch_summary = ALIGNMENT_BASED_RESULTS.out.summary
     }
 
 //
@@ -99,36 +104,34 @@ workflow ALIGNMENT_BASED {
 //
     if (add_reference) {
 
-        PARSNP.out.mblocks
-            .map( fasta -> 
-                [fasta.countFasta()]
-            )
-            .flatten()
-            .set{ ch_for_count }
-
         //
         // PARSER
         //
-        PARSE_PARSNP_ALIGNER_LOG (
-            PARSNP.out.log,
+        PARSE_ALIGNER_LOG (
+            ch_parsnp_log,
             add_reference
         )
+
+        ch_parsed = PARSE_ALIGNER_LOG.out.aligner_log
 
         //
         // COMPARE_IO
         //
         COMPARE_IO (
             samplesheet,
-            PARSE_PARSNP_ALIGNER_LOG.out.aligner_log
+            ch_parsed
         )
+
+        ch_excluded_samples = COMPARE_IO.out.excluded
 
         //
         // IQTREE
         //
         IQTREE (
-            PARSNP.out.mblocks,
-            ch_for_count
+            PARSNP.out.mblocks
         )
+
+        ch_tree = IQTREE.out.phylogeny
         ch_versions = ch_versions.mix(IQTREE.out.versions)
 
         //
@@ -137,24 +140,28 @@ workflow ALIGNMENT_BASED {
         SNPDISTS (
             PARSNP.out.mblocks
         )
+
+        ch_snp = SNPDISTS.out.tsv
         ch_versions = ch_versions.mix(SNPDISTS.out.versions)
 
         //
         // Final Summary
         //
-        RESULTS (
+        ALIGNMENT_BASED_RESULTS (
             quast_tsv,
-            PARSE_PARSNP_ALIGNER_LOG.out.aligner_log,
-            COMPARE_IO.out.excluded,
+            ch_parsed,
+            ch_excluded_samples,
             params.runname
             )
+
+        ch_summary = ALIGNMENT_BASED_RESULTS.out.summary
     }
 
     emit:
-    phylogeny    =      IQTREE.out.phylogeny
-    tsv          =      SNPDISTS.out.tsv
-    aligner_log  =      PARSE_PARSNP_ALIGNER_LOG.out.aligner_log
-    excluded     =      COMPARE_IO.out.excluded
-    summary      =      RESULTS.out.summary
+    phylogeny    =      ch_tree
+    tsv          =      ch_snp 
+    aligner_log  =      ch_parsed
+    excluded     =      ch_excluded_samples
+    summary      =      ch_summary
     versions     =      ch_versions
 }
