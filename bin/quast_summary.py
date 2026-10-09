@@ -1,35 +1,64 @@
-#!/usr/bin/python3.7
-import os
-import glob
-import pandas as pd
+#!/usr/bin/env python3
 
-# function for summarizing quast output
+import os
+import sys
+import glob
+import argparse
+import logging
+
+import pandas as pd
+from functools import partial
+
+logging.basicConfig(level = logging.INFO, format = '%(levelname)s : %(message)s')
+
 def summarize_quast(file):
-    # get sample id from file name and set up data list
-    sample_id = os.path.basename(file).split(".")[0]
-    # read in data frame from file
+    logging.debug("Get sample id from file name and set up data list")
+    sample_id = os.path.basename(file).split('.')[0]
+
+    logging.debug("Read in data frame from file")
     df = pd.read_csv(file, sep='\t')
-    # get contigs, total length and assembly length columns
-    df = df.iloc[:,[1,7,17]]
-    # assign sample id as column
+
+    logging.debug("Get contigs, total length and assembly length columns")
+    df = df.loc[:,['# contigs','Total length', 'N50']]
+
+    logging.debug("Assign sample id as column")
     df = df.assign(Sample=sample_id)
-    # rename columns
-    df = df.rename(columns={'# contigs (>= 0 bp)':'Contigs','Total length (>= 0 bp)':'Assembly Length (bp)'})
-    # re-order data frame
+
+    logging.debug("Rename columns")
+    df = df.rename(columns={'# contigs':'Contigs','Total length':'Assembly Length (bp)'})
+
+    logging.debug("Re-order data frame")
     df = df[['Sample', 'Contigs','Assembly Length (bp)', 'N50']]
+
     return df
 
-# get quast output files
-files = glob.glob("data/*.transposed.quast.report.tsv*")
+def grab_files():
 
-# summarize quast output files
-dfs = map(summarize_quast,files)
-dfs = list(dfs)
+    logging.info("Obtaining all QUAST output files")
+    files = glob.glob('data*/*.transposed.quast.report.tsv*')
 
-# concatenate dfs and write data frame to file
-if len(dfs) > 1:
-    dfs_concat = pd.concat(dfs)
-    dfs_concat.to_csv(f'quast_results.tsv',sep='\t', index=False, header=True, na_rep='NaN')
-else:
-    dfs = dfs[0]
-    dfs.to_csv(f'quast_results.tsv',sep='\t', index=False, header=True, na_rep='NaN')
+    return files
+
+def summarize_output(files):
+
+    summarize_quast_partial = partial(summarize_quast)
+
+    logging.info("Summarizing quast output files")
+    dfs = map(summarize_quast_partial,files)
+    dfs = list(dfs)
+
+    return dfs
+
+def concatenate_dfs(dfs):
+    logging.debug("Concatenate dfs and write data frame to file")
+    if len(dfs) > 1:
+        dfs_concat = pd.concat(dfs)
+        dfs_concat.to_csv('quast_results.tsv',sep='\t', index=False, header=True, na_rep='NaN')
+    else:
+        dfs = dfs[0]
+        dfs.to_csv('quast_results.tsv',sep='\t', index=False, header=True, na_rep='NaN')
+
+logging.info("Begin compiling all results for output file.")
+files = grab_files()
+dfs = summarize_output(files)
+concatenate_dfs(dfs)
