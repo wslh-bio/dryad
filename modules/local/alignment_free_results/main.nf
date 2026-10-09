@@ -1,14 +1,16 @@
-process ALIGNMENT_FREE_RESULTS {
+process CREATE_REPORT {
 
-    container "quay.io/wslh-bioinformatics/pandas@sha256:9ba0a1f5518652ae26501ea464f466dcbb69e43d85250241b308b96406cac458"
-
+    label 'process_single'
+    container "quay.io/wslh-bioinformatics/pandas:1.5.0"
+    
     input:
-        path quast
-        val run_name
+    path quast
+    val run_name
 
     output:
-        path("*.csv"), emit: summary
-        
+    path("*.csv"), emit: summary
+    path "versions.yml", emit: versions
+
     when:
     task.ext.when == null || task.ext.when
 
@@ -19,6 +21,11 @@ process ALIGNMENT_FREE_RESULTS {
         --quast_results $quast \\
         --run_name $cleaned_runname \\
         --dryad_version ${workflow.manifest.version}
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        create_report: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
+    END_VERSIONS
     """
 
 }
