@@ -1,14 +1,13 @@
 process REMOVE_REFERENCE {
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/biopython:1.81' :
-        'quay.io/biocontainers/biopython:1.81' }"
+    container "quay.io/biocontainers/biopython:1.81"
 
     input:
     path fastas
 
     output:
-    path "*.mblocks"   , emit: mblocks
+    path "*.mblocks"        , emit: mblocks
+    path "versions.yml"     , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -17,5 +16,10 @@ process REMOVE_REFERENCE {
     """
     remove_reference.py \\
     $fastas
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        remove_reference: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
+    END_VERSIONS
     """
 }
