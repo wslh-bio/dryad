@@ -1,4 +1,5 @@
 process COUNT_FASTA {
+    
     tag "$meta.id"
     label 'process_single'
     container "quay.io/wslh-bioinformatics/pandas:1.5.0"
@@ -8,7 +9,7 @@ process COUNT_FASTA {
 
     output:
     tuple val(meta), path("*.csv"), emit: csv
-    path "versions.yml"            , emit: versions
+    path "versions.yml"           , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -21,11 +22,11 @@ process COUNT_FASTA {
         $args \\
         --sample_id ${meta.id} \\
         --fasta ${fasta} \\
-        --output ${meta.id}_output.csv 
-
+        --output ${meta.id}_output.csv
+        
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        countfastq: \$(python --version)
+        count_fasta: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
     END_VERSIONS
     """
 
@@ -39,7 +40,7 @@ process COUNT_FASTA {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        countfasta: \$(python --version)
+        count_fasta: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
     END_VERSIONS
     """
 }
