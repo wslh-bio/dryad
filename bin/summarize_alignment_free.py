@@ -31,7 +31,7 @@ def create_report(df_quast, version, WFRunName):
                     'Contigs',
                     'N50',
                     'Assembly Length (bp)',
-                    'Version']
+                    'Dryad Version']
 
     logging.debug("Ensuring sample is just name")
     df_quast['Sample'] = df_quast['Sample'].apply(lambda x: Path(x).stem)
@@ -46,6 +46,9 @@ def create_report(df_quast, version, WFRunName):
 
     logging.debug("Add Dryad version number")
     df_quast = df_quast.assign(Version=version)
+
+    logging.debug("Renaming columns to full names")
+    df_quast = df_quast.rename(columns={'Version':'Dryad Version'})
 
     logging.debug("Reorder columns based on column order")
     df_quast = df_quast.reindex(columns = column_order)

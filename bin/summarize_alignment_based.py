@@ -91,7 +91,7 @@ def join_dfs_with_quast(df_log, df_included, df_quast, version, WFRunName):
                     'Sequence Length (bps)',
                     'Cluster Coverage (bps)',
                     'Total Coverage (%)',
-                    'Version']
+                    'Dryad Version']
 
     logging.debug("Ensuring sample is just name")
     df_log['Sample'] = df_log['Sample'].apply(lambda x: Path(x).stem)
@@ -114,11 +114,12 @@ def join_dfs_with_quast(df_log, df_included, df_quast, version, WFRunName):
     logging.debug("Replace -1 with empty space")
     df_log_included_quast = df_log_included_quast.replace(-1,'')
 
-    logging.debug("Rename and columns")
-    df_log_included_quast = df_log_included_quast.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
-
     logging.debug("Add Dryad version number")
     df_log_included_quast = df_log_included_quast.assign(Version=version)
+
+    logging.debug("Rename columns to full names")
+    df_log_included_quast = df_log_included_quast.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis',
+                                                                  'Version':'Dryad Version'})
 
     logging.debug("Reorder columns based on column order")
     df_log_included_quast = df_log_included_quast.reindex(columns = column_order)
