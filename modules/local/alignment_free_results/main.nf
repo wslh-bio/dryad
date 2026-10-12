@@ -1,6 +1,6 @@
 process CREATE_REPORT {
     label 'process_single'
-    
+
     container "quay.io/wslh-bioinformatics/pandas:1.5.0"
     
     input:
@@ -17,7 +17,7 @@ process CREATE_REPORT {
     script: // This script is bundled with the pipeline, in wslh-bio/dryad/bin
     def cleaned_runname=run_name.toString().replaceAll(' ', '_')
     """
-    summarize_results.py \\
+    summarize_alignment_free.py \\
         --quast_results $quast \\
         --run_name $cleaned_runname \\
         --dryad_version ${workflow.manifest.version}
