@@ -24,6 +24,17 @@ else {
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    CONFIG FILES
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+ch_multiqc_config          = channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+ch_multiqc_custom_config   = params.multiqc_config ? channel.fromPath( params.multiqc_config, checkIfExists: true ) : channel.empty()
+ch_multiqc_logo            = params.multiqc_logo   ? channel.fromPath( params.multiqc_logo, checkIfExists: true ) : channel.empty()
+ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT LOCAL MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -44,6 +55,8 @@ include { QUAST             } from '../modules/local/quast'
 include { QUAST_SUMMARY     } from '../modules/local/quast_summary'
 include { ALIGNMENT_BASED   } from '../subworkflows/local/alignment_based'
 include { ALIGNMENT_FREE    } from '../subworkflows/local/alignment_free'
+include { CUSTOM_DUMPSOFTWAREVERSIONS          } from '../modules/nf-core/custom/dumpsoftwareversions/main'
+include { MULTIQC           } from '../modules/local/multiqc/multiqc'
 
 workflow DRYAD {
 
@@ -165,6 +178,8 @@ workflow DRYAD {
                 quast_file
                 )
         }
+        ch_alignment_free_versions = ALIGNMENT_FREE.out.versions
+        ch_versions = ch_versions.mix(ch_alignment_free_versions)
     }
 
     if (params.fasta == "random") {
@@ -192,6 +207,8 @@ workflow DRYAD {
                 INPUT_CHECK.out.csv,
                 QUAST_SUMMARY.out.quast_tsv
                 )
+            ch_alignment_based_versions = ALIGNMENT_BASED.out.versions
+            ch_versions = ch_versions.mix(ch_alignment_based_versions)
         }
         if (params.skip_quast) {
             ALIGNMENT_BASED (
@@ -204,6 +221,36 @@ workflow DRYAD {
                 INPUT_CHECK.out.csv,
                 quast_file
                 )
-        }
+            ch_alignment_based_versions = ALIGNMENT_BASED.out.versions
+            //ch_versions = ch_versions.mix(ch_alignment_based_versions)
+        }        
     }
+    
+    CUSTOM_DUMPSOFTWAREVERSIONS (
+        ch_versions.unique().collectFile(name: 'collated_versions.yml')
+    )
+
+    //
+    //MODULE: MultiQC
+    //
+    
+    workflow_summary    = WorkflowDryad.paramsSummaryMultiqc(workflow, summary_params)
+    ch_workflow_summary = channel.value(workflow_summary)
+
+    methods_description    = WorkflowDryad.methodsDescriptionText(workflow, ch_multiqc_custom_methods_description)
+    ch_methods_description = channel.value(methods_description)
+
+    ch_multiqc_files = channel.empty()
+    ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml'))
+    ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
+    ch_multiqc_files = ch_multiqc_files.mix(QUAST.out.result.collect().ifEmpty([]))
+
+    MULTIQC (
+        ch_multiqc_files.collect(),
+        ch_multiqc_config.collect().ifEmpty([]),
+        ch_multiqc_custom_config.collect().ifEmpty([]),
+        ch_multiqc_logo.collect().ifEmpty([])
+    )
+
 }
