@@ -9,6 +9,7 @@ process PARSE_ALIGNER_LOG {
 
     output:
     path("aligner_log.tsv") , emit: aligner_log
+    path "versions.yml"     , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -16,5 +17,10 @@ process PARSE_ALIGNER_LOG {
     script:
     """
     parse_parsnp_aligner_log.py parsnp_output/log/parsnpAligner.log $keep_ref
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        parse_aligner_log: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
+    END_VERSIONS
     """
 }
