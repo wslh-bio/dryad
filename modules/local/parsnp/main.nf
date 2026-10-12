@@ -26,16 +26,16 @@ process PARSNP {
     script:
     def fasta_input = fasta.name != 'NO_FILE' ? "$fasta" : '!'
     def recombination = remove_recombination ? "-x" : ""
-        """
-        parsnp -r $fasta_input \\
-               -d $reads \\
-               -o ./parsnp_output \\
-               $recombination \\
-               $partition
+    """
+    parsnp -r $fasta_input \\
+            -d $reads \\
+            -o ./parsnp_output \\
+            $recombination \\
+            $partition
 
-        cat <<-END_VERSIONS > versions.yml
-        "${task.process}":
-            parsnp: \$(parsnp --version | cut -d ' ' -f 2 | sed 's/v//')
-        END_VERSIONS
-        """
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        parsnp: \$(parsnp --version | cut -d ' ' -f 2 | sed 's/v//')
+    END_VERSIONS
+    """
 }
