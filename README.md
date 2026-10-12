@@ -66,8 +66,8 @@ Prepare a samplesheet with your input data with each row representing one fasta 
 `samplesheet.csv`:  
 | sample | fasta |
 | ------------- | ------------- | 
-| sample_1 | 2024_1.contigs.fa |
-| sample_2 | 2024_2.contigs.fa |
+| sample_1 | sample_1.contigs.fa |
+| sample_2 | sample_2.contigs.fa |
 
 ## Parameters
 Dryad's main parameters and their defaults are shown in the table below:
@@ -77,6 +77,7 @@ Dryad's main parameters and their defaults are shown in the table below:
 | input | Path to comma-separated file containing information about the samples in the experiment | --input <PATH_TO_SAMPLESHEET> |
 | outdir | Output directory where the results will be saved. Absolute path must be used for storage on cloud infrastructure | --outdir <DESIRED_OUTPUT_PATH> |
 | profile | Denotes how to access containerized software. | -profile aws |
+| run_name | Prefix for final report. Default is "final". | --run_name <NAME> |
 | fasta | Reference fasta used for alignment based comparisons. Default is no reference fasta. | --fasta <PATH_TO_REF_FASTA> |
 | fasta random | Reference fasta used for alignment based comparisons is chosen by Parsnp's algorithm. Default is not to use a random fasta file as a reference. | --fasta random |
 | alignment_based | Performs a fine scale analysis within a singular outbreak | --alignment_based |
@@ -110,13 +111,31 @@ Dryad's main parameters and their defaults are shown in the table below:
 An example of Dryad's output directory structure for both alignment based and alignment free steps can be seen below. These directories will not include QUAST if `--skip_quast` is used:
 ```
 alignment_based_output/
-├── compare
+├── compare_io
 │   └── sample_exclusion_status.csv
-├── dryad
-│   └── dryad_summary.csv
+├── count_fasta
+│   ├── *_output.html
+│   └── sample_exclusion_status.csv
+├── create_report
+│   └── *_dryad_summary.csv
 ├── iqtree
 │   └── parsnp.snps.mblocks.treefile
-├── parse
+├── mashtree
+│   └── mashtree.bootstrap.dnd
+├── multiqc
+│   ├── multiqc_data
+│   │   ├── *.json
+│   │   ├── *.txt
+│   │   └── multiqc.log
+│   ├── multiqc_plots
+│   │   ├── pdf
+│   │   │   └── *.pdf
+│   │   ├── png
+│   │   │   └── *.png
+│   │   └── svg
+│   │       └── *.svg
+│   └── multiqc_report.html
+├── parse_aligner_log
 │   └── aligner_log.tsv
 ├── parsnp
 │   └── parsnp_output
@@ -149,9 +168,11 @@ alignment_based_output/
 ├── quast
 │   ├── *.quast.report.tsv
 │   ├── *.transposed.quast.tsv
-│   ├── quast_results.tsv
-├── sample
-│   └── count.txt
+│   └── quast_results.tsv
+├── quast_summary
+│   └── quast_results.tsv
+├── remove_reference
+│   └── cleaned_parsnp.snps.mblocks
 └── snpdists
     └── snp_dists_matrix.tsv
 ```
