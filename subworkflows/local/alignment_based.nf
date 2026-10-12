@@ -6,7 +6,7 @@ include { IQTREE                     } from '../../modules/local/iqtree'
 include { SNPDISTS                   } from '../../modules/local/snpdists'
 include { PARSE_ALIGNER_LOG          } from '../../modules/local/parse_parsnp_aligner_log'
 include { COMPARE_IO                 } from '../../modules/local/compare_io'
-include { ALIGNMENT_BASED_RESULTS    } from '../../modules/local/alignment_based_results'
+include { CREATE_REPORT              } from '../../modules/local/alignment_based_results'
 
 workflow ALIGNMENT_BASED {
 
@@ -44,7 +44,8 @@ workflow ALIGNMENT_BASED {
         REMOVE_REFERENCE (
             ch_mblocks
         )
-        .set{ ch_rmref_mblocks }
+        ch_rmref_mblocks = REMOVE_REFERENCE.out.mblocks
+        ch_versions = ch_versions.mix(REMOVE_REFERENCE.out.versions) 
 
         //
         // PARSER
@@ -55,6 +56,7 @@ workflow ALIGNMENT_BASED {
         )
 
         ch_parsed = PARSE_ALIGNER_LOG.out.aligner_log
+        ch_versions = ch_versions.mix(PARSE_ALIGNER_LOG.out.versions) 
 
         //
         // COMPARE_IO
@@ -65,7 +67,8 @@ workflow ALIGNMENT_BASED {
         )
 
         ch_excluded_samples = COMPARE_IO.out.excluded
-        
+        ch_versions = ch_versions.mix(COMPARE_IO.out.versions)
+
         //
         // IQTREE
         //
@@ -89,14 +92,16 @@ workflow ALIGNMENT_BASED {
         //
         // Final Summary
         //
-        ALIGNMENT_BASED_RESULTS (
+        CREATE_REPORT (
             quast_tsv,
             ch_parsed,
             ch_excluded_samples,
             params.run_name
             )
             
-        ch_summary = ALIGNMENT_BASED_RESULTS.out.summary
+        ch_summary = CREATE_REPORT.out.summary
+        ch_versions = ch_versions.mix(CREATE_REPORT.out.versions) 
+
     }
 
 //
@@ -113,6 +118,7 @@ workflow ALIGNMENT_BASED {
         )
 
         ch_parsed = PARSE_ALIGNER_LOG.out.aligner_log
+        ch_versions = ch_versions.mix(PARSE_ALIGNER_LOG.out.versions) 
 
         //
         // COMPARE_IO
@@ -123,6 +129,7 @@ workflow ALIGNMENT_BASED {
         )
 
         ch_excluded_samples = COMPARE_IO.out.excluded
+        ch_versions = ch_versions.mix(COMPARE_IO.out.versions) 
 
         //
         // IQTREE
@@ -147,14 +154,15 @@ workflow ALIGNMENT_BASED {
         //
         // Final Summary
         //
-        ALIGNMENT_BASED_RESULTS (
+        CREATE_REPORT (
             quast_tsv,
             ch_parsed,
             ch_excluded_samples,
             params.runname
             )
 
-        ch_summary = ALIGNMENT_BASED_RESULTS.out.summary
+        ch_summary = CREATE_REPORT.out.summary
+        ch_versions = ch_versions.mix(CREATE_REPORT.out.versions) 
     }
 
     emit:
