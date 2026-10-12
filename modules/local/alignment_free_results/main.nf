@@ -1,6 +1,6 @@
 process CREATE_REPORT {
-
     label 'process_single'
+    
     container "quay.io/wslh-bioinformatics/pandas:1.5.0"
     
     input:
@@ -24,7 +24,7 @@ process CREATE_REPORT {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        create_report: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
+        python: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
     END_VERSIONS
     """
 

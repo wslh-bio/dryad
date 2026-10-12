@@ -19,7 +19,7 @@ process REMOVE_REFERENCE {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        remove_reference: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
+        python: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
     END_VERSIONS
     """
 }

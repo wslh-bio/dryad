@@ -1,13 +1,14 @@
 process QUAST_SUMMARY {
     label 'process_single'
-
-    container "quay.io/wslh-bioinformatics/pandas@sha256:9ba0a1f5518652ae26501ea464f466dcbb69e43d85250241b308b96406cac458"
+    
+    container "quay.io/wslh-bioinformatics/pandas:1.5.0"
 
     input:
     path("data/*")
 
     output:
-    path("quast_results.tsv"), emit: quast_tsv
+    path("quast_results.tsv")    , emit: quast_tsv
+    path "versions.yml"          , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -15,5 +16,10 @@ process QUAST_SUMMARY {
     script:
     """
     quast_summary.py
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
+    END_VERSIONS
     """
 }

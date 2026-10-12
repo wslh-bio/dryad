@@ -1,5 +1,4 @@
 process SNPDISTS {
-
     label 'process_low'
 
     conda "${moduleDir}/environment.yml"

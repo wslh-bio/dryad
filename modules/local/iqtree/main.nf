@@ -1,5 +1,4 @@
 process IQTREE {
-
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"

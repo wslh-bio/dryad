@@ -1,5 +1,4 @@
 process PARSNP {
-
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"

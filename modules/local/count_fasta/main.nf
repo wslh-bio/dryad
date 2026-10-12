@@ -1,7 +1,7 @@
 process COUNT_FASTA {
-    
     tag "$meta.id"
     label 'process_single'
+    
     container "quay.io/wslh-bioinformatics/pandas:1.5.0"
 
     input:
@@ -40,7 +40,7 @@ process COUNT_FASTA {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        count_fasta: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
+        python: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
     END_VERSIONS
     """
 }
