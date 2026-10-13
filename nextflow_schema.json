@@ -23,6 +23,17 @@
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row.",
                     "fa_icon": "fas fa-file-csv"
                 },
+                "outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+                    "fa_icon": "fas fa-folder-open"
+                },
+                "run_name": {
+                    "type": "string",
+                    "description": "A user-defined name for this workflow run.",
+                    "fa_icon": "fas fa-folder-open"
+                },
                 "skip_quast": {
                     "type": "boolean",
                     "description": "Add if running QUAST is not needed.",
@@ -43,12 +54,6 @@
                     "description": "Path to reference fasta file for alignment based algorithm.",
                     "fa_icon": "fas fa-copy"
                 },
-                "cg_tree_model": {
-                    "type": "string",
-                    "default": "GTR+G",
-                    "description": "Denotes what type of tree model desired in IQ-Tree modeling processes.",
-                    "fa_icon": "fas fa-tree"
-                },
                 "parsnp_partition": {
                     "type": "string",
                     "default": "--no-partition",
@@ -60,11 +65,16 @@
                     "description": "Add if keeping the reference in phylogenetic tree creation is desired.",
                     "fa_icon": "fas fa-check-square"
                 },
-                "outdir": {
+                "remove_recombination": {
+                    "type": "boolean",
+                    "description": "Enable filtering of SNPs located in PhiPack identified regions of recombination.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "cg_tree_model": {
                     "type": "string",
-                    "format": "directory-path",
-                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
-                    "fa_icon": "fas fa-folder-open"
+                    "default": "GTR+G",
+                    "description": "Denotes what type of tree model desired in IQ-Tree modeling processes.",
+                    "fa_icon": "fas fa-tree"
                 },
                 "email": {
                     "type": "string",
