@@ -11,8 +11,8 @@ include { CREATE_REPORT              } from '../../modules/local/alignment_based
 workflow ALIGNMENT_BASED {
 
     take:
-    reads               // channel: [ path[ reads ] ]
-    fasta               // channel: /path/to/genome.fasta
+    fastas              // channel: [ path[ fastas ] ]
+    ref                 // channel: /path/to/genome.fasta
     outdir              // output directory
     partition           // tells parsnp if it's important to partition
     add_reference       // tells parsnp if it needs to remove the reference
@@ -23,12 +23,12 @@ workflow ALIGNMENT_BASED {
     main:
     ch_versions = Channel.empty()       // Creating empty version channel to get versions.yml
 
-//
-// PARSNP
-//
+    //
+    // PARSNP
+    //
     PARSNP (
-        reads,
-        fasta,
+        fastas,
+        ref,
         partition,
         recombination
         )
@@ -37,9 +37,9 @@ workflow ALIGNMENT_BASED {
     ch_parsnp_log = PARSNP.out.log
     ch_versions = ch_versions.mix(PARSNP.out.versions) 
 
-//
-// Remove reference
-//
+    //
+    // Remove reference
+    //
     if (!add_reference) {
         REMOVE_REFERENCE (
             ch_mblocks
@@ -104,9 +104,9 @@ workflow ALIGNMENT_BASED {
 
     }
 
-//
-// Keep reference
-//
+    //
+    // Keep reference
+    //
     if (add_reference) {
 
         //
