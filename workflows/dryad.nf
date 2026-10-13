@@ -49,14 +49,15 @@ ch_multiqc_custom_methods_description = params.multiqc_methods_description ? fil
     IMPORT NF-CORE MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { INPUT_CHECK       } from '../subworkflows/local/input_check'
-include { COUNT_FASTA       } from '../modules/local/count_fasta'
-include { QUAST             } from '../modules/local/quast'
-include { QUAST_SUMMARY     } from '../modules/local/quast_summary'
-include { ALIGNMENT_BASED   } from '../subworkflows/local/alignment_based'
-include { ALIGNMENT_FREE    } from '../subworkflows/local/alignment_free'
-include { CUSTOM_DUMPSOFTWAREVERSIONS          } from '../modules/nf-core/custom/dumpsoftwareversions/main'
-include { MULTIQC           } from '../modules/local/multiqc/multiqc'
+include { INPUT_CHECK                    } from '../subworkflows/local/input_check'
+include { COUNT_FASTA                    } from '../modules/local/count_fasta'
+include { REJECTED_SAMPLES               } from '../modules/local/rejected_samples'
+include { QUAST                          } from '../modules/local/quast'
+include { QUAST_SUMMARY                  } from '../modules/local/quast_summary'
+include { ALIGNMENT_BASED                } from '../subworkflows/local/alignment_based'
+include { ALIGNMENT_FREE                 } from '../subworkflows/local/alignment_free'
+include { CUSTOM_DUMPSOFTWAREVERSIONS    } from '../modules/nf-core/custom/dumpsoftwareversions/main'
+include { MULTIQC                        } from '../modules/local/multiqc/multiqc'
 
 workflow DRYAD {
 
@@ -108,11 +109,11 @@ workflow DRYAD {
 
     ch_versions = ch_versions.mix(COUNT_FASTA.out.versions)
 
-    // Pass/fail based on read count of fastq files
+    // Pass/fail based on sequence (contig) count in fasta files
     ch_csv
         .branch{ meta, file, count ->
-            pass: count > params.readcount_cutoff
-            fail: count <= params.readcount_cutoff
+            pass: count > params.seqcount_cutoff
+            fail: count <= params.seqcount_cutoff
         }
         .set{ ch_fasta }
 
@@ -128,7 +129,7 @@ workflow DRYAD {
             }
         .set{ ch_failed }
 
-    // Collect 
+    // Collect empty/rejected samples (if any)
     ch_failed
         .ifEmpty('NO_EMPTY_SAMPLES')
         .collectFile(
@@ -136,6 +137,14 @@ workflow DRYAD {
                 newLine: true
             )
         .set{ ch_rejected_file }
+
+    REJECTED_SAMPLES (
+        ch_rejected_file,
+        "Dryad",
+        params.run_name
+    )
+    
+    ch_versions = ch_versions.mix(REJECTED_SAMPLES.out.versions)
 
     //
     // QC check for runs if skip quast
