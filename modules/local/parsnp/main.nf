@@ -14,7 +14,7 @@ process PARSNP {
     path( "parsnp_output/parsnp.xmfa"           )   , emit: core_genome_alignment
     path( "parsnp_output/parsnp.ggr"            )   , emit: gingr_file
     path( "parsnp_output/parsnp.snps.mblocks"   )   , emit: mblocks
-    path( "parsnp_output/parsnp.tree"           )   , emit: tree
+    path( "parsnp_output/parsnp.tree"           )   , emit: tree, optional: true
     path( "parsnp_output/log/parsnpAligner.log" )   , emit: log
     path( "parsnp_output/*"                     )   , emit: all_output
     path( "versions.yml"                        )   , emit: versions
