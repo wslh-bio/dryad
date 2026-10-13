@@ -8,7 +8,7 @@
     "optional": false
   },
   "run_name": {
-    "description": "A user-defined name for this workflow run.",
+    "description": "A name for the run. This will be used to name the output file.",
     "optional": false
   },
   "skip_quast": {
