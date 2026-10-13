@@ -178,7 +178,6 @@ workflow DRYAD {
     // SUBWORKFLOW: Alignment Free
     //
     if (params.alignment_free) {
-    
         if (!params.skip_quast) {
             ALIGNMENT_FREE (
                 ch_fasta_paths,
@@ -267,5 +266,4 @@ workflow DRYAD {
         ch_multiqc_custom_config.collect().ifEmpty([]),
         ch_multiqc_logo.collect().ifEmpty([])
     )
-
 }
