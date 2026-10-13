@@ -2,7 +2,7 @@ process PARSNP {
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
-    container "staphb/parsnp:2.1.6"
+    container "quay.io/wslh-bioinformatics/parsnp:2.1.6"
 
     input:
     path reads
