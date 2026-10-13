@@ -18,4 +18,8 @@ process RESULTS {
     summarize_results.py $aligner_log $quast $excluded_samples ${workflow.manifest.version}
     """
 
+    stub:
+    """
+    touch dryad_summary.csv
+    """
 }

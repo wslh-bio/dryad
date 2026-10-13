@@ -17,4 +17,9 @@ process PARSE_PARSNP_ALIGNER_LOG {
     """
     parse_parsnp_aligner_log.py parsnp_output/log/parsnpAligner.log $keep_ref
     """
+
+    stub:
+    """
+    touch "aligner_log.tsv"
+    """
 }

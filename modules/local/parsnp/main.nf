@@ -25,15 +25,33 @@ process PARSNP {
 
     script:
     def fasta_input = fasta.name != 'NO_FILE' ? "$fasta" : '!'
-        """
-        parsnp -r $fasta_input \\
-               -d $reads \\
-               -o ./parsnp_output \\
-               $partition
+    """
+    parsnp -r $fasta_input \\
+            -d $reads \\
+            -o ./parsnp_output \\
+            $partition
 
-        cat <<-END_VERSIONS > versions.yml
-        "${task.process}":
-            parsnp: \$(parsnp --version | cut -d ' ' -f 2 | sed 's/v//')
-        END_VERSIONS
-        """
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        parsnp: \$(parsnp --version | cut -d ' ' -f 2 | sed 's/v//')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    mkdir parsnp_output
+    mkdir parsnp_output/log
+    touch "parsnp_output/parsnp.xmfa"
+    touch "parsnp_output/parsnp.ggr"
+    touch "parsnp_output/parsnp.snps.mblocks"
+    touch "parsnp_output/parsnp.tree"
+    touch "parsnp_output/log/parsnpAligner.log"
+    touch "parsnp_output/*"
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        parsnp: \$(parsnp --version | cut -d ' ' -f 2 | sed 's/v//')
+    END_VERSIONS
+    """
+
 }

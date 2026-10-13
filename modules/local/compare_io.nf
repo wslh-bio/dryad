@@ -19,4 +19,9 @@ process COMPARE_IO {
     $aligner_log
     """
 
+    stub:
+    """
+    touch "sample_exclusion_status.csv"
+    """
+
 }
