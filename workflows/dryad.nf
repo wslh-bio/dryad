@@ -143,7 +143,7 @@ workflow DRYAD {
         "Dryad",
         params.run_name
     )
-    
+
     ch_versions = ch_versions.mix(REJECTED_SAMPLES.out.versions)
 
     //
@@ -151,10 +151,15 @@ workflow DRYAD {
     //
     if (!params.skip_quast) {
         QUAST ( ch_filtered )
-        QUAST_SUMMARY (
-            QUAST.out.transposed_report.collect()
-            )
+        ch_quast_reports = QUAST.out.transposed_report
         ch_versions = ch_versions.mix(QUAST.out.versions)
+
+        QUAST_SUMMARY (
+            ch_quast_reports.collect()
+            )
+        ch_quast_summary = QUAST_SUMMARY.out.quast_tsv
+        ch_versions = ch_versions.mix(QUAST_SUMMARY.out.versions)
+
     } else {
         quast_file = file("$baseDir/assets/empty.txt",checkIfExists:true)
     }
@@ -173,11 +178,12 @@ workflow DRYAD {
     // SUBWORKFLOW: Alignment Free
     //
     if (params.alignment_free) {
+    
         if (!params.skip_quast) {
             ALIGNMENT_FREE (
                 ch_fasta_paths,
                 params.task.cpus,
-                QUAST_SUMMARY.out.quast_tsv
+                ch_quast_summary
                 )
         }
         if (params.skip_quast) {
