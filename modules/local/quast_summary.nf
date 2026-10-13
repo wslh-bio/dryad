@@ -16,4 +16,9 @@ process QUAST_SUMMARY {
     """
     quast_summary.py
     """
+
+    stub:
+    """
+    touch "quast_results.tsv"
+    """
 }

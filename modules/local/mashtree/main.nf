@@ -26,4 +26,14 @@ process MASHTREE {
         mashtree: \$( echo \$( mashtree --version 2>&1 ) | sed 's/^.*Mashtree //' )
     END_VERSIONS
     """
+
+    stub:
+    """
+    touch "mashtree.bootstrap.dnd"
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        mashtree: \$( echo \$( mashtree --version 2>&1 ) | sed 's/^.*Mashtree //' )
+    END_VERSIONS
+    """
+
 }

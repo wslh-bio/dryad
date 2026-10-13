@@ -26,4 +26,16 @@ process SAMPLESHEET_CHECK {
         python: \$(python --version | sed 's/Python //g')
     END_VERSIONS
     """
+
+    stub:
+    """
+    touch samplesheet.valid.csv
+    echo "sample,fasta
+    Al-Hasa_12_2013,https://raw.githubusercontent.com/wslh-bio/dryad/main/test-dataset/short_dataset/genomes/Al-Hasa_12_2013.fna
+    " >> samplesheet.valid.csv
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$(python --version | sed 's/Python //g')
+    END_VERSIONS
+    """
 }

@@ -18,4 +18,10 @@ process REMOVE_REFERENCE {
     remove_reference.py \\
     $fastas
     """
+
+    stub:
+    ""
+    """
+    touch "cleaned_parsnp.snps.mblocks"
+    """
 }

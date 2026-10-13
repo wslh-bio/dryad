@@ -28,4 +28,16 @@ process QUAST {
         quast: \$(quast.py --version 2>&1 | sed 's/^.*QUAST v//; s/ .*\$//')
     END_VERSIONS
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch "${prefix}.quast.report.tsv"
+    touch "${prefix}.transposed.quast.report.tsv"
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        quast: \$(quast.py --version 2>&1 | sed 's/^.*QUAST v//; s/ .*\$//')
+    END_VERSIONS
+    """
 }
