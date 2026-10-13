@@ -87,6 +87,7 @@ Dryad's main parameters and their defaults are shown in the table below:
 | parsnp_partition | Tells parsnp the minimum partition amount or to not partition. Default is --no-partition.* | --parsnp_partition "--min-partition-size 50" |
 | skip_quast | If the data was run through pheonix or another pipeline with a quality check, skips QUAST and the summary options. Default is to run QUAST as if quality summaries were not previously run. | --skip_quast |
 | add_reference | Used to include reference in outputs. This option should not be used if you are using --fasta random. Default is false | --add_reference |
+| remove_recombination | Enable filtering of SNPs located in PhiPack identified regions of recombination. Default is false | --remove_recombination |
 
 *If you are running an alignment based workflow on >100 samples, it may be beneficial to take into account a higher partitioning value than the default of 100. More information can be found in parsnp 2.0's [paper](https://pubmed.ncbi.nlm.nih.gov/38352342/#:~:text=Parsnp%20v2%20provides%20users%20with,combined%20into%20a%20final%20alignment.).
 
