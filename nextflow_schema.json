@@ -34,6 +34,11 @@
                     "description": "A user-defined name for this workflow run.",
                     "fa_icon": "fas fa-folder-open"
                 },
+                "seqcount_cutoff": {
+                    "type": "integer",
+                    "description": "Sets the cut-off value for number of sequences (contigs) a sample needs to be analyzed",
+                    "fa_icon": "fas fa-folder-open"
+                },
                 "skip_quast": {
                     "type": "boolean",
                     "description": "Add if running QUAST is not needed.",
