@@ -158,7 +158,7 @@ workflow ALIGNMENT_BASED {
             quast_tsv,
             ch_parsed,
             ch_excluded_samples,
-            params.runname
+            params.run_name
             )
 
         ch_summary = CREATE_REPORT.out.summary
