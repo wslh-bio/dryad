@@ -12,18 +12,15 @@
     "optional": false
   },
   "skip_quast": {
-    "type": "boolean",
     "description": "Add if running QUAST is not needed.",
     "optional": true
   },
   "alignment_based": {
     "description": "Use alignment based, high resolution analysis.",
-    "type": "boolean",
     "optional": true
   },
   "alignment_free": {
     "description": "Use alignment free, low resolution analysis.",
-    "type": "boolean",
     "optional": true
   },
   "fasta": {
@@ -31,18 +28,14 @@
     "optional": true
   },
   "add_reference": {
-      "type": "boolean",
       "description": "Add if keeping the reference in phylogenetic tree creation is desired.",
       "optional": true
   },
   "remove_recombination": {
-      "type": "boolean",
       "description": "Add if running QUAST is not needed.",
       "optional": true
   },
   "cg_tree_model": {
-      "type": "string",
-      "default": "GTR+G",
       "description": "Denotes what type of tree model desired in IQ-Tree modeling processes.",
       "optional": true
   }
