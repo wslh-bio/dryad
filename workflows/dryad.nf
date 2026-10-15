@@ -140,7 +140,7 @@ workflow DRYAD {
 
     REJECTED_SAMPLES (
         ch_rejected_file,
-        "Dryad",
+        "dryad",
         params.run_name
     )
 
