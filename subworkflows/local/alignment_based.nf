@@ -4,7 +4,7 @@ include { REMOVE_REFERENCE           } from '../../modules/local/remove_referenc
 include { PARSNP                     } from '../../modules/local/parsnp'
 include { IQTREE                     } from '../../modules/local/iqtree'
 include { SNPDISTS                   } from '../../modules/local/snpdists'
-include { PARSE_ALIGNER_LOG          } from '../../modules/local/parse_parsnp_aligner_log'
+include { PARSE_ALIGNER_LOG          } from '../../modules/local/parse_aligner_log'
 include { COMPARE_IO                 } from '../../modules/local/compare_io'
 include { CREATE_REPORT              } from '../../modules/local/alignment_based_results'
 
