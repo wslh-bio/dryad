@@ -80,7 +80,7 @@ workflow DRYAD {
     }
 
     // Creating an empty channel to put version information into
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
@@ -151,6 +151,7 @@ workflow DRYAD {
     //
     if (!params.skip_quast) {
         QUAST ( ch_filtered )
+        ch_quast_results = QUAST.out.result
         ch_quast_reports = QUAST.out.transposed_report
         ch_versions = ch_versions.mix(QUAST.out.versions)
 
@@ -162,6 +163,7 @@ workflow DRYAD {
 
     } else {
         quast_file = file("$baseDir/assets/empty.txt",checkIfExists:true)
+        ch_quast_results = channel.empty()
     }
 
     //
@@ -200,7 +202,7 @@ workflow DRYAD {
         ch_fasta = file(params.random_file, checkIfExists:true)
     }
     else if (!params.fasta ) {
-        ch_fasta = Channel.empty()
+        ch_fasta = channel.empty()
     }
     else {
         ch_fasta = file(params.fasta, checkIfExists:true)
@@ -258,7 +260,7 @@ workflow DRYAD {
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
-    ch_multiqc_files = ch_multiqc_files.mix(QUAST.out.result.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_quast_results.collect().ifEmpty([]))
 
     MULTIQC (
         ch_multiqc_files.collect(),
