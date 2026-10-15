@@ -9,8 +9,8 @@ process REJECTED_SAMPLES {
     val run_name
 
     output:
-    path "*_empty_samples.csv", emit: rejected_samples_report
-    path "versions.yml"       , emit: versions
+    path "*_rejected_samples.csv", emit: rejected_samples_report
+    path "versions.yml"          , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -18,7 +18,7 @@ process REJECTED_SAMPLES {
     script:
     """
     #!/bin/bash
-    cp ${csv_file} ${run_name}_${workflow_name}_empty_samples.csv
+    cp ${csv_file} ${run_name}_${workflow_name}_rejected_samples.csv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
