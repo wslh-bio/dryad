@@ -11,10 +11,6 @@
     "description": "A name for the run. This will be used to name the output file.",
     "optional": false
   },
-  "skip_quast": {
-    "description": "Add if running QUAST is not needed.",
-    "optional": true
-  },
   "alignment_based": {
     "description": "Use alignment based, high resolution analysis.",
     "optional": true
@@ -32,11 +28,7 @@
       "optional": true
   },
   "remove_recombination": {
-      "description": "Add if running QUAST is not needed.",
-      "optional": true
-  },
-  "cg_tree_model": {
-      "description": "Denotes what type of tree model desired in IQ-Tree modeling processes.",
+      "description": "Enable filtering of SNPs located in PhiPack identified regions of recombination.",
       "optional": true
   }
 }
