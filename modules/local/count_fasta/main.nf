@@ -22,7 +22,7 @@ process COUNT_FASTA {
         $args \\
         --sample_id ${meta.id} \\
         --fasta ${fasta} \\
-        --output ${meta.id}_output.csv
+        --output ${meta.id}_counts.csv
         
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
