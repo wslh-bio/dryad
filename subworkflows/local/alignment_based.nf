@@ -63,7 +63,8 @@ workflow ALIGNMENT_BASED {
         //
         COMPARE_IO (
             samplesheet,
-            ch_parsed
+            ch_parsed,
+            ref
         )
 
         ch_excluded_samples = COMPARE_IO.out.excluded
@@ -125,7 +126,8 @@ workflow ALIGNMENT_BASED {
         //
         COMPARE_IO (
             samplesheet,
-            ch_parsed
+            ch_parsed,
+            ref
         )
 
         ch_excluded_samples = COMPARE_IO.out.excluded
