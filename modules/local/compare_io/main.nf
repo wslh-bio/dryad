@@ -6,6 +6,7 @@ process COMPARE_IO {
     input:
     path samplesheet
     path aligner_log
+    val fasta
 
     output:
     path("sample_exclusion_status.csv")    , emit: excluded
@@ -15,10 +16,12 @@ process COMPARE_IO {
     task.ext.when == null || task.ext.when
 
     script: // This script is bundled with the pipeline, in wslh-bio/dryad/bin
+    def fasta_input = fasta.name != 'NO_FILE' ? "$fasta" : 'random'
     """
     compare_io.py \\
-    $samplesheet \\
-    $aligner_log
+    --input_file $samplesheet \\
+    --output_file $aligner_log \\
+    --reference_genome $fasta_input
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
