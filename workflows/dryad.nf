@@ -147,14 +147,40 @@ workflow DRYAD {
     ch_versions = ch_versions.mix(REJECTED_SAMPLES.out.versions)
 
     //
-    // QC check for runs if skip quast
+    // QC check for runs if --skip_quast not used
     //
     if (!params.skip_quast) {
-        QUAST ( ch_filtered )
-        ch_quast_results = QUAST.out.result
-        ch_quast_reports = QUAST.out.transposed_report
-        ch_versions = ch_versions.mix(QUAST.out.versions)
 
+        // If reference is provided, include in QUAST analysis
+        if (params.fasta != "random" && params.fasta != null) {
+
+            // Read in reference genome to channel and map according to nf-core meta map ([[id,single_end],[file]])
+            ch_ref = channel.fromPath(params.fasta, checkIfExists:true)
+            .map { ref ->
+                [[id: ref.simpleName, single_end: false],[ref]]
+            }
+            .set{ ch_ref_meta }
+
+            // Mix sample channel and reference genome channel
+            ch_filtered_ref = ch_filtered.mix(ch_ref_meta)
+
+            QUAST ( ch_filtered_ref )
+            ch_quast_results = QUAST.out.result
+            ch_quast_reports = QUAST.out.transposed_report
+            ch_versions = ch_versions.mix(QUAST.out.versions)
+        }
+        
+        // Otherwise, run QUAST on samplesheet samples only
+        else {
+          QUAST ( ch_filtered )
+            ch_quast_results = QUAST.out.result
+            ch_quast_reports = QUAST.out.transposed_report
+            ch_versions = ch_versions.mix(QUAST.out.versions)  
+        }
+
+        //
+        // Summarize QAUST results
+        //
         QUAST_SUMMARY (
             ch_quast_reports.collect()
             )
@@ -198,12 +224,17 @@ workflow DRYAD {
         ch_versions = ch_versions.mix(ch_alignment_free_versions)
     }
 
+    // Check if --fasta is set to random and read in random file
     if (params.fasta == "random") {
         ch_fasta = file(params.random_file, checkIfExists:true)
     }
+
+    // If --fasta is provided (--alignment-based only), set channel to empty
     else if (!params.fasta ) {
         ch_fasta = channel.empty()
     }
+
+    // Else, read in reference genome
     else {
         ch_fasta = file(params.fasta, checkIfExists:true)
     }
@@ -238,10 +269,13 @@ workflow DRYAD {
                 quast_file
                 )
             ch_alignment_based_versions = ALIGNMENT_BASED.out.versions
-            //ch_versions = ch_versions.mix(ch_alignment_based_versions)
+            ch_versions = ch_versions.mix(ch_alignment_based_versions)
         }        
     }
-    
+
+    //
+    //MODULE: Collate software versions
+    //  
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
     )
@@ -249,7 +283,6 @@ workflow DRYAD {
     //
     //MODULE: MultiQC
     //
-    
     workflow_summary    = WorkflowDryad.paramsSummaryMultiqc(workflow, summary_params)
     ch_workflow_summary = channel.value(workflow_summary)
 
