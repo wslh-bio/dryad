@@ -36,7 +36,7 @@ process COUNT_FASTA {
     """
     echo $args
     
-    touch ${prefix}_output.csv
+    touch ${prefix}_counts.csv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

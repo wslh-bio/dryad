@@ -29,5 +29,10 @@ process REJECTED_SAMPLES {
     stub:
     """
     touch "${workflow_name}_empty_samples.csv"
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        bash: \$( bash -c 'echo \$BASH_VERSION' )
+    END_VERSIONS
     """
 }

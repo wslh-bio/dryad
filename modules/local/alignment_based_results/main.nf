@@ -31,4 +31,14 @@ process CREATE_REPORT {
         python: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
     END_VERSIONS
     """
+    
+    stub:
+    """
+    touch dryad_summary.csv
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
+    END_VERSIONS
+    """
 }

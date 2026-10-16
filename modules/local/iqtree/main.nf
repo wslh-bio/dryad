@@ -40,4 +40,14 @@ process IQTREE {
         iqtree2: \$(echo \$(iqtree2 -version 2>&1) | sed 's/^IQ-TREE multicore version //;s/ .*//')
     END_VERSIONS
     """
+
+    stub:
+    """
+    touch "cleaned_parsnp.snps.mblocks.treefile"
+    
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        iqtree2: \$(echo \$(iqtree2 -version 2>&1) | sed 's/^IQ-TREE multicore version //;s/ .*//')
+    END_VERSIONS
+    """
 }

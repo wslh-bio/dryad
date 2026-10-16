@@ -22,4 +22,14 @@ process QUAST_SUMMARY {
         python: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
     END_VERSIONS
     """
+
+    stub:
+    """
+    touch "quast_results.tsv"
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
+    END_VERSIONS
+    """
 }

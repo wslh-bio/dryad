@@ -22,4 +22,14 @@ process REMOVE_REFERENCE {
         python: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
     END_VERSIONS
     """
+
+    stub:
+    """
+    touch "cleaned_parsnp.snps.mblocks"
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
+    END_VERSIONS
+    """
 }

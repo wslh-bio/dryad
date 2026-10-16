@@ -29,4 +29,14 @@ process COMPARE_IO {
     END_VERSIONS
     """
 
+    stub:
+    """
+    touch "sample_exclusion_status.csv"
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
+    END_VERSIONS
+    """
+
 }
