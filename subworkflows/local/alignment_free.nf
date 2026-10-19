@@ -20,7 +20,7 @@ workflow ALIGNMENT_FREE {
     quast_tsv           // will use quast summary output in final summary
 
     main:
-    ch_versions = Channel.empty()       // Creating empty version channel to get versions.yml
+    ch_versions = channel.empty()       // Creating empty version channel to get versions.yml
 
     //
     // MASHTREE input: tuple val(meta), path(seqs)
@@ -33,14 +33,14 @@ workflow ALIGNMENT_FREE {
     ch_tree = MASHTREE.out.tree
     ch_versions = ch_versions.mix(MASHTREE.out.versions)
 
-    if (!params.alignment_based) {
+    if (!params.alignment_based && !params.skip_quast) {
         CREATE_REPORT (
         quast_tsv,
         params.run_name
         )
 
         ch_summary = CREATE_REPORT.out.summary
-        ch_versions = ch_versions.mix(CREATE_REPORT.out.versions)
+        ch_versions = ch_versions.mix(CREATE_REPORT.out.versions)       
     }
     else {
         ch_summary = channel.empty()
