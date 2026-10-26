@@ -23,6 +23,22 @@
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row.",
                     "fa_icon": "fas fa-file-csv"
                 },
+                "outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+                    "fa_icon": "fas fa-folder-open"
+                },
+                "run_name": {
+                    "type": "string",
+                    "description": "A user-defined name for this workflow run.",
+                    "fa_icon": "fas fa-folder-open"
+                },
+                "seqcount_cutoff": {
+                    "type": "integer",
+                    "description": "Sets the cut-off value for number of sequences (contigs) a sample needs to be analyzed",
+                    "fa_icon": "fas fa-folder-open"
+                },
                 "skip_quast": {
                     "type": "boolean",
                     "description": "Add if running QUAST is not needed.",
@@ -43,12 +59,6 @@
                     "description": "Path to reference fasta file for alignment based algorithm.",
                     "fa_icon": "fas fa-copy"
                 },
-                "cg_tree_model": {
-                    "type": "string",
-                    "default": "GTR+G",
-                    "description": "Denotes what type of tree model desired in IQ-Tree modeling processes.",
-                    "fa_icon": "fas fa-tree"
-                },
                 "parsnp_partition": {
                     "type": "string",
                     "default": "--no-partition",
@@ -60,11 +70,16 @@
                     "description": "Add if keeping the reference in phylogenetic tree creation is desired.",
                     "fa_icon": "fas fa-check-square"
                 },
-                "outdir": {
+                "remove_recombination": {
+                    "type": "boolean",
+                    "description": "Enable filtering of SNPs located in PhiPack identified regions of recombination.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "cg_tree_model": {
                     "type": "string",
-                    "format": "directory-path",
-                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
-                    "fa_icon": "fas fa-folder-open"
+                    "default": "GTR+G",
+                    "description": "Denotes what type of tree model desired in IQ-Tree modeling processes.",
+                    "fa_icon": "fas fa-tree"
                 },
                 "email": {
                     "type": "string",
@@ -226,6 +241,49 @@
                     "default": "genomes,igenomes_base",
                     "hidden": true,
                     "fa_icon": "far fa-eye-slash"
+                },
+                "multiqc_config": {
+                    "type": "string",
+                    "description": "Custom config file to supply to MultiQC.",
+                    "fa_icon": "fas fa-cog",
+                    "hidden": true
+                },
+                "multiqc_logo": {
+                    "type": "string",
+                    "description": "Custom logo file to supply to MultiQC. File name must also be set in the MultiQC config file",
+                    "fa_icon": "fas fa-image",
+                    "hidden": true
+                },
+                "multiqc_methods_description": {
+                    "type": "string",
+                    "description": "Custom MultiQC yaml file containing HTML including a methods description.",
+                    "fa_icon": "fas fa-cog"
+                },
+                "tracedir": {
+                    "type": "string",
+                    "description": "Directory to keep pipeline Nextflow logs and reports.",
+                    "fa_icon": "fas fa-cogs",
+                    "hidden": true
+                },
+                "validate_params": {
+                    "type": "boolean",
+                    "description": "Boolean whether to validate parameters against the schema at runtime",
+                    "default": true,
+                    "fa_icon": "fas fa-check-square",
+                    "hidden": true
+                },
+                "show_hidden_params": {
+                    "type": "boolean",
+                    "fa_icon": "far fa-eye-slash",
+                    "description": "Show all params when using `--help`",
+                    "hidden": true,
+                    "help_text": "By default, parameters set as _hidden_ in the schema are not shown on the command line when a user runs with `--help`. Specifying this option will tell the pipeline to show all parameters."
+                },
+                "enable_conda": {
+                    "type": "boolean",
+                    "description": "Run this workflow with Conda. You can also use '-profile conda' instead of providing this parameter.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-bacon"
                 }
             }
         }

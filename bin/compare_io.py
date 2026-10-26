@@ -1,4 +1,4 @@
-#!/usr/bin/python3.7
+#!/usr/bin/python3
 
 import argparse
 import sys
@@ -14,19 +14,24 @@ def parse_args(args=None):
 	Epilog='Usage: python3 compare_io.py <SAMPLESHEET> <LOG>'
 
 	parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
-	parser.add_argument('input_file',
+	parser.add_argument('--input_file',
 		help='Samplesheet.valid.csv with all the samples denoted.')
-	parser.add_argument('output_file',
+	parser.add_argument('--output_file',
 		help='Aligner log output file to compare input samples to.')
-
+	parser.add_argument('--reference_genome',
+		help='Reference genome used by Parsnp.')
 	return parser.parse_args(args)
 
-def create_list_of_input(samplesheet):
+def create_list_of_input(samplesheet,reference_genome):
 
 	logging.debug("Setting up samplesheet dataframe which contains all samples.")
 	samplesheet_df = pd.read_csv(samplesheet)
 	all_samples = samplesheet_df['sample'].tolist()
-
+	if reference_genome == "random":
+		pass
+	else:
+		reference_genome_name = reference_genome.split('/')[-1].split('.')[0]
+		all_samples.append(reference_genome_name)
 	return all_samples
 
 def check_parsnp_file(parsnp_log_file, input_list):
@@ -53,7 +58,7 @@ def check_parsnp_file(parsnp_log_file, input_list):
 def main(args=None):
 	args = parse_args(args)
 
-	total_list = create_list_of_input(args.input_file)
+	total_list = create_list_of_input(args.input_file,args.reference_genome)
 	not_present_list = check_parsnp_file(args.output_file, total_list)
 
 	df = pd.DataFrame({'Sample': total_list})

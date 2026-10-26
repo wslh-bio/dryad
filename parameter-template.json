@@ -1,0 +1,34 @@
+{
+  "input": {
+    "description": "Path to comma-separated file containing information about the samples in the experiment.",
+    "optional": false
+  },
+  "outdir": {
+    "description": "Output directory where the results will be saved. Absolute path must be used for storage on cloud infrastructure.",
+    "optional": false
+  },
+  "run_name": {
+    "description": "A name for the run. This will be used to name the output file.",
+    "optional": false
+  },
+  "alignment_based": {
+    "description": "Use alignment based, high resolution analysis.",
+    "optional": true
+  },
+  "alignment_free": {
+    "description": "Use alignment free, low resolution analysis.",
+    "optional": true
+  },
+  "fasta": {
+    "description": "Path to reference fasta file for alignment based algorithm.",
+    "optional": true
+  },
+  "add_reference": {
+      "description": "Add if keeping the reference in phylogenetic tree creation is desired.",
+      "optional": true
+  },
+  "remove_recombination": {
+      "description": "Enable filtering of SNPs located in PhiPack identified regions of recombination.",
+      "optional": true
+  }
+}

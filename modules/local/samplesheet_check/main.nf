@@ -1,9 +1,7 @@
 process SAMPLESHEET_CHECK {
     tag "$samplesheet"
-
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/python:3.8.3' :
-        'quay.io/biocontainers/python:3.8.3' }"
+    
+    container "quay.io/biocontainers/python:3.8.3"
 
     input:
     path samplesheet
@@ -21,6 +19,19 @@ process SAMPLESHEET_CHECK {
         $samplesheet \\
         samplesheet.valid.csv
 
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch samplesheet.valid.csv
+    echo "sample,fasta
+    Al-Hasa_12_2013,https://raw.githubusercontent.com/wslh-bio/dryad/main/test-dataset/short_dataset/genomes/Al-Hasa_12_2013.fna
+    " >> samplesheet.valid.csv
+    
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')

@@ -1,5 +1,4 @@
 process SNPDISTS {
-
     label 'process_low'
 
     conda "${moduleDir}/environment.yml"
@@ -22,7 +21,17 @@ process SNPDISTS {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        snpdists: \$(snp-dists -v 2>&1 | sed 's/snp-dists //;')
+        snp-dists: \$(snp-dists -v 2>&1 | sed 's/snp-dists //;')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch "snp_dists_matrix.tsv"
+    
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        snp-dists: \$(snp-dists -v 2>&1 | sed 's/snp-dists //;')
     END_VERSIONS
     """
 }

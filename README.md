@@ -21,7 +21,7 @@ Dryad analyzes fasta files that have been processed either by [Spriggan](https:/
 
 ## Usage
 > [!NOTE]
-> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data. To use Dryad, a Nextflow minimum version of 24.04.2.5914 is needed.
+> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data. To use Dryad, a Nextflow minimum version of 25.10.0 is needed.
 
 To run an alignment free comparison, use:
 
@@ -66,26 +66,27 @@ Prepare a samplesheet with your input data with each row representing one fasta 
 `samplesheet.csv`:  
 | sample | fasta |
 | ------------- | ------------- | 
-| sample_1 | 2024_1.contigs.fa |
-| sample_2 | 2024_2.contigs.fa |
+| sample_1 | sample_1.contigs.fa |
+| sample_2 | sample_2.contigs.fa |
 
 ## Parameters
 Dryad's main parameters and their defaults are shown in the table below:
 
 | Parameter | Parameter description and defaults | Example usage |
 | ------------- | ------------- | ------------- |
-| input | Path to comma-separated file containing information about the samples in the experiment | --input <PATH_TO_SAMPLESHEET> |
-| outdir | Output directory where the results will be saved. Absolute path must be used for storage on cloud infrastructure | --outdir <DESIRED_OUTPUT_PATH> |
-| profile | Denotes how to access containerized software. | -profile aws |
+| input | Path to comma-separated file containing information about the samples in the experiment. | --input <PATH_TO_SAMPLESHEET> |
+| outdir | Output directory where the results will be saved. Absolute path must be used for storage on cloud infrastructure. | --outdir <DESIRED_OUTPUT_PATH> |
+| run_name | Prefix for final report. Default is "final". | --run_name <NAME> |
+| seqcount_cutoff | Sets the cut-off value for number of sequences (contigs) a sample needs to be analyzed. Default is zero. | --seqcount_cutoff 0 |
 | fasta | Reference fasta used for alignment based comparisons. Default is no reference fasta. | --fasta <PATH_TO_REF_FASTA> |
 | fasta random | Reference fasta used for alignment based comparisons is chosen by Parsnp's algorithm. Default is not to use a random fasta file as a reference. | --fasta random |
-| alignment_based | Performs a fine scale analysis within a singular outbreak | --alignment_based |
-| alignment_free | Performs a historical analysis across multiple years and outbreaks | --alignment_free |
-| task.cpus | Denotes how many cpus to use for Mashtree. Default task.cpus is 2. |--task.cpus 4 |
-| cg_tree_model | Tells IQ-TREE what [model](http://www.iqtree.org/doc/Substitution-Models) to use. Default cg_tree_model is GTR+G | --cg_tree_model "GTR+G" |
+| alignment_based | Performs a fine scale analysis within a singular outbreak. | --alignment_based |
+| alignment_free | Performs a historical analysis across multiple years and outbreaks. | --alignment_free |
+| cg_tree_model | Tells IQ-TREE what [model](http://www.iqtree.org/doc/Substitution-Models) to use. Default cg_tree_model is GTR+G. | --cg_tree_model "GTR+G" |
 | parsnp_partition | Tells parsnp the minimum partition amount or to not partition. Default is --no-partition.* | --parsnp_partition "--min-partition-size 50" |
-| skip_quast | If the data was run through pheonix or another pipeline with a quality check, skips QUAST and the summary options. Default is to run QUAST as if quality summaries were not previously run. | --skip_quast |
-| add_reference | Used to include reference in outputs. This option should not be used if you are using --fasta random. Default is false | --add_reference |
+| skip_quast | Skips the QUAST and QUAST summary options. Default is to run QUAST. | --skip_quast |
+| add_reference | Used to include the reference genome in outputs. This option should **not** be used if you are using --fasta random. Default is false. | --add_reference |
+| remove_recombination | Enable filtering of SNPs located in PhiPack identified regions of recombination. Default is false. | --remove_recombination |
 
 *If you are running an alignment based workflow on >100 samples, it may be beneficial to take into account a higher partitioning value than the default of 100. More information can be found in parsnp 2.0's [paper](https://pubmed.ncbi.nlm.nih.gov/38352342/#:~:text=Parsnp%20v2%20provides%20users%20with,combined%20into%20a%20final%20alignment.).
 
@@ -93,7 +94,8 @@ Dryad's main parameters and their defaults are shown in the table below:
 ![dryad_workflow](assets/dryad_nfmetro.png)
 
 ### 1. Universal Steps
-   - Enter assembled FASTA genomes into a samplesheet. 
+   - Enter assembled FASTA genomes into a samplesheet.
+   - Count number of sequences (contigs) in each sample and exclude any that do not meet the `seqcount_cutoff` threshold. 
    - [QUAST v5.2.0](http://bioinf.spbau.ru/quast) is used to determine assembly quality if skip_quast is not indicated.
    - QUAST results are summarized with a custom python script to increase readability.
    
@@ -102,21 +104,38 @@ Dryad's main parameters and their defaults are shown in the table below:
       - [Mashtree v1.4.6](https://github.com/lskatz/mashtree) generates a phylogenetic tree using Mash distances. 
    - Fine scale Comparison
       - **Bootstrapping in IQ-TREE2 requires at least 4 genomes. If less than 4 genomes are used, IQ-TREE2 will not perform bootstrapping.**
-      - [Parsnp v2.0.5](https://github.com/marbl/parsnp) is used to perform a core genome alignment.
+      - [Parsnp v2.1.6](https://github.com/marbl/parsnp) is used to perform a core genome alignment.
       - [IQ-TREE2 v2.3.4](https://github.com/Cibiv/IQ-TREE) is used for inferring a phylogenetic tree.
-      - [Snp-dists v0.8.2](https://github.com/tseemann/snp-dists) is used to calculate the SNP distance matrix.
+      - [snp-dists v0.8.2](https://github.com/tseemann/snp-dists) is used to calculate the SNP distance matrix.
 
 ## Output
-An example of Dryad's output directory structure for both alignment based and alignment free steps can be seen below. These directories will not include QUAST if `--skip_quast` is used:
+An example of Dryad's output directory structure for both alignment based and alignment free steps can be seen below.
+
 ```
 alignment_based_output/
-├── compare
+├── compare_io
 │   └── sample_exclusion_status.csv
-├── dryad
-│   └── dryad_summary.csv
+├── count_fasta
+│   └── *_counts.csv
+├── create_report
+│   └── *_dryad_summary.csv
 ├── iqtree
+│   ├── note.txt**
 │   └── parsnp.snps.mblocks.treefile
-├── parse
+├── multiqc
+│   ├── multiqc_data
+│   │   ├── *.json
+│   │   ├── *.txt
+│   │   └── multiqc.log
+│   ├── multiqc_plots
+│   │   ├── pdf
+│   │   │   └── *.pdf
+│   │   ├── png
+│   │   │   └── *.png
+│   │   └── svg
+│   │       └── *.svg
+│   └── multiqc_report.html
+├── parse_aligner_log
 │   └── aligner_log.tsv
 ├── parsnp
 │   └── parsnp_output
@@ -137,7 +156,7 @@ alignment_based_output/
 │       ├── parsnp.ggr
 │       ├── parsnp.maf
 │       ├── parsnp.snps.mblocks
-│       ├── parsnp.tree
+│       ├── parsnp.tree**
 │       ├── parsnp.xmfa
 │       └── *.fna.ref
 ├── pipeline_info
@@ -146,59 +165,68 @@ alignment_based_output/
 │   ├── execution_trace_*.txt
 │   ├── pipeline_dag_*.html
 │   └── samplesheet.valid.csv
-├── quast
+├── quast**
 │   ├── *.quast.report.tsv
 │   ├── *.transposed.quast.tsv
-│   ├── quast_results.tsv
-├── sample
-│   └── count.txt
+│   └── quast_results.tsv
+├── quast_summary**
+│   └── quast_results.tsv
+├── rejected_samples
+│   └── *_dryad_rejected_samples.csv
+├── remove_reference
+│   └── cleaned_parsnp.snps.mblocks
 └── snpdists
     └── snp_dists_matrix.tsv
 ```
 
 ```
 alignment_free_output/
+├── count_fasta
+│   └── *_counts.csv
+├── create_report**
+│   └── *_dryad_summary.csv
 ├── mashtree
 │   └── mashtree.bootstrap.dnd
 ├── pipeline_info
-│   ├── *.html
-│   ├── *.txt
+│   ├── execution_report_*.html
+│   ├── execution_timeline_*.html
+│   ├── execution_trace_*.txt
+│   ├── pipeline_dag_*.html
 │   └── samplesheet.valid.csv
-└── quast
+├── quast**
 │   ├── *.quast.report.tsv
-│   ├── *.transposed.quast.report.tsv
+│   ├── *.transposed.quast.tsv
 │   └── quast_results.tsv
-├── rejected_samples
-│   └── Empty_samples.csv
+├── quast_summary**
+│   └── quast_results.tsv
+└── rejected_samples
+    └── *_dryad_empty_samples.csv
 ```
+
+**optional outputs
+
 Notable output files:
 
 **Alignment based**  
 | File | Output |
 | ------------- | ------------- |
-| quast_results.tsv* | Assembly quality results |
+| quast_results.tsv** | Assembly quality results |
 | snp_dists_matrix.tsv | Number of SNP distances between each pair of isolates |
-| parsnp.snps.mblocks.treefile | Maximum likelihood phylogenetic tree |
+| *parsnp.snps.mblocks.treefile | Maximum likelihood phylogenetic tree |
 | aligner_log.tsv | Coverage statistics calculated by parsnp |
 | excluded_samples_from_parsnp.txt | Lists samples that were excluded from parsnp's analysis due to a MUMi distance > 0.01 |
-| dryad_summary.csv | Summarizes quast report, if run, and core genome percentages |
-| Empty_samples.csv| Lists any samples that are empty and were removed from the pipeline |
-
-*QUAST results will not be present if `--skip_quast` was used.
+| *_dryad_summary.csv | Summarizes quast report, if run, and core genome percentages |
+| *_dryad_rejected_samples.csv | Lists any samples that are empty and were removed from the pipeline |
 
 **Alignment free**
 | File | Output |
 | ------------- | ------------- |
-| quast_results.tsv* | Assembly quality results |
+| quast_results.tsv** | Assembly quality results |
 | mashtree.bootstrap.dnd | Neighbor joining tree based on mash distances |
 | Empty_samples.csv| Lists any samples that are empty and were removed from the pipeline |
+| *_dryad_summary.csv | Summarizes quast report, if run, and core genome percentages |
 
-*QUAST results will not be present if `--skip_quast` was utilized.
-
-> [!WARNING]
-> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
-> see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
-
+**QUAST results will not be present if `--skip_quast` was used.
 
 ## Citations
 This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).

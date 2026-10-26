@@ -1,6 +1,6 @@
-process PARSE_PARSNP_ALIGNER_LOG {
+process PARSE_ALIGNER_LOG {
     label 'process_single'
-
+    
     container "quay.io/wslh-bioinformatics/pandas@sha256:9ba0a1f5518652ae26501ea464f466dcbb69e43d85250241b308b96406cac458"
 
     input:
@@ -9,6 +9,7 @@ process PARSE_PARSNP_ALIGNER_LOG {
 
     output:
     path("aligner_log.tsv") , emit: aligner_log
+    path "versions.yml"     , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -16,5 +17,20 @@ process PARSE_PARSNP_ALIGNER_LOG {
     script:
     """
     parse_parsnp_aligner_log.py parsnp_output/log/parsnpAligner.log $keep_ref
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch "aligner_log.tsv"
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$( echo \$( python3 --version 2>&1 ) | sed 's/^.*Python //' )
+    END_VERSIONS
     """
 }

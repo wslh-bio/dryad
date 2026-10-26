@@ -1,4 +1,5 @@
 #!/usr/bin/python3.7
+
 import re
 import pandas as pd
 import sys
@@ -90,6 +91,7 @@ def createDF(lengthDict, covDict, totalCoverage, addRef):
     fasta_extensions = '|'.join(['.fasta', '.fas', '.fa', '.fna', '.ffn'])
     merged_df['Sample'] = merged_df['Sample'].str.replace(fasta_extensions, '', regex=True)
     merged_df['Sample'] = merged_df['Sample'].str.replace('.ref', '')
+    merged_df['Sample'] = merged_df['Sample'].str.replace('./parsnp_output/', '')
 
     logging.debug("Write to file")
     merged_df.to_csv(f'aligner_log.tsv', sep='\t', index=False, header=True, na_rep='NaN')

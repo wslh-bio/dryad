@@ -1,4 +1,4 @@
-#!/usr/bin/python3.7
+#!/usr/bin/python3
 
 import argparse
 import sys
@@ -15,13 +15,16 @@ def parse_args(args=None):
 	Epilog='Usage: python3 dryad_summary.py '
 
 	parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
-	parser.add_argument('aligner_log',
+	parser.add_argument('--aligner_log',
 		help='Output of parse_parsnp_aligner_log.py')
-	parser.add_argument('quast',
+	parser.add_argument('--quast_results',
 		help='Supplies quast file, if run')
-	parser.add_argument('excluded_samples',
+	parser.add_argument('--excluded_samples',
 		help='Output of compare_io.py')
-	parser.add_argument('version',
+	parser.add_argument('--run_name',
+        type=str,
+		help='This is supplied by the nextflow config and can be changed via the usual methods i.e. command line.'),
+	parser.add_argument('--dryad_version',
 		help='Version of Dryad')
 
 	return parser.parse_args(args)
@@ -40,7 +43,7 @@ def process_dfs(log, excluded, quast):
 
     return df_log, df_excluded, df_quast
 
-def join_dfs_no_quast(df_log, df_excluded, version):
+def join_dfs_no_quast(df_log, df_excluded, version, WFRunName):
 
     logging.debug("Setting the column order for no quast output")
     column_order = ['Sample',
@@ -75,9 +78,9 @@ def join_dfs_no_quast(df_log, df_excluded, version):
     df_log_excluded = df_log_excluded.reindex(columns = column_order)
 
     logging.debug("Writing to csv")
-    df_log_excluded.to_csv('dryad_summary.csv', index=False)
+    df_log_excluded.to_csv(f'{WFRunName}_dryad_summary.csv', index=False)
 
-def join_dfs_with_quast(df_log, df_included, df_quast, version):
+def join_dfs_with_quast(df_log, df_included, df_quast, version, WFRunName):
 
     logging.debug("Setting the column order for including quast output")
     column_order = ['Sample',
@@ -88,7 +91,7 @@ def join_dfs_with_quast(df_log, df_included, df_quast, version):
                     'Sequence Length (bps)',
                     'Cluster Coverage (bps)',
                     'Total Coverage (%)',
-                    'Version']
+                    'Dryad Version']
 
     logging.debug("Ensuring sample is just name")
     df_log['Sample'] = df_log['Sample'].apply(lambda x: Path(x).stem)
@@ -111,27 +114,28 @@ def join_dfs_with_quast(df_log, df_included, df_quast, version):
     logging.debug("Replace -1 with empty space")
     df_log_included_quast = df_log_included_quast.replace(-1,'')
 
-    logging.debug("Rename and columns")
-    df_log_included_quast = df_log_included_quast.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis'})
-
     logging.debug("Add Dryad version number")
     df_log_included_quast = df_log_included_quast.assign(Version=version)
+
+    logging.debug("Rename columns to full names")
+    df_log_included_quast = df_log_included_quast.rename(columns={'excluded_from_analysis':'Excluded from Parsnp\'s analysis',
+                                                                  'Version':'Dryad Version'})
 
     logging.debug("Reorder columns based on column order")
     df_log_included_quast = df_log_included_quast.reindex(columns = column_order)
 
     logging.debug("Writing to csv")
-    df_log_included_quast.to_csv('dryad_summary.csv', index=False)
+    df_log_included_quast.to_csv(f'{WFRunName}_dryad_summary.csv', index=False)
 
 def main(args=None):
     args = parse_args(args)
 
-    l,e,q = process_dfs(args.aligner_log, args.excluded_samples, args.quast)
+    l,e,q = process_dfs(args.aligner_log, args.excluded_samples, args.quast_results)
 
-    if args.quast == 'empty.txt':
-        join_dfs_no_quast(l,e,args.version)
+    if args.quast_results == 'empty.txt':
+        join_dfs_no_quast(l,e,args.dryad_version,args.run_name)
     else:
-        join_dfs_with_quast(l,e,q,args.version)
+        join_dfs_with_quast(l,e,q,args.dryad_version,args.run_name)
 
 if __name__ == "__main__":
 	sys.exit(main())
